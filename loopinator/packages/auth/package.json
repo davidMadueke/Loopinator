@@ -1,0 +1,24 @@
+{
+  "name": "@loopinator/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@loopinator/db": "workspace:*",
+    "@loopinator/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@loopinator/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
