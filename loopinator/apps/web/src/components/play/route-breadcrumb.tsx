@@ -1,6 +1,14 @@
+import type { ReactNode } from "react";
+
 import { Button } from "@loopinator/ui/components/button";
-import { SelectTrigger } from "@loopinator/ui/components/select";
-import { ChevronLeftIcon, ChevronRightIcon, CloudOffIcon, CloudIcon } from "lucide-react";
+import { cn } from "@loopinator/ui/lib/utils";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CloudIcon,
+  CloudOffIcon,
+} from "lucide-react";
 
 type RouteBreadcrumbProps = {
   variant: "setlist" | "track";
@@ -29,12 +37,8 @@ export function RouteBreadcrumb({
     <div className="flex flex-wrap items-center gap-2">
       {variant === "setlist" && setlistName ? (
         <>
-          <SelectTrigger className="max-w-50 pointer-events-none opacity-100">
-            {setlistName}
-          </SelectTrigger>
-          <SelectTrigger className="w-auto min-w-[96px] pointer-events-none opacity-100">
-            {slotLabel}
-          </SelectTrigger>
+          <BreadcrumbChip className="max-w-50">{setlistName}</BreadcrumbChip>
+          <BreadcrumbChip className="w-auto min-w-[96px]">{slotLabel}</BreadcrumbChip>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -58,12 +62,31 @@ export function RouteBreadcrumb({
         </>
       ) : (
         <>
-          <SelectTrigger className="max-w-[280px] pointer-events-none opacity-100">
-            {trackName}
-          </SelectTrigger>
+          <BreadcrumbChip className="max-w-[280px]">{trackName}</BreadcrumbChip>
           <CacheIndicator cached={cached} />
         </>
       )}
+    </div>
+  );
+}
+
+function BreadcrumbChip({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      data-slot="select-trigger"
+      className={cn(
+        "flex h-9 w-fit items-center justify-between gap-1.5 rounded-3xl border border-transparent bg-input/50 px-3 py-2 text-sm whitespace-nowrap",
+        className,
+      )}
+    >
+      <span className="truncate">{children}</span>
+      <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
     </div>
   );
 }
