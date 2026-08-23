@@ -34,7 +34,15 @@ export function PlayheadPanel({
       <div className="relative flex items-center justify-center">
         <PlayheadCircle progress={playhead} />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
-          <p className="text-3xl font-semibold tabular-nums">{Math.round(targetBpm)} BPM</p>
+          <div className="flex h-fit w-fit items-center justify-center gap-2">
+            <p className="h-full align-middle text-7xl font-bold tabular-nums">{Math.round(targetBpm)}</p>
+            <p className="flex h-full w-fit flex-col items-center justify-center text-xs leading-tight ">
+              <span></span>
+              <span>B</span>
+              <span>P</span>
+              <span>M</span>
+            </p>
+          </div>
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {track.originalBpm} BPM original
             {track.bpmUnconfirmed ? (
@@ -42,12 +50,24 @@ export function PlayheadPanel({
             ) : null}
           </p>
           <Separator className="my-3 w-24" />
-          <p className="text-xs text-muted-foreground">{track.key}</p>
-          <p className="text-xs text-muted-foreground">{track.timeSignature}</p>
-          <p className="mt-3 text-sm font-medium">{track.displayName}</p>
-          {track.songTitle ? (
+          <p className=" text-medium font-medium">{track.displayName}</p>
+          <div className="mt-3 flex items-center gap-1 w-fit">
+            <div className="flex h-fit w-full items-end justify-start gap-1 p-1">
+              <p className="text-sm text-muted-foreground">{track.key} </p>
+              <p className="text-sm text-muted-foreground">
+                {track.key === "No Key" ? "" : (track.keyMode === "minor" ? "Minor" : "Major") }
+              </p>
+            </div>
+            <div className="flex h-fit w-full items-end justify-end">
+              <p className="flex w-full items-center justify-end text-sm text-muted-foreground p-1">
+                {track.timeSignature}
+              </p>
+            </div>
+          </div>
+          
+          {/* {track.songTitle ? (
             <p className="text-xs text-muted-foreground">{track.songTitle}</p>
-          ) : null}
+          ) : null} */}
           <div className="mt-4">
             <AdvancedOptionsEntry hasLocalOverride={hasLocalOverride} onResetDevice={onResetDevice} />
           </div>
