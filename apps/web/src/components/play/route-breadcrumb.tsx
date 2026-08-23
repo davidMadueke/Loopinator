@@ -62,7 +62,7 @@ export function RouteBreadcrumb({
         </>
       ) : (
         <>
-          <BreadcrumbChip className="max-w-[280px]">{trackName}</BreadcrumbChip>
+          <BreadcrumbChip className="max-w-70">{trackName}</BreadcrumbChip>
           <CacheIndicator cached={cached} />
         </>
       )}

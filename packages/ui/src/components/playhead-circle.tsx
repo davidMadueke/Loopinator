@@ -12,7 +12,7 @@ type PlayheadCircleProps = {
 function PlayheadCircle({
   progress,
   className,
-  size = 280,
+  size = 350,
   strokeWidth = 10,
 }: PlayheadCircleProps) {
   const radius = (size - strokeWidth) / 2;

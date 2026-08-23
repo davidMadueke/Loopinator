@@ -8,6 +8,7 @@ export type Track = {
   originalBpm: number;
   bpmUnconfirmed: boolean;
   key: string;
+  keyMode: "major" | "minor";
   timeSignature: TimeSignature;
   cached: boolean;
 };

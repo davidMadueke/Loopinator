@@ -50,7 +50,7 @@ function TransportButton({
     <Button
       variant="default"
       className={cn(
-        "h-20 flex-1 rounded-none border-0 border-r border-border disabled:opacity-100",
+        "box-content h-20 w-full flex-1 align-middle rounded-none border-2 border-border disabled:opacity-100",
         active
           ? "bg-background text-foreground hover:bg-background"
           : "pointer-events-none bg-muted text-muted-foreground",
