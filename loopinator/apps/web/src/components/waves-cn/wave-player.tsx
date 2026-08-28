@@ -561,7 +561,7 @@ export function WavePlayer({
             <HoverButton
               type="button"
               size="sm"
-              variant={loopPreviewEnabled ? "secondary" : "ghost"}
+              variant={loopPreviewEnabled ? "default" : "ghost"}
               className="h-8 text-xs"
               disabled={!isReady}
               onClick={() => setLoopPreviewEnabled((current) => !current)}
