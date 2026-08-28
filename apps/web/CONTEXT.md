@@ -123,6 +123,11 @@ recolours live.
 
 `System` follows `prefers-color-scheme` and re-resolves on OS change while the hook is mounted.
 
+Canvas cannot read `var(--primary)`, so `useCssVar` in `lib/wave-cn.tsx` resolves it to a literal
+colour and watches `<html>` for changes. Its `attributeFilter` must list every carrier attribute:
+`data-accent` was missing, which left the waveform progress bars on the previous accent until the
+Wavesurfer instance happened to be rebuilt.
+
 `--playhead` is set once by `:root:not([data-accent="neutral"]) { --playhead: var(--primary) }`
 rather than inside all ten palette blocks. That selector weighs (0,2,0), so it beats the `.dark`
 default, and `--primary` is already per-theme by the time it resolves. The Override dot on the
