@@ -19,7 +19,7 @@ export function TransportBar({ mode, onPlay, onPause, onRestart }: TransportBarP
   const showRestart = mode === "paused";
 
   return (
-    <div className="flex h-fit w-full items-center justify-center gap-0.5 p-1">
+    <div className="flex h-fit w-full items-center justify-center gap-0.5 p-3">
       <TransportButton active={playActive} aria-label="Play" disabled={!playActive} onClick={onPlay}>
         <PlayIcon className="size-10 fill-current" />
       </TransportButton>
@@ -28,12 +28,12 @@ export function TransportBar({ mode, onPlay, onPause, onRestart }: TransportBarP
         aria-label={showRestart ? "Restart" : "Pause"}
         disabled={!rightActive}
         onClick={showRestart ? onRestart : onPause}
-        className="border-r-0"
+        // className="border-r-0"
       >
         {showRestart ? (
           <SkipBackIcon className="size-10" strokeWidth={2.5} />
         ) : (
-          <PauseIcon className="size-10 fill-current" />
+          <PauseIcon className="size-10 " />
         )}
       </TransportButton>
     </div>
