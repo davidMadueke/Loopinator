@@ -83,6 +83,9 @@ export function AudioUploadField({
               <div className="space-y-3 p-4">
                 <WavePlayer
                   className="p-2"
+                  waveColor="var(--muted-foreground)"
+                  progressColor="var(--primary)"
+                  waveHeight={128}
                   src={audioFile}
                   onDurationChange={setDuration}
                   loopRegion={{
