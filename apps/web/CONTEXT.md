@@ -22,8 +22,9 @@ Wireframe layout with these domain overrides:
 | Route context row | **Route breadcrumb** in the Playback frame: read-only dropdown styling, no pickers |
 | Play screen width | Playback frame max ~860px, centered on wider viewports |
 | Tempo stepper | ±1 BPM per tap, ±3 BPM while held |
-| Playhead ring color | `--chart-2` from `packages/ui` globals |
+| Playhead ring color | `--playhead` from `packages/ui` globals; follows the Accent colour |
 | Hamburger | Library, Setlists, Upload, Account/Login per ADR-0002 |
+| Appearance menu | Palette icon button left of the hamburger; Theme and Accent colour |
 
 ## Shadcn components
 
@@ -44,7 +45,7 @@ Wireframe layout with these domain overrides:
 
 ### Custom (not stock Shadcn)
 
-- `PlayheadCircle` in `packages/ui` — SVG ring, `stroke-dashoffset` driven by audio clock, green stroke from `--chart-2`
+- `PlayheadCircle` in `packages/ui` — SVG ring, `stroke-dashoffset` driven by audio clock, stroke from `--playhead`, unfilled track at `muted-foreground/25` so it reads on a white background as well as a dark one
 - Override dot on Advanced Options entry
 - Cache indicator beside Route breadcrumb on Track routes
 - Library panel scroll stack (flex column, not Sheet)
@@ -73,6 +74,7 @@ apps/web/src/components/play/
 | UI block | Implementation |
 |---|---|
 | Hamburger | `DropdownMenu` |
+| Appearance menu | `DropdownMenu` + two `DropdownMenuRadioGroup`s |
 | Route breadcrumb | `Select` triggers, read-only (disabled or label-only), no route change on click |
 | Slot prev/next | `Button` variant ghost + Lucide chevrons |
 | Playhead ring | `PlayheadCircle` (`packages/ui`) |
@@ -95,6 +97,45 @@ apps/web/src/components/play/
     <PlaybackFrame />                   {/* max-w-[860px] mx-auto */}
   </main>
 </div>
+```
+
+## Appearance menu
+
+Theme and Accent colour, opened from a Palette icon button sitting left of the hamburger in the
+Play screen header. Modelled on the 7Ovr Settings 6 appearance block, trimmed to what fits a
+dropdown: no density control and no mock preview, since the Play screen behind the menu already
+recolours live.
+
+| Decision | Choice |
+|---|---|
+| Theme options | Light, Dark, System, as a three-up tile grid of radio items |
+| Default theme | **Dark**, which is what `__root.tsx` used to hard-code |
+| Accent options | Neutral (default), Green, Blue, Violet, Amber, Rose, as a swatch row |
+| What accent moves | `--primary`, `--primary-foreground`, `--ring`, and `--playhead` |
+| What accent leaves alone | `--chart-*`, which stays a green ramp for future charts |
+| Playhead under Neutral | Keeps the brand green; every other accent hands `--playhead` its `--primary` |
+| Where the palettes live | `:root[data-accent]` / `.dark[data-accent]` blocks in `packages/ui` globals |
+| Carrier attributes | `dark` class and `data-accent` on `<html>`, both written by the same helper |
+| Persistence | `localStorage` under `loopinator.theme` and `loopinator.accent`; per device, no DB |
+| No-flash | Blocking `<script>` in `<head>` reapplies the stored choice before first paint |
+| Hydration | `<html suppressHydrationWarning>`: that script makes server and client markup differ |
+| Selection styling | Ring and fill on the item itself; the stock tick is hidden in both groups |
+
+`System` follows `prefers-color-scheme` and re-resolves on OS change while the hook is mounted.
+
+`--playhead` is set once by `:root:not([data-accent="neutral"]) { --playhead: var(--primary) }`
+rather than inside all ten palette blocks. That selector weighs (0,2,0), so it beats the `.dark`
+default, and `--primary` is already per-theme by the time it resolves. The Override dot on the
+Advanced Options entry reads `--playhead` too, so it never drifts away from the ring.
+
+### Appearance file layout
+
+```
+apps/web/src/
+  lib/appearance.ts                ← options, storage, applyAppearance, head script
+  stores/appearance-store.ts       ← Zustand state shared by every mounted menu
+  hooks/use-appearance.ts          ← hydrate on mount + prefers-color-scheme listener
+  components/appearance-menu.tsx   ← trigger button + dropdown
 ```
 
 ## Library create — discard progress

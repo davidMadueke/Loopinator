@@ -124,8 +124,12 @@ The live player at `/s/{id}` and `/t/{id}`. The Playback frame holds the Route b
 _Avoid_: Player page, performance view
 
 **Play screen header**:
-The top bar on the Play screen: Church OS mark, the LOOPINATOR title, and the hamburger menu for editor routes.
+The top bar on the Play screen: Church OS mark, the LOOPINATOR title, the Appearance menu, and the hamburger menu for editor routes.
 _Avoid_: App bar, navbar, top nav
+
+**Appearance menu**:
+The Palette dropdown beside the hamburger holding Theme (Light, Dark, System) and Accent colour. Both save to the browser, so they follow the device rather than the account, and neither reaches the Library.
+_Avoid_: Settings, preferences, theme toggle
 
 **Route breadcrumb**:
 The read-only row in the Playback frame that shows where playback came from. On a Setlist it shows the Setlist name and the Slot label, each styled like a dropdown but not interactive. On a single Track it shows the Display name the same way. The Slot navigator sits beside these on a Setlist. The Cache indicator sits beside the name on a Track.
