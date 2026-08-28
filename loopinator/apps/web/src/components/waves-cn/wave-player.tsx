@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@loopinator/ui/lib/utils";
 import { Card, CardContent } from "@loopinator/ui/components/card";
 import { Button } from "@loopinator/ui/components/button";
+import { HoverButton } from "@loopinator/ui/components/hover-button";
 import { Slider } from "@loopinator/ui/components/slider";
 import { Play, Pause, Loader2, RotateCcw, Repeat } from "lucide-react";
 import WavesurferPlayer from "@/lib/wave-cn";
@@ -20,7 +21,7 @@ import {
 import { wrapLoopPlayback } from "@/lib/loop-playback";
 
 /** Switch loop-region rendering: custom React overlay vs Wavesurfer Regions plugin. */
-export const LOOP_REGION_IMPL = "regions" as "custom" | "regions";
+export const LOOP_REGION_IMPL = "custom" as "custom" | "regions";
 
 const LOOP_REGION_ID = "loop";
 const LOOP_REGION_ACTIVE_COLOR =
@@ -160,7 +161,9 @@ function useRegionsLoopRegion(
       });
     }
 
-    syncingRef.current = false;
+    queueMicrotask(() => {
+      syncingRef.current = false;
+    });
   }, [
     enabled,
     loopRegion,
@@ -180,7 +183,12 @@ function useRegionsLoopRegion(
     const plugin = regionsPluginRef.current;
 
     const onUpdated = (region: Region, side?: "start" | "end") => {
-      if (region.id !== LOOP_REGION_ID || syncingRef.current || duration <= 0) {
+      if (
+        region.id !== LOOP_REGION_ID ||
+        syncingRef.current ||
+        duration <= 0 ||
+        !side
+      ) {
         return;
       }
 
@@ -189,7 +197,7 @@ function useRegionsLoopRegion(
       let nextOut = region.end;
 
       if (snap) {
-        if (side === "start" || side === undefined) {
+        if (side === "start") {
           nextIn = commitLoopPointSeconds(
             region.start,
             region.end,
@@ -198,7 +206,7 @@ function useRegionsLoopRegion(
             { snap: true, snapLoopPoint: snap },
           ).inSeconds;
         }
-        if (side === "end" || side === undefined) {
+        if (side === "end") {
           nextOut = commitLoopPointSeconds(
             region.end,
             nextIn,
@@ -371,12 +379,13 @@ export function WavePlayer({
 
   const restart = React.useCallback(() => {
     if (!wavesurferRef.current || !isReady) return;
-    const restartAt = loopRegion
-      ? storedValueToSeconds(loopRegion.inPoint, duration, "in")
+    if (!loopRegion) return;
+    const restartAt = loopPreviewEnabled
+      ? storedValueToSeconds(loopRegion?.inPoint ?? "", duration, "in")
       : 0;
     wavesurferRef.current.setTime(restartAt);
     wavesurferRef.current.play();
-  }, [duration, isReady, loopRegion]);
+  }, [duration, isReady, loopRegion, loopPreviewEnabled]);
 
   const handleSeek = React.useCallback(
     (value: number | readonly number[]) => {
@@ -483,7 +492,7 @@ export function WavePlayer({
             barGap={barGap}
             barRadius={barRadius}
             minPxPerSec={minPxPerSec}
-            dragToSeek
+            dragToSeek={!loopRegion}
             plugins={regionPlugins}
             onReady={handleReady}
             onPlay={handlePlay}
@@ -549,21 +558,20 @@ export function WavePlayer({
             </Button>
           </div>
           {loopRegion ? (
-            <Button
+            <HoverButton
               type="button"
               size="sm"
               variant={loopPreviewEnabled ? "secondary" : "ghost"}
-              className="h-8 gap-1.5 text-xs"
+              className="h-8 text-xs"
               disabled={!isReady}
               onClick={() => setLoopPreviewEnabled((current) => !current)}
               aria-pressed={loopPreviewEnabled}
               aria-label={
                 loopPreviewEnabled ? "Disable loop preview" : "Enable loop preview"
               }
-            >
-              <Repeat size={14} />
-              Loop preview
-            </Button>
+              simpleView={<Repeat size={14} />}
+              expandedView="Loop preview"
+            />
           ) : null}
         </div>
       </CardContent>

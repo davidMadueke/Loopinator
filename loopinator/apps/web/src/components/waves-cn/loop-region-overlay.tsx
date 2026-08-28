@@ -3,7 +3,6 @@
 import * as React from "react";
 import { cn } from "@loopinator/ui/lib/utils";
 import {
-  clampLoopTimes,
   commitLoopPointSeconds,
   timeToStoredValue,
 } from "@/lib/loop-region-time";
@@ -185,8 +184,8 @@ function LoopHandle({
 }: LoopHandleProps) {
   return (
     <div
-      className="absolute inset-y-0 -translate-x-1/2 pointer-events-auto touch-none"
-      style={{ left: `${positionRatio * 100}%`, width: 12 }}
+      className="absolute inset-y-0 -translate-x-1/2 pointer-events-auto touch-none cursor-ew-resize"
+      style={{ left: `${positionRatio * 100}%`, width: 20 }}
       onPointerDown={onPointerDown}
       role="slider"
       aria-label={ariaLabel}
@@ -196,7 +195,7 @@ function LoopHandle({
     >
       <div
         className={cn(
-          "absolute inset-y-0 left-1/2 w-px -translate-x-1/2 transition-colors duration-150",
+          "absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 transition-colors duration-150",
           active ? "bg-primary" : "bg-muted-foreground/40",
         )}
       />
