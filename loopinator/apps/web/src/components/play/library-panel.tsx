@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@loopinator/ui/components/tabs";
 import { Button } from "@loopinator/ui/components/button";
 import { cn } from "@loopinator/ui/lib/utils";
@@ -37,7 +37,6 @@ export function LibraryPanel() {
   const [tab, setTab] = useState<LibraryTab>("Track");
   const [view, setView] = useState<LibraryView>("browse");
   const [createHovered, setCreateHovered] = useState(false);
-  const [createFormKey, setCreateFormKey] = useState(0);
 
   const browseResetKey = useLibraryCreateStore((state) => state.browseResetKey);
   const resetProgress = useLibraryCreateStore((state) => state.resetProgress);
@@ -45,22 +44,14 @@ export function LibraryPanel() {
   const requestDiscard = useLibraryCreateStore((state) => state.requestDiscard);
 
   const creating = view === "create";
-  const skipBrowseReset = useRef(true);
 
   useEffect(() => {
-    if (skipBrowseReset.current) {
-      skipBrowseReset.current = false;
-      return;
-    }
-
     setView("browse");
-    setCreateFormKey((current) => current + 1);
   }, [browseResetKey]);
 
   const returnToLibrary = useCallback(() => {
     setView("browse");
     resetProgress();
-    setCreateFormKey((current) => current + 1);
   }, [resetProgress]);
 
   const handleBack = () => {
@@ -71,7 +62,6 @@ export function LibraryPanel() {
   };
 
   const handleCreateOpen = () => {
-    setCreateFormKey((current) => current + 1);
     resetProgress();
     setView("create");
   };
@@ -128,13 +118,13 @@ export function LibraryPanel() {
 
       {creating && tab === "Track" && (
         <div className="mx-auto w-full max-w-[860px] px-4 pb-4">
-          <CreateTrackPanel key={createFormKey} onProgressChange={handleProgressChange} />
+          <CreateTrackPanel onProgressChange={handleProgressChange} />
         </div>
       )}
 
       {creating && tab === "Setlist" && (
         <div className="mx-auto w-full max-w-[860px] px-4 pb-4">
-          <CreateSetlistPanel key={createFormKey} onProgressChange={handleProgressChange} />
+          <CreateSetlistPanel onProgressChange={handleProgressChange} />
         </div>
       )}
     </section>

@@ -97,20 +97,30 @@ apps/web/src/components/play/
 </div>
 ```
 
+## Library create — discard progress
+
+Leaving a part-filled **Create New Track** or **Create New Setlist** form asks for confirmation first. Both exits run the same guard, so the warning cannot appear on one and not the other.
+
+| Decision | Choice |
+|---|---|
+| Guarded exits | **Back to Library** button, and **Close library** in the hamburger |
+| In progress | Any field touched: `hasCreateTrackProgress` / `hasCreateSetlistProgress` |
+| Nothing entered | Leaves immediately, no dialog |
+| Keep editing | Dialog closes; form, Library view, and panel visibility all unchanged |
+| Discard | Clears the form **and** its parent: Back to Library returns the panel to browse, Close library closes the panel |
+| Clearing mechanism | The create panel unmounts on exit, which drops its field state; no manual field reset, no remount key |
+| Shared state | `hasProgress`, the discard intent, and dialog visibility live in `src/stores/library-create-store.ts` (Zustand) |
+| Dialog owner | One `DiscardProgressDialog`, rendered by `play-screen.tsx`; opened on the next microtask so the hamburger can close first |
+
 ## Create Track — loop region editor
 
-Loop region editing lives inside the audio upload success panel, not as a separate form section.
+Loop region editing lives inside the audio upload success panel, not as a separate form section. Snap, decode, time format, and analysis roadmap: **[src/lib/loop-analysis/CONTEXT.md](src/lib/loop-analysis/CONTEXT.md)**.
 
 | Decision | Choice |
 |---|---|
 | Layout | `WavePlayer` on top, `LoopRegionField` inputs below, inside `AudioUploadField` `renderOnSuccess` |
 | Form state | `inPoint` / `outPoint` stay in `CreateTrackPanel`; passed through `AudioUploadField` as props |
 | Auto (file edge) | Stored as empty string `""`; inputs display **Auto**; markers stay at 0 s (in) or duration (out) |
-| Time format | `m:ss` or `m:ss.sss` when not auto (e.g. `1:05.125`) |
-| Text input sync | Parse `m:ss` / `m:ss.sss` on blur; invalid input reverts; typing **Auto** (or clearing) sets auto |
-| Zero-cross snap | On marker drag release and text blur, snap ±50 ms to nearest zero crossing (full-rate decode) |
-| Edge snap | Within ~50 ms of start/end → auto |
-| Drag constraint | In stays ≥50 ms before out; handles clamp |
 | Marker UI | Thin vertical lines, draggable; primary-tinted shade between them |
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
@@ -122,16 +132,16 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 
 ```
 apps/web/src/
-  lib/loop-region-time.ts              ← parse, format, auto snap helpers
-  lib/loop-analysis/                 ← decode, zero-crossing, snap pipeline
-  lib/use-loop-snap.ts                ← decode uploaded file for marker snap
+  lib/loop-analysis/                   ← analysis CONTEXT + decode, zero-cross, snap
+  lib/loop-region-time.ts            ← parse, format, clamp, commit helpers
+  lib/use-loop-snap.ts               ← decode uploaded file for marker snap
   components/waves-cn/
-    wave-player.tsx                    ← WavePlayer + LOOP_REGION_IMPL
-    loop-region-overlay.tsx            ← custom overlay markers
+    wave-player.tsx                  ← WavePlayer + LOOP_REGION_IMPL
+    loop-region-overlay.tsx          ← custom overlay markers
   components/play/create-track/
-    audio-upload-field.tsx             ← upload + WavePlayer + LoopRegionField
-    loop-region-field.tsx              ← in/out text inputs
-    create-track-panel.tsx             ← form state; no standalone loop section
+    audio-upload-field.tsx           ← upload + WavePlayer + LoopRegionField
+    loop-region-field.tsx            ← in/out text inputs
+    create-track-panel.tsx           ← form state; no standalone loop section
 ```
 
 ## Related ADRs
