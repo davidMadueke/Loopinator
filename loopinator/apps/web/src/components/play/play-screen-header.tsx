@@ -9,6 +9,8 @@ import {
 } from "@loopinator/ui/components/dropdown-menu";
 import { MenuIcon } from "lucide-react";
 
+import { AppearanceMenu } from "@/components/appearance-menu";
+
 type PlayScreenHeaderProps = {
   libraryOpen: boolean;
   onLibraryToggle: () => void;
@@ -24,21 +26,25 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
         <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="Menu" />}>
-          <MenuIcon />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onLibraryToggle}>
-            {libraryOpen ? "Close library" : "Library"}
-          </DropdownMenuItem>
-          <DropdownMenuItem disabled>Setlists</DropdownMenuItem>
-          <DropdownMenuItem disabled>Upload</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem render={<Link to="/login" />}>Login</DropdownMenuItem>
-          <DropdownMenuItem render={<Link to="/dashboard" />}>Account</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <AppearanceMenu />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="Menu" />}>
+            <MenuIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onLibraryToggle}>
+              {libraryOpen ? "Close library" : "Library"}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>Setlists</DropdownMenuItem>
+            <DropdownMenuItem disabled>Upload</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem render={<Link to="/login" />}>Login</DropdownMenuItem>
+            <DropdownMenuItem render={<Link to="/dashboard" />}>Account</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }
