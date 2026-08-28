@@ -71,7 +71,7 @@ export function LibraryPanel() {
         ) : (
           <Tabs value={tab} onValueChange={(value) => setTab(value as LibraryTab)}>
             <div className="flex">
-              <TabsList>
+              <TabsList variant="default">
                 <TabsTrigger value="Track">Tracks</TabsTrigger>
                 <TabsTrigger value="Setlist">Setlists</TabsTrigger>
               </TabsList>
