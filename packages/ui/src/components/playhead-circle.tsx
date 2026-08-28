@@ -29,15 +29,15 @@ function PlayheadCircle({
       className={cn("shrink-0 -rotate-90", className)}
       aria-hidden
     >
-      <circle
+      {<circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-muted/30"
-      />
+        className="text-muted-foreground/25"
+      />}
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -48,7 +48,7 @@ function PlayheadCircle({
         strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={offset}
-        className="text-chart-2 transition-[stroke-dashoffset] duration-75"
+        className="text-playhead transition-[stroke-dashoffset] duration-75"
       />
     </svg>
   );
