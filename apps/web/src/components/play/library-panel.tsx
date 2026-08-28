@@ -1,11 +1,12 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@loopinator/ui/components/tabs";
 import { Button } from "@loopinator/ui/components/button";
 import { cn } from "@loopinator/ui/lib/utils";
 
+import { useLibraryCreateStore } from "@/stores/library-create-store";
+
 import { CreateSetlistPanel } from "./create-setlist-panel";
 import { CreateTrackPanel } from "./create-track-panel";
-import { DiscardProgressDialog } from "./discard-progress-dialog";
 import { LibrarySetlistsTab } from "./library-setlists-tab";
 import { LibraryTracksTab } from "./library-tracks-tab";
 
@@ -36,36 +37,51 @@ export function LibraryPanel() {
   const [tab, setTab] = useState<LibraryTab>("Track");
   const [view, setView] = useState<LibraryView>("browse");
   const [createHovered, setCreateHovered] = useState(false);
-  const [createHasProgress, setCreateHasProgress] = useState(false);
-  const [discardOpen, setDiscardOpen] = useState(false);
   const [createFormKey, setCreateFormKey] = useState(0);
 
+  const browseResetKey = useLibraryCreateStore((state) => state.browseResetKey);
+  const resetProgress = useLibraryCreateStore((state) => state.resetProgress);
+  const setHasProgress = useLibraryCreateStore((state) => state.setHasProgress);
+  const requestDiscard = useLibraryCreateStore((state) => state.requestDiscard);
+
   const creating = view === "create";
+  const skipBrowseReset = useRef(true);
 
-  const returnToLibrary = useCallback(() => {
-    setView("browse");
-    setCreateHasProgress(false);
-    setCreateFormKey((current) => current + 1);
-  }, []);
-
-  const handleBack = () => {
-    if (createHasProgress) {
-      setDiscardOpen(true);
+  useEffect(() => {
+    if (skipBrowseReset.current) {
+      skipBrowseReset.current = false;
       return;
     }
 
-    returnToLibrary();
+    setView("browse");
+    setCreateFormKey((current) => current + 1);
+  }, [browseResetKey]);
+
+  const returnToLibrary = useCallback(() => {
+    setView("browse");
+    resetProgress();
+    setCreateFormKey((current) => current + 1);
+  }, [resetProgress]);
+
+  const handleBack = () => {
+    const result = requestDiscard("return-to-browse");
+    if (result === "proceeded") {
+      returnToLibrary();
+    }
   };
 
   const handleCreateOpen = () => {
     setCreateFormKey((current) => current + 1);
-    setCreateHasProgress(false);
+    resetProgress();
     setView("create");
   };
 
-  const handleProgressChange = useCallback((hasProgress: boolean) => {
-    setCreateHasProgress(hasProgress);
-  }, []);
+  const handleProgressChange = useCallback(
+    (nextHasProgress: boolean) => {
+      setHasProgress(nextHasProgress);
+    },
+    [setHasProgress],
+  );
 
   return (
     <section className="border-b border-border bg-card/40">
@@ -121,12 +137,6 @@ export function LibraryPanel() {
           <CreateSetlistPanel key={createFormKey} onProgressChange={handleProgressChange} />
         </div>
       )}
-
-      <DiscardProgressDialog
-        open={discardOpen}
-        onOpenChange={setDiscardOpen}
-        onDiscard={returnToLibrary}
-      />
     </section>
   );
 }

@@ -2,7 +2,9 @@ import { useState } from "react";
 
 import { usePlayback } from "@/hooks/use-playback";
 import type { Setlist, Track } from "@/lib/play-types";
+import { useLibraryCreateStore } from "@/stores/library-create-store";
 
+import { DiscardProgressDialog } from "./discard-progress-dialog";
 import { LibraryPanel } from "./library-panel";
 import { PlayScreenHeader } from "./play-screen-header";
 import { PlayheadPanel } from "./playhead-panel";
@@ -28,6 +30,11 @@ type PlayScreenProps =
 export function PlayScreen(props: PlayScreenProps) {
   const [libraryOpen, setLibraryOpen] = useState(false);
 
+  const discardDialogOpen = useLibraryCreateStore((state) => state.discardDialogOpen);
+  const requestDiscard = useLibraryCreateStore((state) => state.requestDiscard);
+  const confirmDiscard = useLibraryCreateStore((state) => state.confirmDiscard);
+  const cancelDiscard = useLibraryCreateStore((state) => state.cancelDiscard);
+
   const initialTargetBpm =
     props.mode === "setlist"
       ? props.setlist.slots[props.slotIndex]?.targetBpm ?? props.track.originalBpm
@@ -42,12 +49,34 @@ export function PlayScreen(props: PlayScreenProps) {
   const canGoNext =
     props.mode === "setlist" && props.slotIndex < props.setlist.slots.length - 1;
 
+  const handleLibraryToggle = () => {
+    if (!libraryOpen) {
+      setLibraryOpen(true);
+      return;
+    }
+
+    const result = requestDiscard("close-library");
+    if (result === "proceeded") {
+      setLibraryOpen(false);
+    }
+  };
+
+  const handleDiscardDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      cancelDiscard();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    const intent = confirmDiscard();
+    if (intent === "close-library") {
+      setLibraryOpen(false);
+    }
+  };
+
   return (
     <div className="flex min-h-dvh flex-col font-[system-ui,-apple-system,BlinkMacSystemFont,sans-serif]">
-      <PlayScreenHeader
-        libraryOpen={libraryOpen}
-        onLibraryToggle={() => setLibraryOpen((open) => !open)}
-      />
+      <PlayScreenHeader libraryOpen={libraryOpen} onLibraryToggle={handleLibraryToggle} />
       <main className="flex flex-1 flex-col overflow-y-auto">
         {libraryOpen 
         ? <>
@@ -98,6 +127,12 @@ export function PlayScreen(props: PlayScreenProps) {
           />
         </div>
       </main>
+
+      <DiscardProgressDialog
+        open={discardDialogOpen}
+        onOpenChange={handleDiscardDialogOpenChange}
+        onDiscard={handleConfirmDiscard}
+      />
     </div>
   );
 }
