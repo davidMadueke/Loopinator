@@ -13,6 +13,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import Header from "../components/header";
+import { DEFAULT_ACCENT, appearanceInitScript } from "../lib/appearance";
 
 import appCss from "../index.css?url";
 export interface RouterAppContext {
@@ -50,10 +51,13 @@ function RootDocument() {
     select: (state) => /^\/(s|t)\//.test(state.location.pathname),
   });
 
+  // The head script rewrites the class and data-accent below before first paint, so
+  // the server markup and the hydrated DOM disagree by design.
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" data-accent={DEFAULT_ACCENT} suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: appearanceInitScript }} />
       </head>
       <body>
         {isPlayRoute ? (

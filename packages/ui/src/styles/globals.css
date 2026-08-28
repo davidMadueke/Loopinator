@@ -9,6 +9,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -32,6 +33,7 @@
   --chart-3: oklch(0.627 0.194 149.214);
   --chart-4: oklch(0.527 0.154 150.069);
   --chart-5: oklch(0.448 0.119 151.328);
+  --playhead: oklch(0.627 0.194 149.214);
   --radius: 0;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -44,6 +46,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -67,6 +70,7 @@
   --chart-3: oklch(0.627 0.194 149.214);
   --chart-4: oklch(0.527 0.154 150.069);
   --chart-5: oklch(0.448 0.119 151.328);
+  --playhead: oklch(0.723 0.219 149.579);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -75,6 +79,78 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Accent palettes. `data-accent` sits on <html> beside the `dark` class, so the
+   `.dark[data-accent]` blocks must stay below their `:root[data-accent]` twin —
+   both weigh (0,2,0) and source order breaks the tie. "neutral" has no block:
+   it falls through to the greyscale --primary above. */
+
+/* The Playhead ring tracks the accent. Written once at (0,2,0) rather than per
+   palette: it outweighs the `.dark` default and --primary is already per-theme.
+   Neutral opts out and keeps the brand green. */
+:root:not([data-accent="neutral"]) {
+  --playhead: var(--primary);
+}
+
+:root[data-accent="green"] {
+  --primary: oklch(0.627 0.194 149.214);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.723 0.219 149.579);
+}
+
+.dark[data-accent="green"] {
+  --primary: oklch(0.723 0.219 149.579);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.627 0.194 149.214);
+}
+
+:root[data-accent="blue"] {
+  --primary: oklch(0.546 0.245 262.881);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.623 0.214 259.815);
+}
+
+.dark[data-accent="blue"] {
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.546 0.245 262.881);
+}
+
+:root[data-accent="violet"] {
+  --primary: oklch(0.541 0.281 293.009);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.606 0.25 292.717);
+}
+
+.dark[data-accent="violet"] {
+  --primary: oklch(0.606 0.25 292.717);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.541 0.281 293.009);
+}
+
+:root[data-accent="amber"] {
+  --primary: oklch(0.769 0.188 70.08);
+  --primary-foreground: oklch(0.216 0.006 56.043);
+  --ring: oklch(0.828 0.189 84.429);
+}
+
+.dark[data-accent="amber"] {
+  --primary: oklch(0.828 0.189 84.429);
+  --primary-foreground: oklch(0.216 0.006 56.043);
+  --ring: oklch(0.769 0.188 70.08);
+}
+
+:root[data-accent="rose"] {
+  --primary: oklch(0.586 0.253 17.585);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.645 0.246 16.439);
+}
+
+.dark[data-accent="rose"] {
+  --primary: oklch(0.645 0.246 16.439);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.586 0.253 17.585);
 }
 
 @theme inline {
@@ -92,6 +168,7 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-playhead: var(--playhead);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
