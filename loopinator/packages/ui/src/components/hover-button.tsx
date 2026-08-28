@@ -5,6 +5,13 @@ import * as React from "react";
 import { Button } from "@loopinator/ui/components/button";
 import { cn } from "@loopinator/ui/lib/utils";
 
+/* The dark: copies are not redundant. Several Button variants ship their own
+   dark:hover: background, and the extra `:is(.dark *)` in that selector outweighs
+   a bare hover: utility, so in dark mode the variant would win. Repeating the
+   same modifiers lets tailwind-merge strip the variant's version instead. */
+const HOVER_FILL =
+  "hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground";
+
 function useHovered() {
   const [hovered, setHovered] = React.useState(false);
 
@@ -46,7 +53,7 @@ function HoverButton({
     <Button
       data-slot="hover-button"
       data-hovered={hovered ? "" : undefined}
-      className={cn("gap-0", className)}
+      className={cn(HOVER_FILL, "gap-0", className)}
       onMouseEnter={(event) => {
         hoverProps.onMouseEnter();
         onMouseEnter?.(event);
