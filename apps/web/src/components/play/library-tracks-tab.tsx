@@ -47,7 +47,7 @@ export function LibraryTracksTab() {
                       <Link
                         to="/t/$id"
                         params={{ id: track.id }}
-                        className="block truncate text-sm hover:underline"
+                        className="block truncate font-medium text-sm hover:underline"
                       >
                         {track.displayName}
                       </Link>
