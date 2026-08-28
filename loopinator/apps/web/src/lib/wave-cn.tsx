@@ -309,6 +309,10 @@ export function useWavesurfer({
 }
 
 // ─── CSS var resolver ────────────────────────────────────────────────────────
+/** Attributes on <html> that can change what a var resolves to. `data-accent` carries
+ *  the accent palette, so leaving it out strands canvas colours on the old accent. */
+const APPEARANCE_ATTRIBUTES = ["class", "style", "data-theme", "data-accent"];
+
 export function useCssVar(value: string): string {
   const [resolved, setResolved] = useState(value);
 
@@ -332,7 +336,7 @@ export function useCssVar(value: string): string {
     const observer = new MutationObserver(resolve);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class", "style", "data-theme"],
+      attributeFilter: APPEARANCE_ATTRIBUTES,
     });
     return () => observer.disconnect();
   }, [value]);
