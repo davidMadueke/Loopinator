@@ -56,6 +56,13 @@ function HomeComponent() {
       </section>
 
       <section className="rounded-lg border p-4">
+        <h2 className="mb-2 font-medium">Dev</h2>
+        <Button variant="outline" render={<Link to="/dev/loop-preview" />}>
+          Loop preview dev test
+        </Button>
+      </section>
+
+      <section className="rounded-lg border p-4">
         <h2 className="mb-2 font-medium">API status</h2>
         <div className="flex items-center gap-2">
           <div

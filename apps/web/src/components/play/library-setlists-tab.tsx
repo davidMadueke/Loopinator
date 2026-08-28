@@ -6,11 +6,6 @@ import { DEMO_SETLISTS } from "@/lib/mock-data";
 export function LibrarySetlistsTab() {
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" disabled>
-          Create new
-        </Button>
-      </div>
       <ul className="divide-y divide-border border border-border">
         {DEMO_SETLISTS.map((setlist) => (
           <li

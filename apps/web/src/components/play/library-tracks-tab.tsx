@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@loopinator/ui/components/button";
-import { PlayIcon } from "lucide-react";
+import { PlayIcon, SquareIcon } from "lucide-react";
 
 import { DEMO_TRACKS } from "@/lib/mock-data";
 import { BPM_BAND_LABELS, getBpmBand, type BpmBand } from "@/lib/play-types";
@@ -23,6 +24,7 @@ function groupTracksByBand() {
 
 export function LibraryTracksTab() {
   const bands = groupTracksByBand();
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -36,23 +38,35 @@ export function LibraryTracksTab() {
           <section key={band}>
             <h3 className="mb-2 text-xs font-medium text-muted-foreground">{BPM_BAND_LABELS[band]}</h3>
             <ul className="divide-y divide-border border border-border">
-              {tracks.map((track) => (
-                <li key={track.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                  <div className="min-w-0">
-                    <Link
-                      to="/t/$id"
-                      params={{ id: track.id }}
-                      className="block truncate text-sm hover:underline"
+              {tracks.map((track) => {
+                const isPreviewing = previewingId === track.id;
+
+                return (
+                  <li key={track.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div className="min-w-0">
+                      <Link
+                        to="/t/$id"
+                        params={{ id: track.id }}
+                        className="block truncate text-sm hover:underline"
+                      >
+                        {track.displayName}
+                      </Link>
+                      <p className="truncate text-xs text-muted-foreground">{track.filename}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={isPreviewing ? `Stop ${track.displayName}` : `Preview ${track.displayName}`}
+                      aria-pressed={isPreviewing}
+                      onClick={() =>
+                        setPreviewingId((current) => (current === track.id ? null : track.id))
+                      }
                     >
-                      {track.displayName}
-                    </Link>
-                    <p className="truncate text-xs text-muted-foreground">{track.filename}</p>
-                  </div>
-                  <Button variant="ghost" size="icon-sm" aria-label={`Preview ${track.displayName}`}>
-                    <PlayIcon />
-                  </Button>
-                </li>
-              ))}
+                      {isPreviewing ? <SquareIcon className="fill-current" /> : <PlayIcon />}
+                    </Button>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         );

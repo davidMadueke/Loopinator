@@ -21,5 +21,7 @@
   "menuColor": "default",
   "menuAccent": "subtle",
   "rtl": false,
-  "registries": {}
+  "registries": {
+    "@waves-cn": "https://waves-cn.vercel.app/r/{name}.json"
+  }
 }

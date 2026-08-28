@@ -1,5 +1,60 @@
 export type TimeSignature = "4/4" | "3/4" | "6/8" | "12/8" | "2/4";
 
+export type KeyCenter =
+  | "No Key"
+  | "C"
+  | "C#"
+  | "Db"
+  | "D"
+  | "D#"
+  | "Eb"
+  | "E"
+  | "F"
+  | "F#"
+  | "Gb"
+  | "G"
+  | "G#"
+  | "Ab"
+  | "A"
+  | "A#"
+  | "Bb"
+  | "B";
+
+export type KeyScale = "major" | "minor";
+
+export type TrackKey = {
+  center: KeyCenter;
+  scale: KeyScale;
+};
+
+export const KEY_CENTERS: KeyCenter[] = [
+  "No Key",
+  "C",
+  "C#",
+  "Db",
+  "D",
+  "D#",
+  "Eb",
+  "E",
+  "F",
+  "F#",
+  "Gb",
+  "G",
+  "G#",
+  "Ab",
+  "A",
+  "A#",
+  "Bb",
+  "B",
+];
+
+export const KEY_SCALES: KeyScale[] = ["major", "minor"];
+
+export const DEFAULT_TRACK_KEY: TrackKey = {
+  center: "No Key",
+  scale: "major",
+};
+
 export type Track = {
   id: string;
   displayName: string;

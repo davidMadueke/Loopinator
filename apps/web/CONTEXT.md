@@ -97,6 +97,43 @@ apps/web/src/components/play/
 </div>
 ```
 
+## Create Track — loop region editor
+
+Loop region editing lives inside the audio upload success panel, not as a separate form section.
+
+| Decision | Choice |
+|---|---|
+| Layout | `WavePlayer` on top, `LoopRegionField` inputs below, inside `AudioUploadField` `renderOnSuccess` |
+| Form state | `inPoint` / `outPoint` stay in `CreateTrackPanel`; passed through `AudioUploadField` as props |
+| Auto (file edge) | Stored as empty string `""`; inputs display **Auto**; markers stay at 0 s (in) or duration (out) |
+| Time format | `m:ss` or `m:ss.sss` when not auto (e.g. `1:05.125`) |
+| Text input sync | Parse `m:ss` / `m:ss.sss` on blur; invalid input reverts; typing **Auto** (or clearing) sets auto |
+| Zero-cross snap | On marker drag release and text blur, snap ±50 ms to nearest zero crossing (full-rate decode) |
+| Edge snap | Within ~50 ms of start/end → auto |
+| Drag constraint | In stays ≥50 ms before out; handles clamp |
+| Marker UI | Thin vertical lines, draggable; primary-tinted shade between them |
+| WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
+| Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
+| Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
+| Replace / Remove | Panel `onFileChange` resets both points to auto |
+| Implementation switch | `LOOP_REGION_IMPL` constant at top of `wave-player.tsx`: `"custom"` (React overlay) or `"regions"` (Wavesurfer Regions plugin) |
+
+### Create Track file layout
+
+```
+apps/web/src/
+  lib/loop-region-time.ts              ← parse, format, auto snap helpers
+  lib/loop-analysis/                 ← decode, zero-crossing, snap pipeline
+  lib/use-loop-snap.ts                ← decode uploaded file for marker snap
+  components/waves-cn/
+    wave-player.tsx                    ← WavePlayer + LOOP_REGION_IMPL
+    loop-region-overlay.tsx            ← custom overlay markers
+  components/play/create-track/
+    audio-upload-field.tsx             ← upload + WavePlayer + LoopRegionField
+    loop-region-field.tsx              ← in/out text inputs
+    create-track-panel.tsx             ← form state; no standalone loop section
+```
+
 ## Related ADRs
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
