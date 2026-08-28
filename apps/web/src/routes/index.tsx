@@ -57,9 +57,14 @@ function HomeComponent() {
 
       <section className="rounded-lg border p-4">
         <h2 className="mb-2 font-medium">Dev</h2>
-        <Button variant="outline" render={<Link to="/dev/loop-preview" />}>
-          Loop preview dev test
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" render={<Link to="/dev/loop-preview" />}>
+            Loop preview dev test
+          </Button>
+          <Button variant="outline" render={<Link to="/dev/hover-button" />}>
+            Hover button dev test
+          </Button>
+        </div>
       </section>
 
       <section className="rounded-lg border p-4">

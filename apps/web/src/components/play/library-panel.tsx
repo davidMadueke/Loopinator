@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@loopinator/ui/components/tabs";
 import { Button } from "@loopinator/ui/components/button";
-import { cn } from "@loopinator/ui/lib/utils";
+import { HoverButton } from "@loopinator/ui/components/hover-button";
 
 import { useLibraryCreateStore } from "@/stores/library-create-store";
 
@@ -17,26 +17,9 @@ function createLabel(tab: LibraryTab) {
   return `Create New ${tab}`;
 }
 
-function CreateNewButtonLabel({ tab, hovered }: { tab: LibraryTab; hovered: boolean }) {
-  return (
-    <span className="inline-flex items-center">
-      <span>Create New</span>
-      <span
-        className={cn(
-          "inline-grid transition-[grid-template-columns] duration-300 ease-out",
-          hovered ? "grid-cols-[1fr]" : "grid-cols-[0fr]",
-        )}
-      >
-        <span className="overflow-hidden whitespace-nowrap pl-1">{tab}</span>
-      </span>
-    </span>
-  );
-}
-
 export function LibraryPanel() {
   const [tab, setTab] = useState<LibraryTab>("Track");
   const [view, setView] = useState<LibraryView>("browse");
-  const [createHovered, setCreateHovered] = useState(false);
 
   const browseResetKey = useLibraryCreateStore((state) => state.browseResetKey);
   const resetProgress = useLibraryCreateStore((state) => state.resetProgress);
@@ -94,15 +77,14 @@ export function LibraryPanel() {
               </TabsList>
 
               <div className="flex w-full justify-end">
-                <Button
+                <HoverButton
                   variant="outline"
                   size="sm"
-                  onMouseEnter={() => setCreateHovered(true)}
-                  onMouseLeave={() => setCreateHovered(false)}
                   onClick={handleCreateOpen}
-                >
-                  <CreateNewButtonLabel tab={tab} hovered={createHovered} />
-                </Button>
+                  simpleView="Create New"
+                  expandedView={tab}
+                  expandedClassName="pl-1"
+                />
               </div>
             </div>
 
