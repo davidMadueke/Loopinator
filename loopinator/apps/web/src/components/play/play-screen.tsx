@@ -49,7 +49,14 @@ export function PlayScreen(props: PlayScreenProps) {
         onLibraryToggle={() => setLibraryOpen((open) => !open)}
       />
       <main className="flex flex-1 flex-col overflow-y-auto">
-        {libraryOpen ? <LibraryPanel /> : null}
+        {libraryOpen 
+        ? <>
+        <LibraryPanel />
+        <div className="pb-2"></div>
+        </> 
+        
+        : null}
+        
         <div className="mx-auto flex w-full max-w-215 flex-1 flex-col gap-5 px-4 py-4">
           <RouteBreadcrumb
             variant={props.mode}
