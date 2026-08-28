@@ -43,11 +43,11 @@ export function AppearanceMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="outline" size="icon" aria-label="Appearance" />}
+        render={<Button variant="ghost" size="icon" aria-label="Appearance" />}
       >
         <PaletteIcon />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 p-2">
+      <DropdownMenuContent align="end" className="w-64 pt-2 pb-4">
         <DropdownMenuRadioGroup
           className="grid grid-cols-3 gap-1.5"
           value={theme}

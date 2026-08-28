@@ -37,8 +37,6 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
             <DropdownMenuItem onClick={onLibraryToggle}>
               {libraryOpen ? "Close library" : "Library"}
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>Setlists</DropdownMenuItem>
-            <DropdownMenuItem disabled>Upload</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link to="/login" />}>Login</DropdownMenuItem>
             <DropdownMenuItem render={<Link to="/dashboard" />}>Account</DropdownMenuItem>
