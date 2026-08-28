@@ -39,6 +39,7 @@
     "db:local": "bun run --filter @loopinator/db db:local",
     "deploy:setup": "vercel link",
     "dev:vercel": "vercel dev -L",
+    "check:hover-button": "bun scripts/check-hover-button.ts",
     "env:preview": "tsx scripts/sync-vercel-env.ts preview",
     "env:production": "tsx scripts/sync-vercel-env.ts production",
     "deploy": "vercel deploy",
