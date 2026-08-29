@@ -12,15 +12,16 @@ export function LibrarySetlistsTab() {
             key={setlist.id}
             className="flex items-center justify-between gap-3 px-3 py-3"
           >
-            <div>
+            <div className="min-w-0 max-w-4/5 flex-1">
               <Link
                 to="/s/$id"
                 params={{ id: setlist.id }}
-                className="text-sm font-medium hover:underline"
+                className="block truncate text-sm font-medium hover:underline"
+                title={setlist.name}
               >
                 {setlist.name}
               </Link>
-              <p className="text-xs text-muted-foreground">
+              <p className="truncate text-xs text-muted-foreground">
                 {setlist.slots.length} tracks · {setlist.cached ? "Cached" : "Online only"}
               </p>
             </div>

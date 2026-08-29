@@ -49,6 +49,30 @@ export const DEMO_TRACKS: Track[] = [
     timeSignature: "4/4",
     cached: true,
   },
+  {
+    id: "q8k4v3",
+    displayName: "Extended Ambient Pad Swell With Reverse Cymbal Tail",
+    filename: "extended-ambient-pad-swell-with-reverse-cymbal-tail-72.wav",
+    songTitle: "Holy Forever (Combined Service Extended Arrangement)",
+    originalBpm: 72,
+    bpmUnconfirmed: false,
+    key: "Bb",
+    keyMode: "major",
+    timeSignature: "4/4",
+    cached: true,
+  },
+  {
+    id: "z6y2n5",
+    displayName: "Full Band Percussion Stack With Djembe, Shaker And Rim Clicks",
+    filename: "full-band-percussion-stack-djembe-shaker-rim-clicks-104.mp3",
+    songTitle: null,
+    originalBpm: 104,
+    bpmUnconfirmed: true,
+    key: "F#",
+    keyMode: "minor",
+    timeSignature: "12/8",
+    cached: false,
+  },
 ];
 
 export const DEMO_SETLISTS: Setlist[] = [
@@ -69,6 +93,24 @@ export const DEMO_SETLISTS: Setlist[] = [
     slots: [
       { trackId: "r2t6h5", slotLabel: "Track 1", targetBpm: 92 },
       { trackId: "k7m2p9", slotLabel: "Track 2", targetBpm: 118 },
+    ],
+  },
+  {
+    id: "w7j9t4",
+    name: "Sunday Morning Combined Service With Youth Band And Choir",
+    cached: false,
+    slots: [
+      {
+        trackId: "q8k4v3",
+        slotLabel: "Opening Worship Set, Track 1",
+        targetBpm: 72,
+      },
+      {
+        trackId: "z6y2n5",
+        slotLabel: "Communion Response And Offering, Track 2",
+        targetBpm: 104,
+      },
+      { trackId: "k7m2p9", slotLabel: "Track 3", targetBpm: 120 },
     ],
   },
 ];

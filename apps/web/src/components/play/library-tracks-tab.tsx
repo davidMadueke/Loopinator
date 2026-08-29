@@ -43,11 +43,12 @@ export function LibraryTracksTab() {
 
                 return (
                   <li key={track.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 max-w-4/5 flex-1">
                       <Link
                         to="/t/$id"
                         params={{ id: track.id }}
                         className="block truncate font-medium text-sm hover:underline"
+                        title={track.displayName}
                       >
                         {track.displayName}
                       </Link>
