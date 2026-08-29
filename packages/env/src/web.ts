@@ -10,6 +10,9 @@ export const env = createEnv({
   clientPrefix: "VITE_",
   client: {
     VITE_SERVER_URL: serverUrlSchema,
+    /** Which session source the web app reads. Unset means dev builds get the dummy
+     *  session and production builds get Better Auth. */
+    VITE_SESSION_SOURCE: z.enum(["dev", "better-auth"]).optional(),
   },
   runtimeEnv: (import.meta as any).env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

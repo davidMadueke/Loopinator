@@ -10,6 +10,7 @@ import {
 import { MenuIcon } from "lucide-react";
 
 import { AppearanceMenu } from "@/components/appearance-menu";
+import { useSession } from "@/hooks/use-session";
 
 type PlayScreenHeaderProps = {
   libraryOpen: boolean;
@@ -17,6 +18,8 @@ type PlayScreenHeaderProps = {
 };
 
 export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHeaderProps) {
+  const { isSignedIn, isLoading } = useSession();
+
   return (
     <header className="flex items-center justify-between border-b border-border px-4 py-3">
       <div className="flex items-center gap-3">
@@ -26,12 +29,11 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
         <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
       </div>
       <div className="flex w-full justify-center items-center gap-2">
-      {libraryOpen ? 
-      <Button variant="outline" onClick={onLibraryToggle}>
-      Close library
-      </Button> 
-      : null}
-        
+        {libraryOpen ? (
+          <Button variant="outline" onClick={onLibraryToggle}>
+            Close library
+          </Button>
+        ) : null}
       </div>
       <div className="flex items-center gap-2">
         <AppearanceMenu />
@@ -41,12 +43,24 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
             <MenuIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onLibraryToggle}>
-              {libraryOpen ? "Close library" : "Library"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link to="/login" />}>Login</DropdownMenuItem>
-            <DropdownMenuItem render={<Link to="/dashboard" />}>Account</DropdownMenuItem>
+            {/* The menu only mounts on open, by which time the source has answered, so
+                holding the items back while loading costs nothing and avoids a label swap. */}
+            {isLoading ? null : isSignedIn ? (
+              <>
+                <DropdownMenuItem onClick={onLibraryToggle}>
+                  {libraryOpen ? "Close library" : "Library"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link to="/dashboard" />}>Account</DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                {/* ADR-0002: a Musician still sees the editor route, it just lands on /login. */}
+                <DropdownMenuItem render={<Link to="/login" />}>Library</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link to="/login" />}>Login</DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

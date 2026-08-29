@@ -1,18 +1,19 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-import { authClient } from "@/lib/auth-client";
+import { activeSessionSource } from "@/lib/session/active-source";
 
 export const Route = createFileRoute("/_auth")({
   ssr: false,
   component: AuthLayout,
   beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) {
+    // beforeLoad runs outside React, so it reads the source directly rather than useSession.
+    const { editor } = await activeSessionSource.readSession();
+    if (!editor) {
       throw redirect({
         to: "/login",
       });
     }
-    return { session };
+    return { editor };
   },
 });
 
