@@ -10,9 +10,9 @@ Wireframe layout with these domain overrides:
 |---|---|
 | Key +/- and dropdown | Read-only text inside the Playhead circle |
 | 4/4 dropdown | Read-only text inside the Playhead circle |
-| Fade on main screen | Transport fade in Advanced Options sheet only |
+| Fade on main screen | Transport fade in the Advanced Options panel only |
 | Split Play \| Pause | One contextual Transport bar button: Play, then Pause, then Restart |
-| "Advanced Settings" | **Advanced Options** (bottom sheet) |
+| "Advanced Settings" | **Advanced Options panel**, scroll-stacked like the Library panel |
 | Single large BPM | **Target BPM readout** at performance size, no "Target" label |
 | Source tempo | **Original BPM readout** row directly under Target BPM, smaller type |
 | Unconfirmed BPM | Flag on Original BPM readout only; Target still shows the number |
@@ -31,7 +31,6 @@ Wireframe layout with these domain overrides:
 ### Install now (`packages/ui`)
 
 - `breadcrumb` — Route breadcrumb chips, each a `DropdownMenu` trigger
-- `sheet` — Advanced Options
 - `separator` — dividers inside the Playhead circle and control panels
 - `tabs` — Tracks and Setlists tabs inside the Library panel
 
@@ -49,6 +48,9 @@ Wireframe layout with these domain overrides:
 - Override dot on Advanced Options entry
 - Cache indicator beside Route breadcrumb on Track routes
 - Library panel scroll stack (flex column, not Sheet)
+- Advanced Options panel scroll stack, same flex column. The Playhead entry button opens and closes
+  it, and **Close advanced options** in the header closes it. The hamburger has no entry for it, so
+  the Playhead entry stays the only way in
 
 ## File layout
 
@@ -65,6 +67,7 @@ apps/web/src/components/play/
   transport-bar.tsx         ← single large Button (Play / Pause / Restart)
   tempo-stepper.tsx         ← Label + Button +/− (±1 tap, ±3 hold)
   library-panel.tsx         ← Tabs: Tracks | Setlists
+  advanced-options-panel.tsx ← Reset this device, Save for everyone
   library-tracks-tab.tsx    ← Tracks by BPM band
   library-setlists-tab.tsx  ← Setlist rows, Create new, Edit
 ```
@@ -83,7 +86,7 @@ apps/web/src/components/play/
 | Advanced Options entry | `Button` outline + Override dot |
 | Transport | One `Button`, size lg |
 | Tempo stepper | `Button` +/− in bordered container |
-| Advanced Options body | `Sheet`, side bottom |
+| Advanced Options body | Custom panel; full-width block above the Playback frame |
 | Library panel | `Tabs` + custom lists; full-width block above Playback frame |
 
 ## Page structure
@@ -93,8 +96,9 @@ apps/web/src/components/play/
 <div className="flex min-h-dvh flex-col">
   <PlayScreenHeader />
   <main className="flex flex-1 flex-col overflow-y-auto">
-    {libraryOpen && <LibraryPanel />}   {/* Tabs: Tracks | Setlists */}
-    <PlaybackFrame />                   {/* max-w-[860px] mx-auto */}
+    {libraryOpen && <LibraryPanel />}     {/* Tabs: Tracks | Setlists */}
+    {advancedOpen && <AdvancedOptionsPanel />}
+    <PlaybackFrame />                     {/* max-w-[860px] mx-auto */}
   </main>
 </div>
 ```

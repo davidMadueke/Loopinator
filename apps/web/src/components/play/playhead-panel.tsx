@@ -1,15 +1,5 @@
-import { Button } from "@loopinator/ui/components/button";
 import { PlayheadCircle } from "@loopinator/ui/components/playhead-circle";
 import { Separator } from "@loopinator/ui/components/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@loopinator/ui/components/sheet";
-import { cn } from "@loopinator/ui/lib/utils";
 import { AlertTriangleIcon } from "lucide-react";
 
 import type { Track } from "@/lib/play-types";
@@ -19,7 +9,8 @@ type PlayheadPanelProps = {
   targetBpm: number;
   playhead: number;
   hasLocalOverride: boolean;
-  onResetDevice: () => void;
+  advancedOpen: boolean;
+  onAdvancedToggle: () => void;
 };
 
 export function PlayheadPanel({
@@ -27,7 +18,8 @@ export function PlayheadPanel({
   targetBpm,
   playhead,
   hasLocalOverride,
-  onResetDevice,
+  advancedOpen,
+  onAdvancedToggle,
 }: PlayheadPanelProps) {
   return (
     <div className="relative flex flex-col items-center py-6">
@@ -69,7 +61,11 @@ export function PlayheadPanel({
             <p className="text-xs text-muted-foreground">{track.songTitle}</p>
           ) : null} */}
           <div className="mt-4">
-            <AdvancedOptionsEntry hasLocalOverride={hasLocalOverride} onResetDevice={onResetDevice} />
+            <AdvancedOptionsEntry
+              hasLocalOverride={hasLocalOverride}
+              advancedOpen={advancedOpen}
+              onToggle={onAdvancedToggle}
+            />
           </div>
         </div>
       </div>
@@ -79,43 +75,27 @@ export function PlayheadPanel({
 
 function AdvancedOptionsEntry({
   hasLocalOverride,
-  onResetDevice,
+  advancedOpen,
+  onToggle,
 }: {
   hasLocalOverride: boolean;
-  onResetDevice: () => void;
+  advancedOpen: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <Sheet>
-      <SheetTrigger
-        className={cn(
-          "relative inline-flex h-8 items-center border border-border px-3 text-xs hover:bg-muted",
-        )}
-      >
-        Advanced Options
-        {hasLocalOverride ? (
-          <span
-            className="absolute -top-1 -right-1 size-2 rounded-full bg-playhead"
-            aria-label="Local override active"
-          />
-        ) : null}
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Advanced Options</SheetTitle>
-          <SheetDescription>
-            Region editor, transport fade, and Save for everyone will ship in a later pass. This
-            prototype covers layout and playback controls only.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="space-y-3 pt-2">
-          <Button variant="outline" className="w-full" onClick={onResetDevice}>
-            Reset this device
-          </Button>
-          <Button variant="secondary" className="w-full" disabled>
-            Save for everyone
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={advancedOpen}
+      className="relative inline-flex h-8 items-center border border-border px-3 text-xs hover:bg-muted"
+    >
+      Advanced Options
+      {hasLocalOverride ? (
+        <span
+          className="absolute -top-1 -right-1 size-2 rounded-full bg-playhead"
+          aria-label="Local override active"
+        />
+      ) : null}
+    </button>
   );
 }

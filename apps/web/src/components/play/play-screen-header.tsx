@@ -15,9 +15,16 @@ import { useSession } from "@/hooks/use-session";
 type PlayScreenHeaderProps = {
   libraryOpen: boolean;
   onLibraryToggle: () => void;
+  advancedOpen: boolean;
+  onAdvancedClose: () => void;
 };
 
-export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHeaderProps) {
+export function PlayScreenHeader({
+  libraryOpen,
+  onLibraryToggle,
+  advancedOpen,
+  onAdvancedClose,
+}: PlayScreenHeaderProps) {
   const { isSignedIn, isLoading } = useSession();
 
   return (
@@ -32,6 +39,11 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
         {libraryOpen ? (
           <Button variant="outline" onClick={onLibraryToggle}>
             Close library
+          </Button>
+        ) : null}
+        {advancedOpen ? (
+          <Button variant="outline" className="text-playhead" onClick={onAdvancedClose}>
+            Close advanced options
           </Button>
         ) : null}
       </div>
