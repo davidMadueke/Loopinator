@@ -21,7 +21,7 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
   const { isSignedIn, isLoading } = useSession();
 
   return (
-    <header className="flex items-center justify-between border-b border-border px-4 py-3">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex size-8 items-center justify-center border border-border text-[10px] font-semibold tracking-wider">
           CCIC

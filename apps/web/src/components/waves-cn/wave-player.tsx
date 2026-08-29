@@ -465,7 +465,7 @@ export function WavePlayer({
   return (
     <Card
       className={cn(
-        "w-full px-0 border-0 rounded-none bg-transparent",
+        "isolate w-full px-0 border-0 rounded-none bg-transparent",
         className,
       )}
     >
