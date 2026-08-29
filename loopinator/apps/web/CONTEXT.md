@@ -217,6 +217,40 @@ How a denied chip looks is still open. Plain text with no chevron, a disabled tr
 dropdown holding one Sign in item are all still on the table. Whichever it becomes, the Slot
 navigator stays available to a Musician, so a Setlist is walkable without the Slot picker.
 
+## Long names
+
+A Setlist name, Slot label, or Display name can be much longer than the row it lands in. Long names
+truncate with an ellipsis rather than wrapping, and the group carrying them never claims the whole
+row, so trailing controls keep their place at every viewport width.
+
+| Decision | Choice |
+|---|---|
+| Row split | The name-carrying group is `max-w-4/5 flex-1 min-w-0`; trailing controls stay `shrink-0` |
+| Why four fifths | The Slot navigator, Cache indicator, and Library row actions stay put instead of being pushed off or wrapping to a second line |
+| Overflow | One line, ellipsis, never wrap; `BreadcrumbList` is `flex-nowrap overflow-hidden` |
+| Where the ellipsis sits | A `truncate` span inside the chip, because `text-overflow` does not apply to a flex container |
+| Shrink chain | Every ancestor from the row down to the text carries `min-w-0`, since the default `min-width: auto` refuses to shrink a flex item below its text |
+| Button override | `Button` variants ship `shrink-0`; a chip passes `shrink` and `twMerge` drops the base |
+| Reading the full name | `title` on the chip or link, so a cut-off name is still legible on hover |
+| Chip caps | Setlist name `max-w-80`, Slot label `max-w-56` over a `min-w-24` floor, single Track `max-w-full`, chip default `max-w-40` |
+
+Where it applies: the Route breadcrumb row, the Tracks tab rows, and the Setlists tab rows. Library
+rows already truncated Display name and Filename; the four-fifths cap is what keeps a long name from
+crowding out Row preview and Edit.
+
+### Picker items
+
+Not built yet. Each item inside the Setlist, Slot, or Track picker truncates to the full width of
+the dropdown container.
+
+| Decision | Choice |
+|---|---|
+| Item width | Whatever the dropdown container is; items truncate to it |
+| Menu width | Set by the container, never stretched to fit the longest name |
+| Overflow | One line, ellipsis, never wrap |
+| Per-item cap | None. The container is the only limit |
+| Reading the full name | Same `title` hover as the chips |
+
 ## Create Track — loop region editor
 
 Loop region editing lives inside the audio upload success panel, not as a separate form section. Snap, decode, time format, and analysis roadmap: **[src/lib/loop-analysis/CONTEXT.md](src/lib/loop-analysis/CONTEXT.md)**.

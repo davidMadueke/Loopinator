@@ -34,6 +34,12 @@ function HomeComponent() {
             <Button render={<Link to="/s/$id" params={{ id: "x3f8s2" }} />}>
               Open Sunday AM
             </Button>
+            <Button
+              variant="outline"
+              render={<Link to="/s/$id" params={{ id: "w7j9t4" }} />}
+            >
+              Open long-name setlist
+            </Button>
           </CardContent>
         </Card>
 
@@ -50,6 +56,12 @@ function HomeComponent() {
               render={<Link to="/t/$id" params={{ id: "n4w8q1" }} />}
             >
               Open Shaker Groove
+            </Button>
+            <Button
+              variant="outline"
+              render={<Link to="/t/$id" params={{ id: "z6y2n5" }} />}
+            >
+              Open long-name track
             </Button>
           </CardContent>
         </Card>

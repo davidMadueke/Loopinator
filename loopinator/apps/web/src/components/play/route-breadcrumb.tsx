@@ -47,25 +47,34 @@ export function RouteBreadcrumb({
     <div className="flex flex-wrap items-center gap-2">
       {variant === "setlist" && setlistName ? (
         <div className="flex items-center gap-2 w-full">
-        <Breadcrumb className="flex w-full ">
-        <BreadcrumbList>
+        <div className="flex min-w-0 max-w-4/5 flex-1 items-center gap-4">
+        <Breadcrumb className="flex min-w-0 flex-1">
+        <BreadcrumbList className="w-full flex-nowrap overflow-hidden">
 
-          <BreadcrumbItem>
-          <BreadcrumbChip className="max-w-50 font-medium text-lg text-primary hover:text-primary" children={setlistName} />
+          <BreadcrumbItem className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+          <BreadcrumbChip className="max-w-80 font-medium text-lg text-primary hover:text-primary" children={setlistName} />
+          </div>
           </BreadcrumbItem>
 
-          <BreadcrumbSeparator>
+          <BreadcrumbSeparator className="shrink-0">
             <SlashIcon className="size-6" />
           </BreadcrumbSeparator>
 
-          <BreadcrumbItem >
-          <BreadcrumbChip className="min-w-[96px] text-lg " children={slotLabel}/>
+          <BreadcrumbItem className="min-w-0">
+          <BreadcrumbChip className="min-w-24 max-w-56 text-lg " children={slotLabel}/>
           </BreadcrumbItem>
+
+        {/* <BreadcrumbItem className="shrink-0">
+          <CacheIndicator cached={cached} />
+        </BreadcrumbItem> */}
 
         </BreadcrumbList>
           </Breadcrumb>
-          
-          <div className="flex w-full justify-end items-center gap-1">
+
+          <CacheIndicator cached={cached} className="shrink-0" />
+          </div>
+          <div className="flex shrink-0 ml-auto justify-end items-center gap-1">
             <Button
               variant="outline"
               size="icon-sm"
@@ -86,15 +95,17 @@ export function RouteBreadcrumb({
               <ChevronRightIcon className=""/>
             </Button>
           </div>
+
+          
         </div>
       ) : (
         <div className="flex items-center gap-2 w-full">
-        <Breadcrumb>
-          <BreadcrumbItem >
-          <BreadcrumbChip className="max-w-70 text-lg text-primary hover:text-primary" children={trackName}/>
+        <Breadcrumb className="flex min-w-0 max-w-4/5 flex-1">
+          <BreadcrumbItem className="min-w-0">
+          <BreadcrumbChip className="max-w-full text-lg text-primary hover:text-primary" children={trackName}/>
           </BreadcrumbItem>
         </Breadcrumb>
-        <CacheIndicator cached={cached} />
+        <CacheIndicator cached={cached} className="shrink-0" />
         </div>
       )}
     </div>
@@ -110,7 +121,13 @@ function BreadcrumbChip({
 }) {
   return (
     <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant={"ghost"} className={`flex  ${className}`}>{children}
+            <DropdownMenuTrigger render={
+              <Button
+                variant={"ghost"}
+                className={cn("flex min-w-0 shrink max-w-40", className)}
+                title={typeof children === "string" ? children : undefined}
+              >
+                <span className="min-w-0 truncate">{children}</span>
               <ChevronDownIcon data-icon="inline-end" className="size-3.5" /></Button>} />
             <DropdownMenuContent align="start">
               <DropdownMenuGroup>
@@ -123,10 +140,10 @@ function BreadcrumbChip({
   );
 }
 
-function CacheIndicator({ cached }: { cached: boolean }) {
+function CacheIndicator({ cached, className }: { cached: boolean; className?: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+      className={cn("inline-flex items-center gap-1 text-xs text-muted-foreground", className)}
       title={cached ? "Available offline" : "Not cached on this device"}
     >
       {cached ? <CloudIcon className="size-3.5" /> : <CloudOffIcon className="size-3.5" />}
