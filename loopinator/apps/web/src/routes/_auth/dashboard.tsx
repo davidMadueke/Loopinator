@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_auth/dashboard")({
 });
 
 function RouteComponent() {
-  const { session } = Route.useRouteContext();
+  const { editor } = Route.useRouteContext();
 
   const trpc = useTRPC();
   const privateData = useQuery(trpc.privateData.queryOptions());
@@ -16,7 +16,7 @@ function RouteComponent() {
   return (
     <div>
       <h1>Dashboard</h1>
-      <p>Welcome {session.data?.user.name}</p>
+      <p>Welcome {editor.name}</p>
       <p>API: {privateData.data?.message}</p>
     </div>
   );

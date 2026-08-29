@@ -158,6 +158,46 @@ Leaving a part-filled **Create New Track** or **Create New Setlist** form asks f
 | Shared state | `hasProgress`, the discard intent, and dialog visibility live in `src/stores/library-create-store.ts` (Zustand) |
 | Dialog owner | One `DiscardProgressDialog`, rendered by `play-screen.tsx`; opened on the next microtask so the hamburger can close first |
 
+## Session source
+
+Sign-in state reaches components through one swappable source, so editor-only UI can be built
+before invite-code sign-up ships. See **[0013-session-source-seam](../../docs/adr/0013-session-source-seam.md)**.
+
+| Decision | Choice |
+|---|---|
+| What components call | `useSession()` → `{ status, editor, isSignedIn, isLoading, signOut }` |
+| What they never call | `authClient` directly, outside `SignInForm` / `SignUpForm` |
+| States | `loading`, `signed-out`, `signed-in`; `editor` is null for the first two |
+| Sources | `devSessionSource` (localStorage flag, `DEV_EDITOR`), `betterAuthSessionSource` (real) |
+| Which one runs | `VITE_SESSION_SOURCE`; unset means dev for `vite dev`, Better Auth for a build |
+| Where it is chosen | `lib/session/active-source.ts`, once per page load, never swapped mid-render |
+| How components receive it | `SessionProvider` in `router.tsx` `Wrap`; tests pass their own `source` prop |
+| Outside React | `activeSessionSource.readSession()`, used by the `/_auth` `beforeLoad` gate |
+| Sign-in itself | Not on the interface: credentials differ per provider, so forms own it |
+| Flipping state in dev | `DevSessionToggle` pill, mounted in `__root.tsx`, hidden under Better Auth |
+| Dev `/login` | Renders `DevSignInPanel` instead of the real forms, so no server is needed |
+| First paint | Server render reports `loading`, the client resolves after hydration |
+| What a faked session buys | UI only. Writes still hit tRPC `protectedProcedure` and get rejected |
+
+Gated UI today: the Play screen hamburger (Library toggles for an Editor, links to `/login` for a
+Musician, per ADR-0002), `UserMenu`, and the `/_auth` route gate.
+
+### Session file layout
+
+```
+apps/web/src/
+  lib/session/types.ts              ← Editor, SessionState, SessionSource
+  lib/session/dev-editor.ts         ← DEV_EDITOR + localStorage read/write
+  lib/session/dev-source.ts         ← dummy source over the Zustand store
+  lib/session/better-auth-source.ts ← real source over authClient
+  lib/session/active-source.ts      ← VITE_SESSION_SOURCE resolution
+  stores/dev-session-store.ts       ← signedIn + hydrated
+  hooks/use-session.ts              ← the hook every component uses
+  components/session-provider.tsx   ← context holding the chosen source
+  components/dev-session-toggle.tsx ← dev-only sign in / sign out pill
+  components/dev-sign-in-panel.tsx  ← dev-only /login body
+```
+
 ## Create Track — loop region editor
 
 Loop region editing lives inside the audio upload success panel, not as a separate form section. Snap, decode, time format, and analysis roadmap: **[src/lib/loop-analysis/CONTEXT.md](src/lib/loop-analysis/CONTEXT.md)**.
@@ -194,3 +234,4 @@ apps/web/src/
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
 - [0012-library-scroll-stack](../../docs/adr/0012-library-scroll-stack.md) — Library panel above Playback frame
+- [0013-session-source-seam](../../docs/adr/0013-session-source-seam.md) — one swappable session source

@@ -11,17 +11,17 @@ import {
 import { Skeleton } from "@loopinator/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/hooks/use-session";
 
 export default function UserMenu() {
   const navigate = useNavigate();
-  const { data: session, isPending } = authClient.useSession();
+  const { editor, isLoading, signOut } = useSession();
 
-  if (isPending) {
+  if (isLoading) {
     return <Skeleton className="h-9 w-24" />;
   }
 
-  if (!session) {
+  if (!editor) {
     return (
       <Link to="/login">
         <Button variant="outline">Sign In</Button>
@@ -31,26 +31,17 @@ export default function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" />}>
-        {session.user.name}
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger render={<Button variant="outline" />}>{editor.name}</DropdownMenuTrigger>
       <DropdownMenuContent className="bg-card">
         <DropdownMenuGroup>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
+          <DropdownMenuItem>{editor.email}</DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => {
-              authClient.signOut({
-                fetchOptions: {
-                  onSuccess: () => {
-                    navigate({
-                      to: "/",
-                    });
-                  },
-                },
-              });
+            onClick={async () => {
+              await signOut();
+              navigate({ to: "/" });
             }}
           >
             Sign Out

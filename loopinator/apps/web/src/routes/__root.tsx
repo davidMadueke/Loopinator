@@ -12,6 +12,7 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
+import { DevSessionToggle } from "../components/dev-session-toggle";
 import Header from "../components/header";
 import { DEFAULT_ACCENT, appearanceInitScript } from "../lib/appearance";
 
@@ -68,6 +69,7 @@ function RootDocument() {
             <Outlet />
           </div>
         )}
+        <DevSessionToggle />
         <Toaster richColors />
         <TanStackRouterDevtools position="bottom-left" />
         <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />

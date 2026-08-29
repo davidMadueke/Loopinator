@@ -1,0 +1,5 @@
+# One session source seam, not authClient calls in components
+
+Editor-only UI has to be built before invite-code sign-up exists, and the Play screen is the one surface a Musician sees, so getting the signed-out state right matters as much as the signed-in one. Components read `useSession()` and never touch Better Auth. Behind it a `SessionSource` answers with `loading`, `signed-out`, or an `Editor`: `devSessionSource` fakes it from a localStorage flag, `betterAuthSessionSource` does the real thing. `VITE_SESSION_SOURCE` picks one at startup, defaulting to dev for `vite dev` and Better Auth for a production build.
+
+The alternative was calling `authClient.useSession()` in each component and mocking at the network layer. That keeps one less indirection but ties every gated component to Better Auth, and flipping sign-in state then means seeding a database instead of clicking a toggle. The seam is cheap because the faked session only unlocks UI: every write still goes through tRPC `protectedProcedure`, which reads the real cookie and rejects the dev Editor.

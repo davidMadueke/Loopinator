@@ -8,6 +8,7 @@ import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 
 import Loader from "./components/loader";
+import { SessionProvider } from "./components/session-provider";
 import { routeTree } from "./routeTree.gen";
 import { TRPCProvider } from "./utils/trpc";
 
@@ -86,7 +87,7 @@ export const getRouter = () => {
     defaultNotFoundComponent: () => <div>Not Found</div>,
     Wrap: ({ children }) => (
       <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </TRPCProvider>
     ),
   });
