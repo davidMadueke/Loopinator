@@ -4,6 +4,7 @@ import { usePlayback } from "@/hooks/use-playback";
 import type { Setlist, Track } from "@/lib/play-types";
 import { useLibraryCreateStore } from "@/stores/library-create-store";
 
+import { AdvancedOptionsPanel } from "./advanced-options-panel";
 import { DiscardProgressDialog } from "./discard-progress-dialog";
 import { LibraryPanel } from "./library-panel";
 import { PlayScreenHeader } from "./play-screen-header";
@@ -29,6 +30,7 @@ type PlayScreenProps =
 
 export function PlayScreen(props: PlayScreenProps) {
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const discardDialogOpen = useLibraryCreateStore((state) => state.discardDialogOpen);
   const requestDiscard = useLibraryCreateStore((state) => state.requestDiscard);
@@ -76,7 +78,12 @@ export function PlayScreen(props: PlayScreenProps) {
 
   return (
     <div className="flex min-h-dvh flex-col font-[system-ui,-apple-system,BlinkMacSystemFont,sans-serif]">
-      <PlayScreenHeader libraryOpen={libraryOpen} onLibraryToggle={handleLibraryToggle} />
+      <PlayScreenHeader
+        libraryOpen={libraryOpen}
+        onLibraryToggle={handleLibraryToggle}
+        advancedOpen={advancedOpen}
+        onAdvancedClose={() => setAdvancedOpen(false)}
+      />
       <main className="flex flex-1 flex-col overflow-y-auto">
         {libraryOpen 
         ? <>
@@ -85,6 +92,13 @@ export function PlayScreen(props: PlayScreenProps) {
         </> 
         
         : null}
+
+        {advancedOpen ? (
+          <div>
+            <AdvancedOptionsPanel onResetDevice={playback.resetDevice} />
+            <div className="pb-2"></div>
+          </div>
+        ) : null}
         
         <div className="mx-auto flex w-full max-w-215 flex-1 flex-col gap-5 px-4 py-4">
           <RouteBreadcrumb
@@ -112,7 +126,8 @@ export function PlayScreen(props: PlayScreenProps) {
             targetBpm={playback.state.targetBpm}
             playhead={playback.state.playhead}
             hasLocalOverride={playback.state.hasLocalOverride}
-            onResetDevice={playback.resetDevice}
+            advancedOpen={advancedOpen}
+            onAdvancedToggle={() => setAdvancedOpen((open) => !open)}
           />
 
           <TransportBar

@@ -59,6 +59,8 @@ export function LibraryPanel() {
   return (
     <section className="border-b border-border bg-card/40">
       <div className="mx-auto w-full max-w-[860px] px-4 py-4">
+        <>
+        <h2 className="text-2xl font-medium pb-2">Library</h2>
         {creating ? (
           <div className="flex">
             <h2 className="flex items-center w-full text-2xl font-medium">{createLabel(tab)}</h2>
@@ -96,6 +98,7 @@ export function LibraryPanel() {
             </TabsContent>
           </Tabs>
         )}
+        </>
       </div>
 
       {creating && tab === "Track" && (
