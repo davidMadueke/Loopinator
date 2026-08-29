@@ -25,7 +25,14 @@ export function PlayScreenHeader({ libraryOpen, onLibraryToggle }: PlayScreenHea
         </div>
         <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
       </div>
-
+      <div className="flex w-full justify-center items-center gap-2">
+      {libraryOpen ? 
+      <Button variant="outline" onClick={onLibraryToggle}>
+      Close library
+      </Button> 
+      : null}
+        
+      </div>
       <div className="flex items-center gap-2">
         <AppearanceMenu />
 
