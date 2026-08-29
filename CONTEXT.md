@@ -1,6 +1,6 @@
 # Loopinator
 
-A standalone Church OS app for gapless looping of worship percussion on Sunday and at rehearsal. Anyone holding a link can play. Changing the Library needs a sign-in.
+A standalone Church OS app for gapless looping of worship percussion on Sunday and at rehearsal. Anyone holding a link can play what that link addresses. Seeing the rest of the Library, or changing any of it, needs a sign-in.
 
 ## People
 
@@ -52,7 +52,7 @@ _Avoid_: Playlist, service, Sunday, AllTracks
 One Track on one Setlist. It can hold its own Loop region, Target BPM, and Transport fade. Display name, Key, and Time signature stay on the Track. Removing the Track from the Setlist destroys those overrides, so adding it back starts from the Track default.
 
 **Library**:
-The catalog of every Track, grouped by BPM band. When open it stacks as the Library panel above the Playback frame in the same scroll column. Any signed-in account can browse it. No public page lists it.
+The catalog of every Track, grouped by BPM band. When open it stacks as the Library panel above the Playback frame in the same scroll column. Only an Editor reaches it, through the Library panel or the Track picker. No public page lists it.
 _Avoid_: AllTracks, public index, library page, library modal
 
 **Library panel**:
@@ -82,6 +82,10 @@ _Avoid_: Preview player, mini player
 **Short id**:
 The stable, unguessable public identifier in `/s/{id}` and `/t/{id}`. Renaming does not change it.
 _Avoid_: UUID, slug, pretty URL
+
+**Link scope**:
+What a Play screen link opens for a Musician: the thing it addresses and nothing wider. `/s/{id}` reaches every slot in that Setlist. `/t/{id}` reaches that one Track. Neither reaches the Library or the list of Setlists without a sign-in.
+_Avoid_: Guest browsing, public library, link permissions
 
 **Soft delete**:
 Hides a Track from the Library and drops it from every Setlist. The row and the audio file survive, so an Editor can still get the Track back. A public link to a soft-deleted Track says it was removed.
@@ -132,16 +136,28 @@ The Palette dropdown beside the hamburger holding Theme (Light, Dark, System) an
 _Avoid_: Settings, preferences, theme toggle
 
 **Route breadcrumb**:
-The read-only row in the Playback frame that shows where playback came from. On a Setlist it shows the Setlist name and the Slot label, each styled like a dropdown but not interactive. On a single Track it shows the Display name the same way. The Slot navigator sits beside these on a Setlist. The Cache indicator sits beside the name on a Track.
-_Avoid_: Context bar, navigation picker, editable Select
+The row in the Playback frame showing where playback came from and moving between the places it can reach. On a Setlist it holds the Setlist name and the Slot label, each opening its picker, with the Slot navigator beside them. On a single Track it holds the Display name, opening the Track picker, with the Cache indicator beside it.
+_Avoid_: Context bar, read-only row, editable Select
 
 **Slot label**:
-The position readout for the current Setlist slot in the Route breadcrumb, such as "Track 12". Read-only. It is not the Display name.
-_Avoid_: Track name, slot number alone, slot picker
+The position readout for the current Setlist slot in the Route breadcrumb, such as "Track 12". It opens the Slot picker. It is not the Display name.
+_Avoid_: Track name, slot number alone
 
 **Slot navigator**:
-The paired prev and next controls beside the slot label. They move to the adjacent Setlist slot without opening the picker.
+The paired prev and next controls beside the slot label. They move to the adjacent Setlist slot without opening the Slot picker.
 _Avoid_: Skip buttons, queue controls
+
+**Setlist picker**:
+The dropdown on the Setlist name in the Route breadcrumb, listing every Setlist. Only an Editor sees it. A Musician holding a Setlist link never learns which other Setlists exist.
+_Avoid_: Setlist switcher, breadcrumb menu
+
+**Slot picker**:
+The dropdown on the Slot label, listing the Tracks in the Setlist being played. The one picker a Musician gets, since the link already grants that Setlist.
+_Avoid_: Queue, slot menu, Track picker (which lists the Library)
+
+**Track picker**:
+The dropdown on the Display name in the Route breadcrumb on `/t/{id}`, listing the whole Library. Only an Editor sees it.
+_Avoid_: Library dropdown, Slot picker (which lists one Setlist)
 
 **Playhead circle**:
 The large ring on the Play screen. It shows Target BPM at performance size without a "Target" label, a separate Original BPM readout, read-only Key, read-only Time signature, Display name, Song title, and the Advanced Options entry. The green ring is the Playhead.

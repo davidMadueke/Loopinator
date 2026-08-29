@@ -19,7 +19,7 @@ Wireframe layout with these domain overrides:
 | Library as overlay | **Library panel** scroll-stacked above the Playback frame; audio keeps playing |
 | Library structure | **Tracks tab** and **Setlists tab** inside the Library panel |
 | Setlist editing | Create new and Edit on Setlist rows inside the Setlists tab |
-| Route context row | **Route breadcrumb** in the Playback frame: read-only dropdown styling, no pickers |
+| Route context row | **Route breadcrumb** in the Playback frame; its chips open the Setlist, Slot, and Track pickers |
 | Play screen width | Playback frame max ~860px, centered on wider viewports |
 | Tempo stepper | ±1 BPM per tap, ±3 BPM while held |
 | Playhead ring color | `--playhead` from `packages/ui` globals; follows the Accent colour |
@@ -30,14 +30,14 @@ Wireframe layout with these domain overrides:
 
 ### Install now (`packages/ui`)
 
-- `select` — styled read-only Route breadcrumb triggers (disabled or non-interactive; same visual as wireframe dropdowns)
+- `breadcrumb` — Route breadcrumb chips, each a `DropdownMenu` trigger
 - `sheet` — Advanced Options
 - `separator` — dividers inside the Playhead circle and control panels
 - `tabs` — Tracks and Setlists tabs inside the Library panel
 
 ### Already installed
 
-`button`, `dropdown-menu`, `label`, `card`, `input`
+`button`, `dropdown-menu`, `label`, `card`, `input`, `select` (Key and Time signature fields on Create Track)
 
 ### Defer
 
@@ -55,12 +55,12 @@ Wireframe layout with these domain overrides:
 ```
 packages/ui/src/components/
   playhead-circle.tsx
-  select.tsx, sheet.tsx, separator.tsx, tabs.tsx   ← CLI
+  breadcrumb.tsx, sheet.tsx, separator.tsx, tabs.tsx   ← CLI
 
 apps/web/src/components/play/
   play-screen.tsx           ← page shell: header + scroll column
   play-screen-header.tsx    ← Church OS mark, title, hamburger (DropdownMenu)
-  route-breadcrumb.tsx      ← read-only Select-styled labels + Slot navigator
+  route-breadcrumb.tsx      ← picker chips + Slot navigator + Cache indicator
   playback-frame.tsx        ← max-w ~860px centered column
   transport-bar.tsx         ← single large Button (Play / Pause / Restart)
   tempo-stepper.tsx         ← Label + Button +/− (±1 tap, ±3 hold)
@@ -75,7 +75,7 @@ apps/web/src/components/play/
 |---|---|
 | Hamburger | `DropdownMenu` |
 | Appearance menu | `DropdownMenu` + two `DropdownMenuRadioGroup`s |
-| Route breadcrumb | `Select` triggers, read-only (disabled or label-only), no route change on click |
+| Route breadcrumb | `Breadcrumb` chips; each is a `DropdownMenu` trigger holding one picker |
 | Slot prev/next | `Button` variant ghost + Lucide chevrons |
 | Playhead ring | `PlayheadCircle` (`packages/ui`) |
 | Target / Original BPM | Plain text; unconfirmed flag on Original only |
@@ -180,7 +180,7 @@ before invite-code sign-up ships. See **[0013-session-source-seam](../../docs/ad
 | What a faked session buys | UI only. Writes still hit tRPC `protectedProcedure` and get rejected |
 
 Gated UI today: the Play screen hamburger (Library toggles for an Editor, links to `/login` for a
-Musician, per ADR-0002), `UserMenu`, and the `/_auth` route gate.
+Musician, per ADR-0002), the Route breadcrumb pickers, `UserMenu`, and the `/_auth` route gate.
 
 ### Session file layout
 
@@ -197,6 +197,25 @@ apps/web/src/
   components/dev-session-toggle.tsx ← dev-only sign in / sign out pill
   components/dev-sign-in-panel.tsx  ← dev-only /login body
 ```
+
+## Breadcrumb pickers and link scope
+
+Every Route breadcrumb chip opens a dropdown. Which ones a signed-out Musician may open follows
+**[0014-link-scope-breadcrumb-pickers](../../docs/adr/0014-link-scope-breadcrumb-pickers.md)**: the
+link opens what it addresses and nothing wider.
+
+| Route | Chip | Picker lists | Musician | Editor |
+|---|---|---|---|---|
+| `/s/{id}` | Setlist name | Every Setlist | No | Yes |
+| `/s/{id}` | Slot label | The Tracks in this Setlist | Yes | Yes |
+| `/t/{id}` | Display name | Every Track in the Library | No | Yes |
+
+The Library panel sits on the same line. The hamburger toggles it for an Editor and sends a
+Musician to `/login`, so a Musician never lists Tracks by either route.
+
+How a denied chip looks is still open. Plain text with no chevron, a disabled trigger, and a
+dropdown holding one Sign in item are all still on the table. Whichever it becomes, the Slot
+navigator stays available to a Musician, so a Setlist is walkable without the Slot picker.
 
 ## Create Track — loop region editor
 
@@ -235,3 +254,4 @@ apps/web/src/
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
 - [0012-library-scroll-stack](../../docs/adr/0012-library-scroll-stack.md) — Library panel above Playback frame
 - [0013-session-source-seam](../../docs/adr/0013-session-source-seam.md) — one swappable session source
+- [0014-link-scope-breadcrumb-pickers](../../docs/adr/0014-link-scope-breadcrumb-pickers.md) — which pickers a Musician may open

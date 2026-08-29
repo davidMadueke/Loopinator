@@ -1,0 +1,5 @@
+# A Play link opens what it addresses, nothing wider
+
+Turning the Route breadcrumb chips into real dropdowns raised a question ADR-0002 never answered. That ADR keeps `/s/{id}` and `/t/{id}` public and puts writes behind Better Auth, but it says nothing about reading. A Musician holding a Setlist link gets the Slot picker, which lists the Tracks in that Setlist, because the link already grants the whole Setlist and the Slot navigator already steps through it one at a time. The Setlist picker and the Track picker both reach past the link into the Library, so both need an Editor, as does the Library panel itself.
+
+The alternative was one rule for the whole breadcrumb. All-public would name every Track and every Setlist to anyone ever texted a link, which is the thing "no public page lists the Library" exists to stop. All-private would make a Musician tap next eleven times to reach slot twelve, when the Setlist link they were sent is exactly what authorises that jump. So the breadcrumb is deliberately asymmetric, and the rule that explains it is Link scope: you see what your link addresses.
