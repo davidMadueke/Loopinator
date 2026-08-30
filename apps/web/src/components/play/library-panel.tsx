@@ -58,19 +58,17 @@ export function LibraryPanel() {
 
   return (
     <section className="border-b border-border bg-card/40">
-      <div className="mx-auto w-full max-w-[860px] px-4 py-4">
-        <>
-        <h2 className="text-2xl font-medium pb-2">Library</h2>
-        {creating ? (
-          <div className="flex">
-            <h2 className="flex items-center w-full text-2xl font-medium">{createLabel(tab)}</h2>
-            <div className="flex w-full justify-end">
-              <Button variant="outline" size="sm" onClick={handleBack}>
-                Back to Library
-              </Button>
-            </div>
-          </div>
-        ) : (
+      <div className="mx-auto w-full max-w-215 px-4 py-4">
+        <div className="flex items-center justify-between gap-4 pb-4">
+          <h2 className="text-2xl font-medium">{creating ? createLabel(tab) : "Library"}</h2>
+          {creating ? (
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              Back to Library
+            </Button>
+          ) : null}
+        </div>
+
+        {creating ? null : (
           <Tabs value={tab} onValueChange={(value) => setTab(value as LibraryTab)}>
             <div className="flex">
               <TabsList variant="default">
@@ -98,17 +96,16 @@ export function LibraryPanel() {
             </TabsContent>
           </Tabs>
         )}
-        </>
       </div>
 
       {creating && tab === "Track" && (
-        <div className="mx-auto w-full max-w-[860px] px-4 pb-4">
+        <div className="mx-auto w-full max-w-215 px-4 pb-4">
           <CreateTrackPanel onProgressChange={handleProgressChange} />
         </div>
       )}
 
       {creating && tab === "Setlist" && (
-        <div className="mx-auto w-full max-w-[860px] px-4 pb-4">
+        <div className="mx-auto w-full max-w-215 px-4 pb-4">
           <CreateSetlistPanel onProgressChange={handleProgressChange} />
         </div>
       )}

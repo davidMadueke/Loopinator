@@ -27,7 +27,6 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
   return (
     <div className="pt-4">
       <div className="space-y-1 pb-4">
-        {/* <h2 className="text-base font-medium">Create New Track</h2> */}
         <p className="text-sm text-muted-foreground text-center">
           Upload a WAV or MP3 and set the Track default Loop region and metadata.
         </p>
