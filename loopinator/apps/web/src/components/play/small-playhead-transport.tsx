@@ -196,7 +196,7 @@ function TransportIsland({
             className="absolute inset-0"
           />
           <Button
-            variant="ghost"
+            variant="ghost_hover"
             size="icon-sm"
             className="relative p-0"
             style={{ width: PLAY_SIZE, height: PLAY_SIZE }}
@@ -205,9 +205,9 @@ function TransportIsland({
             onClick={handlePlayPause}
           >
             {playing ? (
-              <PauseIcon className="size-3 fill-current text-primary" />
+              <PauseIcon className="size-3 fill-current text-primary hover:text-primary" />
             ) : (
-              <PlayIcon className="size-3 fill-current" />
+              <PlayIcon className="size-3 fill-current hover:text-primary" />
             )}
           </Button>
         </span>
