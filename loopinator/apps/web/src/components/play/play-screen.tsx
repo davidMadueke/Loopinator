@@ -10,6 +10,7 @@ import { LibraryPanel } from "./library-panel";
 import { PlayScreenHeader } from "./play-screen-header";
 import { PlayheadPanel } from "./playhead-panel";
 import { RouteBreadcrumb } from "./route-breadcrumb";
+import { SmallPlayheadTransport } from "./small-playhead-transport";
 import { TempoStepper } from "./tempo-stepper";
 import { TransportBar } from "./transport-bar";
 import { Separator } from "@loopinator/ui/components/separator";
@@ -30,6 +31,7 @@ type PlayScreenProps =
 export function PlayScreen(props: PlayScreenProps) {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [transportExpanded, setTransportExpanded] = useState(false);
 
   const discardDialogOpen = useLibraryCreateStore((state) => state.discardDialogOpen);
   const requestDiscard = useLibraryCreateStore((state) => state.requestDiscard);
@@ -45,6 +47,11 @@ export function PlayScreen(props: PlayScreenProps) {
     originalBpm: props.track.originalBpm,
     initialTargetBpm,
   });
+
+  const transportLabel =
+    props.mode === "setlist"
+      ? props.setlist.slots[props.slotIndex]?.slotLabel ?? props.track.displayName
+      : props.track.displayName;
 
   const handleLibraryToggle = () => {
     if (!libraryOpen) {
@@ -78,6 +85,18 @@ export function PlayScreen(props: PlayScreenProps) {
         onLibraryToggle={handleLibraryToggle}
         advancedOpen={advancedOpen}
         onAdvancedClose={() => setAdvancedOpen(false)}
+        transportExpanded={transportExpanded}
+        transport={
+          <SmallPlayheadTransport
+            label={transportLabel}
+            mode={playback.state.mode}
+            playhead={playback.state.playhead}
+            onPlay={playback.play}
+            onPause={playback.pause}
+            onRestart={playback.restart}
+            onExpandedChange={setTransportExpanded}
+          />
+        }
       />
       <main className="flex flex-1 flex-col overflow-y-auto">
         {libraryOpen 
@@ -118,6 +137,7 @@ export function PlayScreen(props: PlayScreenProps) {
 
           <TransportBar
             mode={playback.state.mode}
+            playhead={playback.state.playhead}
             onPlay={playback.play}
             onPause={playback.pause}
             onRestart={playback.restart}

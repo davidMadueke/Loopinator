@@ -6,54 +6,64 @@ import { PauseIcon, PlayIcon, SkipBackIcon } from "lucide-react";
 
 import type { PlaybackMode } from "@/lib/play-types";
 
+type TransportTone = "idle" | "engaged" | "disabled";
+
+const TRANSPORT_TONES: Record<TransportTone, string> = {
+  idle: "bg-background text-foreground hover:bg-background",
+  engaged: "bg-primary text-primary-foreground hover:bg-primary",
+  disabled: "pointer-events-none bg-muted text-muted-foreground",
+};
+
 type TransportBarProps = {
   mode: PlaybackMode;
+  playhead: number;
   onPlay: () => void;
   onPause: () => void;
   onRestart: () => void;
 };
 
-export function TransportBar({ mode, onPlay, onPause, onRestart }: TransportBarProps) {
-  const playActive = mode === "stopped" || mode === "paused";
-  const rightActive = mode === "playing" || mode === "paused";
-  const showRestart = mode === "paused";
+export function TransportBar({ mode, playhead, onPlay, onPause, onRestart }: TransportBarProps) {
+  const playing = mode === "playing";
+  const canRestart = !playing && playhead > 0;
 
   return (
     <div className="flex h-fit w-full items-center justify-center gap-0.5 p-3">
-      <TransportButton active={playActive} aria-label="Play" disabled={!playActive} onClick={onPlay}>
-        <PlayIcon className="size-10 fill-current" />
+      <TransportButton
+        tone={playing ? "engaged" : "idle"}
+        aria-label={playing ? "Pause" : "Play"}
+        aria-pressed={playing}
+        onClick={playing ? onPause : onPlay}
+      >
+        {playing ? (
+          <PauseIcon className="size-10 fill-current" />
+        ) : (
+          <PlayIcon className="size-10 fill-current" />
+        )}
       </TransportButton>
       <TransportButton
-        active={rightActive}
-        aria-label={showRestart ? "Restart" : "Pause"}
-        disabled={!rightActive}
-        onClick={showRestart ? onRestart : onPause}
-        // className="border-r-0"
+        tone={canRestart ? "idle" : "disabled"}
+        aria-label="Restart"
+        disabled={!canRestart}
+        onClick={onRestart}
       >
-        {showRestart ? (
-          <SkipBackIcon className="size-10" strokeWidth={2.5} />
-        ) : (
-          <PauseIcon className="size-10 " />
-        )}
+        <SkipBackIcon className="size-10" strokeWidth={2.5} />
       </TransportButton>
     </div>
   );
 }
 
 function TransportButton({
-  active,
+  tone,
   className,
   children,
   ...props
-}: ComponentProps<typeof Button> & { active: boolean }) {
+}: ComponentProps<typeof Button> & { tone: TransportTone }) {
   return (
     <Button
       variant="default"
       className={cn(
         "box-content h-20 w-full flex-1 align-middle rounded-none border-2 border-border disabled:opacity-100",
-        active
-          ? "bg-background text-foreground hover:bg-background"
-          : "pointer-events-none bg-muted text-muted-foreground",
+        TRANSPORT_TONES[tone],
         className,
       )}
       {...props}
