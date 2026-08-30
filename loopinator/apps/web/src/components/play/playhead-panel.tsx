@@ -28,12 +28,11 @@ export function PlayheadPanel({
         <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
           <div className="flex h-fit w-fit items-center justify-center gap-2">
             <p className="h-full align-middle text-7xl font-bold tabular-nums">{Math.round(targetBpm)}</p>
-            <p className="flex h-full w-fit flex-col items-center justify-center text-xs leading-tight ">
-              <span></span>
+            <div className="box-content flex h-full w-fit flex-col items-center justify-center gap-0 align-middle font-medium text-primary text-sm leading-4">
               <span>B</span>
               <span>P</span>
               <span>M</span>
-            </p>
+            </div>
           </div>
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {track.originalBpm} BPM original
