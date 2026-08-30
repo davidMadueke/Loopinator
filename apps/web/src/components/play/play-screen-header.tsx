@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@loopinator/ui/components/button";
 import {
@@ -17,6 +18,8 @@ type PlayScreenHeaderProps = {
   onLibraryToggle: () => void;
   advancedOpen: boolean;
   onAdvancedClose: () => void;
+  transport: ReactNode;
+  transportExpanded: boolean;
 };
 
 export function PlayScreenHeader({
@@ -24,33 +27,42 @@ export function PlayScreenHeader({
   onLibraryToggle,
   advancedOpen,
   onAdvancedClose,
+  transport,
+  transportExpanded,
 }: PlayScreenHeaderProps) {
   const { isSignedIn, isLoading } = useSession();
   const panelOpen = libraryOpen || advancedOpen;
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background px-4 py-3">
+    <header className="sticky top-0 z-30 flex items-center border-b border-border bg-background px-4 py-3">
       {panelOpen ? null : (
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="flex size-8 items-center justify-center border border-border text-[10px] font-semibold tracking-wider">
             CCIC
           </div>
           <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
         </div>
       )}
-      <div className="flex w-full justify-center items-center gap-2">
-        {libraryOpen ? (
-          <Button variant="outline" onClick={onLibraryToggle}>
-            Close library
-          </Button>
-        ) : null}
-        {advancedOpen ? (
-          <Button variant="outline" className="text-playhead" onClick={onAdvancedClose}>
-            Close advanced options
-          </Button>
-        ) : null}
+      <div className="flex min-w-0 flex-1 items-center justify-center">
+        {/* min-w-0 plus a zero flex basis keeps this column sized by the header's free
+            space; the transport island measures it and would otherwise inflate it. */}
+        <div className="flex min-w-0 w-full max-w-215 items-center gap-2">
+          {panelOpen ? transport : null}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {libraryOpen && !transportExpanded ? (
+              <Button variant="outline" onClick={onLibraryToggle}>
+                Close library
+              </Button>
+            ) : null}
+            {advancedOpen && !transportExpanded ? (
+              <Button variant="outline" className="text-playhead" onClick={onAdvancedClose}>
+                Close advanced options
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <AppearanceMenu />
 
         <DropdownMenu>
