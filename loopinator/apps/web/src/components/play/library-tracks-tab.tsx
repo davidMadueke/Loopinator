@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@loopinator/ui/components/button";
+import { cn } from "@loopinator/ui/lib/utils";
 import { PlayIcon, SquareIcon } from "lucide-react";
 
 import { DEMO_TRACKS } from "@/lib/mock-data";
@@ -22,7 +23,11 @@ function groupTracksByBand() {
   return bands;
 }
 
-export function LibraryTracksTab() {
+type LibraryTracksTabProps = {
+  activeTrackId?: string;
+};
+
+export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
   const bands = groupTracksByBand();
   const [previewingId, setPreviewingId] = useState<string | null>(null);
 
@@ -40,18 +45,35 @@ export function LibraryTracksTab() {
             <ul className="divide-y divide-border border border-border">
               {tracks.map((track) => {
                 const isPreviewing = previewingId === track.id;
+                const isCurrent = track.id === activeTrackId;
 
                 return (
-                  <li key={track.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <li
+                    key={track.id}
+                    aria-current={isCurrent ? "page" : undefined}
+                    className={cn(
+                      "flex items-center justify-between gap-3 px-3 py-2",
+                      isCurrent && "pointer-events-none opacity-50",
+                    )}
+                  >
                     <div className="min-w-0 max-w-4/5 flex-1">
-                      <Link
-                        to="/t/$id"
-                        params={{ id: track.id }}
-                        className="block truncate font-medium text-sm hover:underline"
-                        title={track.displayName}
-                      >
-                        {track.displayName}
-                      </Link>
+                      {isCurrent ? (
+                        <span
+                          className="block truncate font-medium text-sm text-muted-foreground"
+                          title={track.displayName}
+                        >
+                          {track.displayName}
+                        </span>
+                      ) : (
+                        <Link
+                          to="/t/$id"
+                          params={{ id: track.id }}
+                          className="block truncate font-medium text-sm hover:underline"
+                          title={track.displayName}
+                        >
+                          {track.displayName}
+                        </Link>
+                      )}
                       <p className="truncate text-xs text-muted-foreground">{track.filename}</p>
                     </div>
                     <Button
