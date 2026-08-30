@@ -24,7 +24,6 @@ type PlayScreenProps =
       setlist: Setlist;
       track: Track;
       slotIndex: number;
-      slotLabel: string;
       onSlotChange: (index: number) => void;
     };
 
@@ -46,10 +45,6 @@ export function PlayScreen(props: PlayScreenProps) {
     originalBpm: props.track.originalBpm,
     initialTargetBpm,
   });
-
-  const canGoPrev = props.mode === "setlist" && props.slotIndex > 0;
-  const canGoNext =
-    props.mode === "setlist" && props.slotIndex < props.setlist.slots.length - 1;
 
   const handleLibraryToggle = () => {
     if (!libraryOpen) {
@@ -101,25 +96,16 @@ export function PlayScreen(props: PlayScreenProps) {
         ) : null}
         
         <div className="mx-auto flex w-full max-w-215 flex-1 flex-col gap-5 px-4 py-4">
-          <RouteBreadcrumb
-            variant={props.mode}
-            setlistName={props.mode === "setlist" ? props.setlist.name : undefined}
-            slotLabel={props.mode === "setlist" ? props.slotLabel : undefined}
-            trackName={props.track.displayName}
-            cached={props.mode === "setlist" ? props.setlist.cached : props.track.cached}
-            canGoPrev={canGoPrev}
-            canGoNext={canGoNext}
-            onPrev={
-              props.mode === "setlist" && canGoPrev
-                ? () => props.onSlotChange(props.slotIndex - 1)
-                : undefined
-            }
-            onNext={
-              props.mode === "setlist" && canGoNext
-                ? () => props.onSlotChange(props.slotIndex + 1)
-                : undefined
-            }
-          />
+          {props.mode === "setlist" ? (
+            <RouteBreadcrumb
+              variant="setlist"
+              setlist={props.setlist}
+              slotIndex={props.slotIndex}
+              onSlotChange={props.onSlotChange}
+            />
+          ) : (
+            <RouteBreadcrumb variant="track" track={props.track} />
+          )}
 
           <PlayheadPanel
             track={props.track}

@@ -16,7 +16,8 @@ function SetlistPlayRoute() {
     throw notFound();
   }
 
-  return <SetlistPlayScreen setlist={setlist} />;
+  // Keyed so the Setlist picker cannot carry a slot index into a shorter Setlist.
+  return <SetlistPlayScreen key={setlist.id} setlist={setlist} />;
 }
 
 function SetlistPlayScreen({
@@ -38,7 +39,6 @@ function SetlistPlayScreen({
       setlist={setlist}
       track={track}
       slotIndex={slotIndex}
-      slotLabel={slot.slotLabel}
       onSlotChange={setSlotIndex}
     />
   );
