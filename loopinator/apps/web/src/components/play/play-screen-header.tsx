@@ -26,15 +26,18 @@ export function PlayScreenHeader({
   onAdvancedClose,
 }: PlayScreenHeaderProps) {
   const { isSignedIn, isLoading } = useSession();
+  const panelOpen = libraryOpen || advancedOpen;
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="flex size-8 items-center justify-center border border-border text-[10px] font-semibold tracking-wider">
-          CCIC
+      {panelOpen ? null : (
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center border border-border text-[10px] font-semibold tracking-wider">
+            CCIC
+          </div>
+          <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
         </div>
-        <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
-      </div>
+      )}
       <div className="flex w-full justify-center items-center gap-2">
         {libraryOpen ? (
           <Button variant="outline" onClick={onLibraryToggle}>
