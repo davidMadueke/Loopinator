@@ -101,7 +101,10 @@ export function PlayScreen(props: PlayScreenProps) {
       <main className="flex flex-1 flex-col overflow-y-auto">
         {libraryOpen 
         ? <>
-        <LibraryPanel />
+        <LibraryPanel
+          activeTrackId={props.mode === "track" ? props.track.id : undefined}
+          activeSetlistId={props.mode === "setlist" ? props.setlist.id : undefined}
+        />
         <div className="pb-2"></div>
         </> 
         

@@ -17,7 +17,12 @@ function createLabel(tab: LibraryTab) {
   return `Create New ${tab}`;
 }
 
-export function LibraryPanel() {
+type LibraryPanelProps = {
+  activeTrackId?: string;
+  activeSetlistId?: string;
+};
+
+export function LibraryPanel({ activeTrackId, activeSetlistId }: LibraryPanelProps) {
   const [tab, setTab] = useState<LibraryTab>("Track");
   const [view, setView] = useState<LibraryView>("browse");
 
@@ -89,10 +94,10 @@ export function LibraryPanel() {
             </div>
 
             <TabsContent value="Track" className="pt-4">
-              <LibraryTracksTab />
+              <LibraryTracksTab activeTrackId={activeTrackId} />
             </TabsContent>
             <TabsContent value="Setlist" className="pt-4">
-              <LibrarySetlistsTab />
+              <LibrarySetlistsTab activeSetlistId={activeSetlistId} />
             </TabsContent>
           </Tabs>
         )}
