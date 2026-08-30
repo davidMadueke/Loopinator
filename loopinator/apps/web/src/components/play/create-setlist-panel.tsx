@@ -23,7 +23,6 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
   return (
     <div className="pt-4">
       <div className="space-y-1 pb-4 ">
-        {/* <h2 className="text-base font-medium">Create New Setlist</h2> */}
         <p className="text-sm text-muted-foreground text-center">Setlist creation is not wired up yet.</p>
       </div>
 

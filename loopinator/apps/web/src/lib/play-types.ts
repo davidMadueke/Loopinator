@@ -72,6 +72,9 @@ export type SetlistSlot = {
   trackId: string;
   slotLabel: string;
   targetBpm: number;
+  timeSignature: TimeSignature;
+  key: string;
+  keyMode: "major" | "minor";
 };
 
 export type Setlist = {

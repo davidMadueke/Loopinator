@@ -91,8 +91,8 @@ function SetlistPicker({ currentSetlist }: { currentSetlist: Setlist }) {
   return (
     <PickerChip
       label={currentSetlist.name}
-      className="max-w-80 font-medium text-lg text-primary hover:text-primary"
-      contentClassName="w-72"
+      className="max-w-80 font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
+      /* contentClassName="w-72" */
     >
       {DEMO_SETLISTS.map((setlist) => {
         const current = setlist.id === currentSetlist.id;
@@ -127,7 +127,7 @@ function SlotPicker({
     <PickerChip
       label={setlist.slots[slotIndex]?.slotLabel ?? ""}
       className="min-w-24 max-w-56 text-lg "
-      contentClassName="w-72"
+      /* contentClassName="w-full" */
     >
       {setlist.slots.map((slot, index) => {
         const current = index === slotIndex;
@@ -143,7 +143,7 @@ function SlotPicker({
               {slot.slotLabel}
             </span>
             <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-              {slot.targetBpm} BPM
+              {slot.targetBpm} BPM · {slot.timeSignature}
             </span>
           </DropdownMenuItem>
         );
@@ -156,8 +156,8 @@ function TrackPicker({ currentTrack }: { currentTrack: Track }) {
   return (
     <PickerChip
       label={currentTrack.displayName}
-      className="max-w-full text-lg text-primary hover:text-primary"
-      contentClassName="w-80"
+      className="max-w-full font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
+      /* contentClassName="w-80" */
     >
       {DEMO_TRACKS.map((track) => {
         const current = track.id === currentTrack.id;
@@ -231,7 +231,7 @@ function PickerChip({
             <DropdownMenuTrigger render={
               <Button
                 variant={"ghost"}
-                className={cn("flex min-w-0 shrink max-w-80 font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted", className)}
+                className={cn("flex min-w-0 shrink max-w-80 ", className)}
                 title={label}
               >
                 <span className="min-w-0 truncate">{label}</span>
@@ -240,7 +240,7 @@ function PickerChip({
                 long Library filling a tall viewport. */}
             <DropdownMenuContent
               align="start"
-              className={cn("max-h-[min(20rem,var(--available-height))]", contentClassName)}
+              className={cn("max-h-[min(20rem,var(--available-height))] w-full", contentClassName)}
             >
               <DropdownMenuGroup>{children}</DropdownMenuGroup>
             </DropdownMenuContent>
