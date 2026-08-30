@@ -15,5 +15,6 @@ function TrackPlayRoute() {
     throw notFound();
   }
 
-  return <PlayScreen mode="track" track={track} />;
+  // Keyed so the Track picker starts the next Track stopped, even when both share an Original BPM.
+  return <PlayScreen key={track.id} mode="track" track={track} />;
 }

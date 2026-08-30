@@ -153,6 +153,14 @@
   --ring: oklch(0.586 0.253 17.585);
 }
 
+/* Accent text sitting on a --muted fill (ghost hover, open dropdown trigger).
+   Pulling --primary toward --foreground darkens it in light mode and lightens
+   it in dark, so every palette keeps its hue and still reads against the fill.
+   Declared on :root after the palettes so var(--primary) resolves per accent. */
+:root {
+  --primary-on-muted: color-mix(in oklch, var(--primary), var(--foreground) 25%);
+}
+
 @theme inline {
   --font-sans: 'Public Sans Variable', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -180,6 +188,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-on-muted: var(--primary-on-muted);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
