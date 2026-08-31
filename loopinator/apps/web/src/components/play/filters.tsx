@@ -1,17 +1,41 @@
-import { useCallback, useState, type KeyboardEvent } from "react";
-import { GaugeIcon, HashIcon, Music2Icon } from "lucide-react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
+import { GaugeIcon, HashIcon, ListFilterPlusIcon, Music2Icon } from "lucide-react";
 
 import {
+  FilterChip,
   Filters as FilterBar,
+  FiltersBuilder,
   createFilterQuery,
+  filterReadOnlyProps,
+  flattenFilterRules,
+  isFilterLocked,
+  useFilterActions,
+  useFilterFocusStore,
+  useFilterState,
   type FilterEditorProps,
   type FilterField,
   type FilterOption,
   type FilterQuery,
   type FilterValueDisplayContext,
 } from "@/components/reui/filters/filters";
+import { filterControlSizes } from "@/components/reui/filters/filters-context";
+import { getFilterField } from "@/components/reui/filters/filters-lib";
+import {
+  getFilterOperator,
+  operatorTakesValue,
+} from "@/components/reui/filters/filters-operators";
+import { findFilterRule } from "@/components/reui/filters/filters-query";
 import { KEY_CENTERS, TIME_SIGNATURES } from "@/lib/play-types";
 import { Button } from "@loopinator/ui/components/button";
+import { HoverButton } from "@loopinator/ui/components/hover-button";
 import { Slider } from "@loopinator/ui/components/slider";
 import {
   ToggleGroup,
@@ -294,7 +318,36 @@ const fields: FilterField[] = [
   },
 ];
 
-export function Filters() {
+type FiltersProps = {
+  children: ReactNode;
+};
+
+type FiltersTriggerProps = {
+  /** Replaces the Add filter control. */
+  trigger?: ReactNode;
+};
+
+function DefaultAddFilterTrigger({
+  simpleView = <ListFilterPlusIcon />,
+  expandedView = "Add Filter",
+  ...props
+}: Omit<ComponentProps<typeof HoverButton>, "simpleView" | "expandedView"> & {
+  simpleView?: ComponentProps<typeof HoverButton>["simpleView"];
+  expandedView?: ComponentProps<typeof HoverButton>["expandedView"];
+}) {
+  return (
+    <HoverButton
+      variant="outline"
+      size="sm"
+      aria-label="Add filter"
+      {...props}
+      simpleView={simpleView}
+      expandedView={expandedView}
+    />
+  );
+}
+
+export function Filters({ children }: FiltersProps) {
   const [query, setQuery] = useState<FilterQuery>(() => createFilterQuery([]));
 
   const handleQueryChange = useCallback((next: FilterQuery) => {
@@ -307,8 +360,133 @@ export function Filters() {
       query={query}
       onQueryChange={handleQueryChange}
       size="sm"
-      showClear
-      className="justify-center"
-    />
+    >
+      {children}
+    </FilterBar>
+  );
+}
+
+export function FiltersTrigger({ trigger }: FiltersTriggerProps) {
+  const actions = useFilterActions();
+  const sizes = filterControlSizes(actions);
+  const { ruleCount, announcement, announcementSeq } = useFilterState();
+
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      <FiltersBuilder trigger={trigger ?? <DefaultAddFilterTrigger />} />
+      {ruleCount > 0 ? (
+        <Button
+          variant="outline"
+          size={sizes.button}
+          disabled={actions.disabled}
+          {...filterReadOnlyProps(actions)}
+          onClick={() => actions.clearQuery()}
+        >
+          {actions.labels.clear}
+        </Button>
+      ) : null}
+      <div aria-live="polite" role="status" className="sr-only">
+        <span key={announcementSeq}>{announcement}</span>
+      </div>
+    </div>
+  );
+}
+
+export function FiltersChips() {
+  const actions = useFilterActions();
+  const { query } = useFilterState();
+  const focusStore = useFilterFocusStore();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const locked = isFilterLocked(actions);
+  const rules = useMemo(() => flattenFilterRules(query), [query]);
+
+  if (rules.length === 0) return null;
+
+  const chips = () =>
+    Array.from(
+      rootRef.current?.querySelectorAll<HTMLElement>('[data-slot="filter-chip"]') ?? [],
+    );
+
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const target = (event.target as HTMLElement).closest<HTMLElement>(
+      '[data-slot="filter-chip"]',
+    );
+    if (!target) return;
+    if (event.target !== target) return;
+
+    const all = chips();
+    const current = all.indexOf(target);
+    if (current === -1) return;
+
+    const rtl = getComputedStyle(target).direction === "rtl";
+    const forward = rtl ? "ArrowLeft" : "ArrowRight";
+    const backward = rtl ? "ArrowRight" : "ArrowLeft";
+
+    const focusAt = (index: number) => {
+      const next = all[Math.max(0, Math.min(index, all.length - 1))];
+      if (!next) return;
+      event.preventDefault();
+      next.focus();
+    };
+
+    const ruleId = target.dataset.ruleId;
+    if (!ruleId) return;
+
+    if (event.altKey && (event.key === forward || event.key === backward)) {
+      if (locked) return;
+      event.preventDefault();
+      actions.moveNode(ruleId, event.key === forward ? 1 : -1);
+      return;
+    }
+    if (event.key === forward) return focusAt(current + 1);
+    if (event.key === backward) return focusAt(current - 1);
+    if (event.key === "Home") return focusAt(0);
+    if (event.key === "End") return focusAt(all.length - 1);
+
+    if (event.key === "Backspace" || event.key === "Delete") {
+      if (locked) return;
+      event.preventDefault();
+      actions.removeNode(ruleId);
+      requestAnimationFrame(() => {
+        const remaining = chips();
+        remaining[Math.min(current, remaining.length - 1)]?.focus();
+      });
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      if (locked) return;
+      event.preventDefault();
+      const rule = findFilterRule(actions.getQuery(), ruleId);
+      if (!rule) return;
+      const field = getFilterField(actions.index, rule.path);
+      if (!field) return;
+      const operator = getFilterOperator(
+        actions.resolveOperators(field),
+        rule.operator,
+      );
+      const segment =
+        rule.operator && operatorTakesValue(operator) ? "value" : "operator";
+      focusStore.set({ id: ruleId, segment, autoOpen: true });
+    }
+  };
+
+  return (
+    <div
+      ref={rootRef}
+      data-slot="filters"
+      role="toolbar"
+      aria-label={actions.labels.filtersLabel}
+      aria-orientation="horizontal"
+      {...(actions.readOnly
+        ? { "aria-description": actions.labels.readOnly }
+        : null)}
+      className="flex w-full flex-wrap items-center gap-1.5"
+      onKeyDown={onKeyDown}
+    >
+      {rules.map((rule, index) => (
+        <FilterChip key={rule.id} rule={rule} index={index} />
+      ))}
+    </div>
   );
 }

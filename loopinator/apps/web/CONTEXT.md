@@ -25,6 +25,7 @@ Wireframe layout with these domain overrides:
 | Playhead ring color | `--playhead` from `packages/ui` globals; follows the Accent colour |
 | Hamburger | Library, Setlists, Upload, Account/Login per ADR-0002 |
 | Appearance menu | Palette icon button left of the hamburger; Theme and Accent colour |
+| Library filters | **Filters** Add/Clear in the Library toolbar centre column; chips in a second full-width row in the same padded toolbar box, above the list |
 
 ## Shadcn components
 
@@ -36,11 +37,15 @@ Wireframe layout with these domain overrides:
 
 ### Already installed
 
-`button`, `dropdown-menu`, `label`, `card`, `input`, `select` (Key and Time signature fields on Create Track)
+`button`, `dropdown-menu`, `label`, `card`, `input`, `select` (Key and Time signature fields on Create Track), `slider`, `toggle` / `toggle-group`, `popover`, `button-group`, `scroll-area`, `spinner`
+
+### ReUI (apps/web)
+
+Registry `@reui` → `https://reui.io/r/{style}/{name}.json` in both `apps/web` and `packages/ui` `components.json`. Play Library Filters owns a copy of the ReUI Filters + Cascader sources under `apps/web/src/components/reui/`. Patterns drawn from free blocks `@reui/c-filters-6` (slider editors) and `@reui/c-filters-8` (toggle-group editors).
 
 ### Defer
 
-- `slider` — Transport fade when Advanced Options ships
+- Transport fade slider when Advanced Options ships (Library Filters already uses `slider` for tempo range)
 
 ### Custom (not stock Shadcn)
 
@@ -66,10 +71,15 @@ apps/web/src/components/play/
   playback-frame.tsx        ← max-w ~860px centered column
   transport-bar.tsx         ← single large Button (Play / Pause / Restart)
   tempo-stepper.tsx         ← Label + Button +/− (±1 tap, ±3 hold)
-  library-panel.tsx         ← Tabs: Tracks | Setlists
+  library-panel.tsx         ← Tabs: Tracks | Setlists; Filters in toolbar centre
+  filters.tsx               ← Library Filters provider, trigger, chip row
   advanced-options-panel.tsx ← Reset this device, Save for everyone
   library-tracks-tab.tsx    ← Tracks by BPM band
   library-setlists-tab.tsx  ← Setlist rows, Create new, Edit
+
+apps/web/src/components/reui/
+  filters/                  ← ReUI Filters package (CLI-owned)
+  cascader/                 ← Cascader dependency of Filters
 ```
 
 ## Component mapping
@@ -88,6 +98,7 @@ apps/web/src/components/play/
 | Tempo stepper | `Button` +/− in bordered container |
 | Advanced Options body | Custom panel; full-width block above the Playback frame |
 | Library panel | `Tabs` + custom lists; full-width block above Playback frame |
+| Library Filters | ReUI provider wrapping browse Tabs; `HoverButton` Add in the centre column, chips in a second toolbar row |
 
 ## Page structure
 
@@ -286,6 +297,51 @@ apps/web/src/
     loop-region-field.tsx            ← in/out text inputs
     create-track-panel.tsx           ← form state; no standalone loop section
 ```
+
+## Library Filters
+
+Browse-mode filter bar in the Library panel toolbar, between the Tracks/Setlists tabs and
+**Create New**. Hidden while creating a Track or Setlist. Built on ReUI Filters; field editors
+follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patterns.
+
+| Decision | Choice |
+|---|---|
+| Add/Clear placement | Centre column of the Library toolbar (`justify-center`), same row as tabs and Create New |
+| Chip placement | Second row in the same padded `max-w-215` toolbar box, above the list; `shrink-0` so chips stay put while the list scrolls |
+| Chip row layout | `w-full flex-wrap`, start aligned, `gap-1.5`; no extra chrome; unlimited wrap |
+| Chip row when empty | Unmounts; the toolbar box collapses back to the 3-column row |
+| Toolbar-to-chips gap | `gap-2`, same as the Library column |
+| List padding | TabsContent keeps `pt-4` whether chips are showing or not |
+| Fields (order) | **Tempo** (target BPM range), **Time signature**, **Key** |
+| Tempo editor | Dual-thumb range slider, 40–200 BPM, step 1; Apply/Discard footer like c-filters-6 |
+| Tempo chip | Mini track + range text; not a bare number |
+| Time signature | Multi toggle group over `TIME_SIGNATURES` from `play-types` |
+| Key | Multi toggle group over `KEY_CENTERS`; wraps inside the popover |
+| Add control | `HoverButton` always: `ListFilterPlus` icon, expands to **Add Filter** on hover/focus |
+| Custom trigger API | Optional `trigger` prop on `FiltersTrigger` |
+| With filters active | HoverButton stays; ReUI **Clear** joins it in the centre column, clustered |
+| Clear | Outline `sm`, ReUI **Clear** label; no `ms-auto` |
+| Composition | `Filters` provider wraps the browse Tabs; `FiltersTrigger` in the centre; `FiltersChips` as the second toolbar row. ReUI `FiltersRow` is unused |
+| Query ownership | Local React state in `filters.tsx` for now; not yet applied to Tracks/Setlists lists |
+| Why a wrapper trigger | ReUI `PopoverTrigger` merges click/ref onto the `trigger` element; that element must forward props to the real button or the picker never opens |
+
+### Library Filters file layout
+
+```
+apps/web/src/
+  components/play/filters.tsx          ← schema, editors, Filters provider, FiltersTrigger, FiltersChips
+  components/play/library-panel.tsx    ← Filters wraps Tabs; Trigger in centre; Chips under the 3-col row
+  components/reui/filters/*            ← ReUI Filters (CLI)
+  components/reui/cascader/*           ← Cascader (CLI)
+  lib/play-types.ts                    ← TIME_SIGNATURES, KEY_CENTERS
+packages/ui/src/components/
+  hover-button.tsx                     ← Add Filter control
+  slider.tsx, toggle.tsx, toggle-group.tsx, popover.tsx, button-group.tsx
+```
+
+Open: wiring the filter query into `LibraryTracksTab` / `LibrarySetlistsTab` so chips actually
+narrow the lists. Tempo currently means target BPM in the filter schema; Tracks still group by
+original BPM bands until that hand-off lands.
 
 ## Related ADRs
 
