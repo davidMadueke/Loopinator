@@ -970,7 +970,10 @@ function FilterChipImpl<V, O>({ rule, index }: FilterChipProps<V>) {
         /* Dropped while the path is collapsed: the ellipsis inside carries the
            same sentence as a tooltip, and the two would stack. */
         title={pathCollapsed ? undefined : pathText}
-        className="bg-background dark:bg-input/30 cursor-default gap-1.5"
+        className={cn(
+          "cursor-default gap-1.5",
+          field.chipLabelClassName ?? "bg-background dark:bg-input/30",
+        )}
       >
         {field.icon}
         {/* Zero gap INSIDE the path, so the separator's own margin is the only

@@ -220,6 +220,11 @@ export interface FilterField<V = unknown, O = unknown> {
    * the SMALLER of that and the space the popup has.
    */
   className?: string
+  /**
+   * Reaches the chip's FIELD LABEL segment, not the operator or value.
+   * Merged last onto that `ButtonGroupText`.
+   */
+  chipLabelClassName?: string
 
   /** The storage column when it differs from the UI path. Never read here. */
   column?: string

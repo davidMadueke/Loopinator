@@ -82,6 +82,11 @@ export interface FilterFieldPickerProps {
   onSelect: (path: string[], defaultOperator: string | null) => void
   /** Viewport height before the list scrolls. */
   maxHeight?: number
+  /**
+   * Search field in the picker header. Off hides the nav (the input stays for
+   * keyboard) rather than removing it. Defaults to on.
+   */
+  searchable?: boolean
   /** Cascader-only strings; the `FilterLabels` bridge below covers the rest. */
   labels?: Partial<CascaderLabels>
   /** Pinned footer rows, OUT of the option ring so arrows never land on one. */
@@ -99,6 +104,7 @@ export function FilterFieldPicker<V, O>({
   onQueryChange,
   onSelect,
   maxHeight = 260,
+  searchable = true,
   labels: labelsProp,
   actions: actionItems,
 }: FilterFieldPickerProps) {
@@ -165,7 +171,7 @@ export function FilterFieldPicker<V, O>({
       maxHeight={maxHeight}
     >
       <CascaderPanel>
-        <CascaderNav>
+        <CascaderNav className={cn(!searchable && "sr-only")}>
           <CascaderInput placeholder={actions.labels.searchFields} />
         </CascaderNav>
         <CascaderBreadcrumb />
@@ -199,6 +205,7 @@ function FieldStep<V, O>() {
       onSelect={(path, defaultOperator) =>
         actions.dispatchDraft({ type: "selectField", path, defaultOperator })
       }
+      searchable={false}
     />
   )
 }
