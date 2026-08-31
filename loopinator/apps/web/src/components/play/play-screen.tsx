@@ -102,6 +102,7 @@ export function PlayScreen(props: PlayScreenProps) {
         {libraryOpen 
         ? <>
         <LibraryPanel
+          defaultTab={props.mode === "setlist" ? "Setlist" : "Track"}
           activeTrackId={props.mode === "track" ? props.track.id : undefined}
           activeSetlistId={props.mode === "setlist" ? props.setlist.id : undefined}
         />

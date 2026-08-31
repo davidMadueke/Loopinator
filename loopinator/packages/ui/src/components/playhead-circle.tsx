@@ -36,7 +36,7 @@ function PlayheadCircle({
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-muted-foreground/25"
+        className="text-muted-foreground/35"
       />}
       <circle
         cx={size / 2}

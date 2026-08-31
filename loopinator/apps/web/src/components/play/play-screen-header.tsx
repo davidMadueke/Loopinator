@@ -48,9 +48,14 @@ export function PlayScreenHeader({
         ) : null}
       </div>
 
-      <div className="flex w-full max-w-215 items-center gap-2 px-4">
-        {panelOpen ? transport : null}
-        {showClosePanel ? (
+      <div className="flex w-full max-w-215 items-center gap-2 ">
+        
+        <div className="flex min-w-0 w-full justify-start items-center">
+          {panelOpen ? transport : null}
+        </div>
+
+        {
+        showClosePanel ? (
           <div className=" w-full justify-end flex  items-center gap-2">
             {libraryOpen ? (
               <Button variant="outline" onClick={onLibraryToggle}>
@@ -63,10 +68,12 @@ export function PlayScreenHeader({
               </Button>
             ) : null}
           </div>
-        ) : null}
+        ) : null
+        }
+
       </div>
 
-      <div className="flex min-w-0 w-full flex-1 items-center justify-end gap-2">
+      <div className="flex  w-full flex-1 items-center justify-end gap-2">
         <Separator orientation="vertical" />
         <AppearanceMenu />
 
