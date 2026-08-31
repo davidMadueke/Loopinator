@@ -1,5 +1,7 @@
 export type TimeSignature = "4/4" | "3/4" | "6/8" | "12/8" | "2/4";
 
+export const TIME_SIGNATURES: TimeSignature[] = ["4/4", "3/4", "6/8", "12/8", "2/4"];
+
 export type KeyCenter =
   | "No Key"
   | "C"

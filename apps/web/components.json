@@ -22,6 +22,7 @@
   "menuAccent": "subtle",
   "rtl": false,
   "registries": {
-    "@waves-cn": "https://waves-cn.vercel.app/r/{name}.json"
+    "@waves-cn": "https://waves-cn.vercel.app/r/{name}.json",
+    "@reui": "https://reui.io/r/{style}/{name}.json"
   }
 }
