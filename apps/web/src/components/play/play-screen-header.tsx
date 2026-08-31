@@ -12,6 +12,7 @@ import { MenuIcon } from "lucide-react";
 
 import { AppearanceMenu } from "@/components/appearance-menu";
 import { useSession } from "@/hooks/use-session";
+import { Separator } from "@loopinator/ui/components/separator";
 
 type PlayScreenHeaderProps = {
   libraryOpen: boolean;
@@ -32,37 +33,41 @@ export function PlayScreenHeader({
 }: PlayScreenHeaderProps) {
   const { isSignedIn, isLoading } = useSession();
   const panelOpen = libraryOpen || advancedOpen;
+  const showClosePanel = panelOpen && !transportExpanded;
 
   return (
-    <header className="sticky top-0 z-30 flex items-center border-b border-border bg-background px-4 py-3">
-      {panelOpen ? null : (
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="flex size-8 items-center justify-center border border-border text-[10px] font-semibold tracking-wider">
-            CCIC
+    <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-border bg-background px-4 py-3">
+      <div className="flex w-full flex-1 items-center">
+        {!panelOpen ? (
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 items-center justify-center border border-border text-[10px] font-semibold tracking-wider">
+              CCIC
+            </div>
+            <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
           </div>
-          <span className="text-sm font-semibold tracking-[0.2em]">LOOPINATOR</span>
-        </div>
-      )}
-      <div className="flex min-w-0 flex-1 items-center justify-center">
-        {/* min-w-0 plus a zero flex basis keeps this column sized by the header's free
-            space; the transport island measures it and would otherwise inflate it. */}
-        <div className="flex min-w-0 w-full max-w-215 items-center gap-2">
-          {panelOpen ? transport : null}
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            {libraryOpen && !transportExpanded ? (
+        ) : null}
+      </div>
+
+      <div className="flex w-full max-w-215 items-center gap-2 px-4">
+        {panelOpen ? transport : null}
+        {showClosePanel ? (
+          <div className=" w-full justify-end flex  items-center gap-2">
+            {libraryOpen ? (
               <Button variant="outline" onClick={onLibraryToggle}>
                 Close library
               </Button>
             ) : null}
-            {advancedOpen && !transportExpanded ? (
+            {advancedOpen ? (
               <Button variant="outline" className="text-playhead" onClick={onAdvancedClose}>
                 Close advanced options
               </Button>
             ) : null}
           </div>
-        </div>
+        ) : null}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+
+      <div className="flex min-w-0 w-full flex-1 items-center justify-end gap-2">
+        <Separator orientation="vertical" />
         <AppearanceMenu />
 
         <DropdownMenu>
