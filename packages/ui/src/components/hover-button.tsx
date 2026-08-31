@@ -53,6 +53,7 @@ function HoverButton({
     <Button
       data-slot="hover-button"
       data-hovered={hovered ? "" : undefined}
+      {...buttonProps}
       className={cn(HOVER_FILL, "gap-0", className)}
       onMouseEnter={(event) => {
         hoverProps.onMouseEnter();
@@ -70,7 +71,6 @@ function HoverButton({
         hoverProps.onBlur();
         onBlur?.(event);
       }}
-      {...buttonProps}
     >
       {simpleView}
       <span
