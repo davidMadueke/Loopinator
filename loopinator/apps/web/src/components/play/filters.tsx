@@ -527,7 +527,7 @@ function DefaultAddFilterTrigger({
       aria-label="Add filter"
       {...props}
       className={cn(
-        "aria-expanded:bg-primary aria-expanded:text-primary-foreground"/* , "aria-expanded:hover:bg-transparent aria-expanded:hover:text-primary-on-muted aria-expanded:[&_svg]:text-primary-on-muted" */,  "dark:aria-expanded:hover:bg-transparent",
+        "aria-expanded:bg-primary aria-expanded:text-primary-foreground", /* "aria-expanded:hover:bg-transparent aria-expanded:hover:text-primary-on-muted aria-expanded:[&_svg]:text-primary-on-muted",*/  /* "dark:aria-expanded:hover:bg-transparent" ,*/
         className,
       )}
       simpleView={simpleView}
@@ -682,7 +682,7 @@ export function FiltersChips() {
       {...(actions.readOnly
         ? { "aria-description": actions.labels.readOnly }
         : null)}
-      className="flex w-full flex-wrap items-center gap-1.5"
+      className="flex w-full flex-wrap items-center gap-3 pt-2 pb-2"
       onKeyDown={onKeyDown}
     >
       {rules.map((rule, index) => (
