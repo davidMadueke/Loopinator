@@ -313,13 +313,16 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 | Toolbar-to-chips gap | `gap-2`, same as the Library column |
 | List padding | TabsContent keeps `pt-4` whether chips are showing or not |
 | Fields (order) | **Tempo** (target BPM range), **Time signature**, **Key** |
-| Tempo editor | Dual-thumb range slider, 40–200 BPM, step 1; Apply/Discard footer like c-filters-6 |
+| Tempo editor | Dual-thumb range slider, 40–200 BPM, step 1; each bound is a number input beside the track; Apply/Discard footer like c-filters-6 |
 | Tempo chip | Mini track + range text; not a bare number |
 | Time signature | Multi toggle group over `TIME_SIGNATURES` from `play-types` |
-| Key | Multi toggle group over `KEY_CENTERS`; wraps inside the popover |
-| Add control | `HoverButton` always: `ListFilterPlus` icon, expands to **Add Filter** on hover/focus |
+| Key | Multi toggle group over `KEY_CENTERS`; wraps inside the popover. Selected toggle is `bg-primary` / `text-primary-foreground`; chip value uses `text-primary` |
+| Choice operators | Key and Time signature default to **is**, **is not**, **is one of**, **is none of**. Override with `keyOperators` / `timeSignatureOperators` on `Filters` |
+| Chip label wash | Tempo `bg-primary/20`, Time signature `bg-primary/40`, Key `bg-primary/60` |
+| Add control | Default `HoverButton`: icon expands to **Add Filter**. Open matches the Route breadcrumb (`text-primary-on-muted`). Custom `trigger` skips this |
 | Custom trigger API | Optional `trigger` prop on `FiltersTrigger` |
-| With filters active | HoverButton stays; ReUI **Clear** joins it in the centre column, clustered |
+| With filters active | Same HoverButton, idle fill `bg-primary` (icon only); hover still expands; open still `text-primary-on-muted`. ReUI **Clear** joins it in the centre column |
+| Field picker search | Hidden on Add Filter (`searchable={false}`); input stays `sr-only` for keyboard |
 | Clear | Outline `sm`, ReUI **Clear** label; no `ms-auto` |
 | Composition | `Filters` provider wraps the browse Tabs; `FiltersTrigger` in the centre; `FiltersChips` as the second toolbar row. ReUI `FiltersRow` is unused |
 | Query ownership | Local React state in `filters.tsx` for now; not yet applied to Tracks/Setlists lists |
