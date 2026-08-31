@@ -7,6 +7,7 @@ import { useLibraryCreateStore } from "@/stores/library-create-store";
 
 import { CreateSetlistPanel } from "./create-setlist-panel";
 import { CreateTrackPanel } from "./create-track-panel";
+import { Filters } from "./filters";
 import { LibrarySetlistsTab } from "./library-setlists-tab";
 import { LibraryTracksTab } from "./library-tracks-tab";
 
@@ -102,7 +103,9 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
                 </TabsList>
               </div>
 
-              <div className="flex w-full justify-center" />
+              <div className="flex w-full justify-center">
+                <Filters />
+              </div>
 
               <div className="flex w-full justify-end">
                 <HoverButton

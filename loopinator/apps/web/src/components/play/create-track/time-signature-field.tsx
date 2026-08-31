@@ -7,9 +7,7 @@ import {
   SelectValue,
 } from "@loopinator/ui/components/select";
 
-import type { TimeSignature } from "@/lib/play-types";
-
-const TIME_SIGNATURES: TimeSignature[] = ["4/4", "3/4", "6/8", "12/8", "2/4"];
+import { TIME_SIGNATURES, type TimeSignature } from "@/lib/play-types";
 
 type TimeSignatureFieldProps = {
   value: TimeSignature;

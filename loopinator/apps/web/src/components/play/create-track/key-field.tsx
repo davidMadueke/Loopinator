@@ -1,4 +1,3 @@
-import { Label } from "@loopinator/ui/components/label";
 import {
   Select,
   SelectContent,
