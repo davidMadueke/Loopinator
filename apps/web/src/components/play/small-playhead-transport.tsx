@@ -20,8 +20,8 @@ const HOVER_DELAY_MS = 2000;
 /* Touch fires no pointerleave, so a tap-driven expansion has to time itself out. */
 const PRESS_EXPAND_MS = 3000;
 
-const ISLAND_HEIGHT = 36;
-const ISLAND_PADDING = 2;
+const ISLAND_HEIGHT = 40;
+const ISLAND_PADDING = 4;
 const ISLAND_GAP = 4;
 const RING_SIZE = ISLAND_HEIGHT - ISLAND_PADDING * 2;
 const RING_STROKE = 2.5;
@@ -177,12 +177,12 @@ function TransportIsland({
       id="small-playhead-transport"
       ref={islandRef}
       withContainer={false}
-      className="flex bg-card w-auto h-auto"
+      className="flex bg-card w-auto h-fill "
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
       <div
-        className="flex h-full w-full items-center py-4"
+        className="flex h-full w-full items-center justify-center"
         style={{ gap: ISLAND_GAP, paddingInline: ISLAND_PADDING }}
       >
         <span

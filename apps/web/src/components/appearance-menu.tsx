@@ -45,7 +45,7 @@ export function AppearanceMenu() {
       <DropdownMenuTrigger
         render={<Button variant="ghost" size="icon" aria-label="Appearance" />}
       >
-        <PaletteIcon />
+        <PaletteIcon className="" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 pt-2 pb-4">
         <DropdownMenuRadioGroup

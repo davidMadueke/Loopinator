@@ -18,12 +18,13 @@ function createLabel(tab: LibraryTab) {
 }
 
 type LibraryPanelProps = {
+  defaultTab: LibraryTab;
   activeTrackId?: string;
   activeSetlistId?: string;
 };
 
-export function LibraryPanel({ activeTrackId, activeSetlistId }: LibraryPanelProps) {
-  const [tab, setTab] = useState<LibraryTab>("Track");
+export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: LibraryPanelProps) {
+  const [tab, setTab] = useState<LibraryTab>(defaultTab);
   const [view, setView] = useState<LibraryView>("browse");
 
   const browseResetKey = useLibraryCreateStore((state) => state.browseResetKey);
