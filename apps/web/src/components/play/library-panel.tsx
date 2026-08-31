@@ -105,9 +105,12 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
                     </TabsList>
                   </div>
 
-                  <div className="flex w-full justify-center">
+
+                  { tab === "Track" && (
+                    <div className="flex w-full justify-center">
                     <FiltersTrigger />
-                  </div>
+                    </div>
+                  ) }
 
                   <div className="flex w-full justify-end">
                     <HoverButton
@@ -120,7 +123,11 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
                     />
                   </div>
                 </div>
+
+                { tab === "Track" && (
                 <FiltersChips />
+                )}
+                
               </div>
             </div>
 
