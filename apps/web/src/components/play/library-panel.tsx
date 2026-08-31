@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@loopinator/ui/components/tabs";
 import { Button } from "@loopinator/ui/components/button";
 import { HoverButton } from "@loopinator/ui/components/hover-button";
@@ -15,6 +15,18 @@ type LibraryView = "browse" | "create";
 
 function createLabel(tab: LibraryTab) {
   return `Create New ${tab}`;
+}
+
+type LibraryPanelScrollAreaProps = {
+  children: ReactNode;
+};
+
+function LibraryPanelScrollArea({ children }: LibraryPanelScrollAreaProps) {
+  return (
+    <div className="mx-auto min-h-0 w-full max-w-215 flex-1 overflow-y-auto overscroll-contain">
+      <div className="px-4 pb-4">{children}</div>
+    </div>
+  );
 }
 
 type LibraryPanelProps = {
@@ -63,8 +75,8 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
   );
 
   return (
-    <section className="border-b border-border bg-card/40">
-      <div className="mx-auto w-full max-w-215 px-4 py-4">
+    <section className="sticky top-0 z-20 flex max-h-[calc(100dvh-8.75rem)] flex-col overflow-hidden border-b border-border bg-card/40">
+      <div className="mx-auto w-full max-w-215 shrink-0 px-4 pt-4">
         <div className="flex items-center justify-between gap-4 pb-4">
           <h2 className="text-2xl font-medium">{creating ? createLabel(tab) : "Library"}</h2>
           {creating ? (
@@ -73,14 +85,24 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
             </Button>
           ) : null}
         </div>
+      </div>
 
-        {creating ? null : (
-          <Tabs value={tab} onValueChange={(value) => setTab(value as LibraryTab)}>
+      {creating ? null : (
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as LibraryTab)}
+          className="flex min-h-0 flex-1 flex-col gap-2"
+        >
+          <div className="mx-auto w-full max-w-215 shrink-0 px-4">
             <div className="flex">
-              <TabsList variant="default">
-                <TabsTrigger value="Track">Tracks</TabsTrigger>
-                <TabsTrigger value="Setlist">Setlists</TabsTrigger>
-              </TabsList>
+              <div className="flex w-full justify-start">
+                <TabsList variant="default">
+                  <TabsTrigger value="Track">Tracks</TabsTrigger>
+                  <TabsTrigger value="Setlist">Setlists</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <div className="flex w-full justify-center" />
 
               <div className="flex w-full justify-end">
                 <HoverButton
@@ -93,27 +115,29 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
                 />
               </div>
             </div>
+          </div>
 
+          <LibraryPanelScrollArea>
             <TabsContent value="Track" className="pt-4">
               <LibraryTracksTab activeTrackId={activeTrackId} />
             </TabsContent>
             <TabsContent value="Setlist" className="pt-4">
               <LibrarySetlistsTab activeSetlistId={activeSetlistId} />
             </TabsContent>
-          </Tabs>
-        )}
-      </div>
+          </LibraryPanelScrollArea>
+        </Tabs>
+      )}
 
       {creating && tab === "Track" && (
-        <div className="mx-auto w-full max-w-215 px-4 pb-4">
+        <LibraryPanelScrollArea>
           <CreateTrackPanel onProgressChange={handleProgressChange} />
-        </div>
+        </LibraryPanelScrollArea>
       )}
 
       {creating && tab === "Setlist" && (
-        <div className="mx-auto w-full max-w-215 px-4 pb-4">
+        <LibraryPanelScrollArea>
           <CreateSetlistPanel onProgressChange={handleProgressChange} />
-        </div>
+        </LibraryPanelScrollArea>
       )}
     </section>
   );
