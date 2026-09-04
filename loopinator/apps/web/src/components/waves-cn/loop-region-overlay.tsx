@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@loopinator/ui/lib/utils";
 import {
   commitLoopPointSeconds,
-  timeToStoredValue,
+  toStoredLoopRegion,
 } from "@/lib/loop-region-time";
 
 type LoopRegionOverlayProps = {
@@ -19,6 +19,11 @@ type LoopRegionOverlayProps = {
 };
 
 type DragTarget = "in" | "out";
+
+type DragState = {
+  target: DragTarget;
+  otherSeconds: number;
+};
 
 function timeFromClientX(
   clientX: number,
@@ -40,7 +45,7 @@ export function LoopRegionOverlay({
   onOutPointChange,
 }: LoopRegionOverlayProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const dragRef = React.useRef<DragTarget | null>(null);
+  const dragRef = React.useRef<DragState | null>(null);
   const snapLoopPointRef = React.useRef(snapLoopPoint);
   const inSecondsRef = React.useRef(inSeconds);
   const outSecondsRef = React.useRef(outSeconds);
@@ -55,64 +60,51 @@ export function LoopRegionOverlay({
   const commitDrag = React.useCallback(
     (
       target: DragTarget,
-      nextIn: number,
-      nextOut: number,
+      nextTime: number,
+      otherSeconds: number,
       snap: boolean,
     ) => {
-      const clamped = commitLoopPointSeconds(
-        target === "in" ? nextIn : nextOut,
-        target === "in" ? nextOut : nextIn,
+      const ordered = commitLoopPointSeconds(
+        nextTime,
+        otherSeconds,
         duration,
-        target === "in" ? "in" : "out",
+        target,
         {
           snap,
           snapLoopPoint: snapLoopPointRef.current,
         },
       );
-
-      if (target === "in") {
-        onInPointChange(
-          timeToStoredValue(clamped.inSeconds, duration, "in"),
-        );
-      } else {
-        onOutPointChange(
-          timeToStoredValue(clamped.outSeconds, duration, "out"),
-        );
-      }
+      const stored = toStoredLoopRegion(
+        ordered.inSeconds,
+        ordered.outSeconds,
+        duration,
+      );
+      onInPointChange(stored.inPoint);
+      onOutPointChange(stored.outPoint);
     },
     [duration, onInPointChange, onOutPointChange],
   );
 
   React.useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
-      const target = dragRef.current;
+      const drag = dragRef.current;
       const container = containerRef.current;
-      if (!target || !container || duration <= 0) {
+      if (!drag || !container || duration <= 0) {
         return;
       }
 
       const rect = container.getBoundingClientRect();
       const nextTime = timeFromClientX(event.clientX, rect, duration);
-
-      if (target === "in") {
-        commitDrag("in", nextTime, outSecondsRef.current, false);
-      } else {
-        commitDrag("out", inSecondsRef.current, nextTime, false);
-      }
+      commitDrag(drag.target, nextTime, drag.otherSeconds, false);
     };
 
     const onPointerUp = (event: PointerEvent) => {
-      const target = dragRef.current;
+      const drag = dragRef.current;
       const container = containerRef.current;
-      if (target && container && duration > 0) {
+      if (drag && container && duration > 0) {
         const rect = container.getBoundingClientRect();
         const nextTime = timeFromClientX(event.clientX, rect, duration);
-
-        if (target === "in") {
-          commitDrag("in", nextTime, outSecondsRef.current, true);
-        } else {
-          commitDrag("out", inSecondsRef.current, nextTime, true);
-        }
+        commitDrag(drag.target, nextTime, drag.otherSeconds, true);
       }
 
       dragRef.current = null;
@@ -120,16 +112,22 @@ export function LoopRegionOverlay({
 
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
   }, [commitDrag, duration]);
 
   const startDrag = (target: DragTarget) => (event: React.PointerEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    dragRef.current = target;
+    dragRef.current = {
+      target,
+      otherSeconds:
+        target === "in" ? outSecondsRef.current : inSecondsRef.current,
+    };
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
   };
 

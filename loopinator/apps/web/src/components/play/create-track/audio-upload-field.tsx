@@ -6,6 +6,7 @@ import { FileUpload } from "@loopinator/ui/components/file-upload";
 import { WavePlayer } from "@/components/waves-cn/wave-player";
 import { LoopRegionField } from "./loop-region-field";
 import { useLoopSnap } from "@/lib/use-loop-snap";
+import { storedValueToSeconds } from "@/lib/loop-region-time";
 
 const AUDIO_ACCEPT = {
   "audio/wav": [".wav"],
@@ -42,6 +43,21 @@ export function AudioUploadField({
 }: AudioUploadFieldProps) {
   const [duration, setDuration] = React.useState(0);
   const { snapLoopPoint } = useLoopSnap(file);
+
+  React.useLayoutEffect(() => {
+    if (duration <= 0) {
+      return;
+    }
+
+    const inSeconds = storedValueToSeconds(inPoint, duration, "in");
+    const outSeconds = storedValueToSeconds(outPoint, duration, "out");
+    if (inSeconds <= outSeconds) {
+      return;
+    }
+
+    onInPointChange(outPoint);
+    onOutPointChange(inPoint);
+  }, [duration, inPoint, onInPointChange, onOutPointChange, outPoint]);
 
   return (
     <div className="space-y-2">

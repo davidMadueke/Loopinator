@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@loopinator/ui/components/button";
 
 import { AudioUploadField } from "./create-track/audio-upload-field";
@@ -19,6 +19,14 @@ type CreateTrackPanelProps = {
 
 export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
   const [form, setForm] = useState<CreateTrackFormState>(INITIAL_CREATE_TRACK_FORM);
+
+  const handleInPointChange = useCallback((inPoint: string) => {
+    setForm((current) => ({ ...current, inPoint }));
+  }, []);
+
+  const handleOutPointChange = useCallback((outPoint: string) => {
+    setForm((current) => ({ ...current, outPoint }));
+  }, []);
 
   useEffect(() => {
     onProgressChange(hasCreateTrackProgress(form));
@@ -45,8 +53,8 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
               outPoint: "",
             }))
           }
-          onInPointChange={(inPoint) => setForm((current) => ({ ...current, inPoint }))}
-          onOutPointChange={(outPoint) => setForm((current) => ({ ...current, outPoint }))}
+          onInPointChange={handleInPointChange}
+          onOutPointChange={handleOutPointChange}
         />
         <DisplayNameField
           value={form.displayName}

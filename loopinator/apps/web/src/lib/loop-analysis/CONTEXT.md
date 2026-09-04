@@ -22,11 +22,11 @@ Loop points are always stored in **source file time**. Time-stretch (Target BPM 
 |---|---|
 | Decode for analysis | Full sample rate via `AudioContext.decodeAudioData`, separate from Wavesurfer’s 8 kHz waveform decode |
 | Snap mode | Zero crossing only, ±50 ms search (`DEFAULT_ZERO_CROSS_SEARCH_MS`) |
-| When snap runs | Marker **drag release** and loop time **text blur** — not on every pointer move |
+| When snap runs | Marker **drag release**, field **scrub release**, and loop time **text blur** — not on every pointer move |
 | Before decode finishes | Drag and text edit work; snap is skipped until `snapLoopPoint` is available |
 | Time storage | `m:ss` or `m:ss.sss` strings (e.g. `1:05.125`); sample-accurate after snap |
 | Edge auto | Within ~50 ms of file start/end → stored as empty string (**Auto**) |
-| Min gap | In stays ≥50 ms before Out when clamping |
+| In/Out order | In-point stays at or before Out-point; crossing swaps the two values. Equal is allowed |
 | Mono mix | All channels averaged before zero-cross search |
 | Crossing pick | Nearest to target time; tie-break on lower amplitude at the crossing |
 
@@ -35,7 +35,7 @@ Loop points are always stored in **source file time**. Time-stretch (Target BPM 
 ```
 raw seconds
   → optional zeroCrossSnap (±50 ms, full-rate buffer)
-  → clampLoopTimes (min gap, file bounds)
+  → clampLoopTimes (order/swap, file bounds)
   → timeToStoredValue (edge auto, format m:ss.sss)
 ```
 
@@ -65,7 +65,7 @@ loop-analysis/
 | `audio-upload-field.tsx` | Calls `useLoopSnap(file)`; passes snap into WavePlayer and LoopRegionField |
 | `wave-player.tsx` | `loopRegion.snapLoopPoint`; Regions plugin snaps on `region-updated` |
 | `loop-region-overlay.tsx` | Free drag while moving; snap on pointer up (`LOOP_REGION_IMPL === "custom"`) |
-| `loop-region-field.tsx` | Snap on blur via `commitLoopPointSeconds` |
+| `loop-region-field.tsx` | Snap on blur or scrub release via `commitLoopPointSeconds`; drag the field to scrub |
 
 WavePlayer opt-in: `loopRegion` prop. Library preview and other uses stay unchanged when `snapLoopPoint` is omitted.
 
@@ -106,11 +106,11 @@ Suggested snap modes for UI: Off | Beat | Zero | Beat + Zero (default for worshi
 
 ## Constants
 
-| Name | Value | File |
+| Name | Value (Seconds) | File |
 |---|---|---|
 | `DEFAULT_ZERO_CROSS_SEARCH_MS` | 50 | `zero-crossing.ts` |
 | `LOOP_EDGE_SNAP_SEC` | 0.05 | `loop-region-time.ts` |
-| `LOOP_MIN_GAP_SEC` | 0.05 | `loop-region-time.ts` |
+| `LOOP_MIN_GAP_SEC` | 0.05 | `loop-region-time.ts` (Regions plugin minLength only) |
 | `LOOP_WRAP_EPSILON_SEC` | 0.02 | `loop-playback.ts` |
 
 ## Tests

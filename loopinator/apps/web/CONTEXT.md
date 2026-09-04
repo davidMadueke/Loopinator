@@ -276,6 +276,9 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | Form state | `inPoint` / `outPoint` stay in `CreateTrackPanel`; passed through `AudioUploadField` as props |
 | Auto (file edge) | Stored as empty string `""`; inputs display **Auto**; markers stay at 0 s (in) or duration (out) |
 | Marker UI | Thin vertical lines, draggable; primary-tinted shade between them |
+| In/Out order | In-point is always at or before Out-point. Dragging or typing past the other point swaps the two values |
+| Overlay ↔ fields | Both write In-point and Out-point together after every edit, so the waveform markers and the time fields never drift |
+| Time fields | Drag horizontally to scrub; click (no drag) to type m:ss or m:ss.sss. Shift tightens the scrub |
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |

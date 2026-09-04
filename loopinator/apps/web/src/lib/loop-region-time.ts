@@ -1,7 +1,7 @@
 /** Snap within this distance of file start/end stores as auto (empty string). */
 export const LOOP_EDGE_SNAP_SEC = 0.05;
 
-/** Minimum gap between in and out when dragging. */
+/** Minimum region length for the Wavesurfer Regions plugin. Overlay/fields swap instead. */
 export const LOOP_MIN_GAP_SEC = 0.05;
 
 export const LOOP_AUTO_LABEL = "Auto";
@@ -92,18 +92,34 @@ export function clampLoopTimes(
   outSeconds: number,
   duration: number,
 ): { inSeconds: number; outSeconds: number } {
-  const maxIn = Math.max(0, duration - LOOP_MIN_GAP_SEC);
-  const nextIn = Math.min(Math.max(0, inSeconds), maxIn);
-  const nextOut = Math.min(
-    Math.max(nextIn + LOOP_MIN_GAP_SEC, outSeconds),
-    duration,
-  );
-  return { inSeconds: nextIn, outSeconds: nextOut };
+  if (duration <= 0) {
+    return { inSeconds: 0, outSeconds: 0 };
+  }
+
+  const nextIn = Math.min(Math.max(0, inSeconds), duration);
+  const nextOut = Math.min(Math.max(0, outSeconds), duration);
+
+  if (nextIn <= nextOut) {
+    return { inSeconds: nextIn, outSeconds: nextOut };
+  }
+
+  return { inSeconds: nextOut, outSeconds: nextIn };
+}
+
+export function toStoredLoopRegion(
+  inSeconds: number,
+  outSeconds: number,
+  duration: number,
+): { inPoint: string; outPoint: string } {
+  return {
+    inPoint: timeToStoredValue(inSeconds, duration, "in"),
+    outPoint: timeToStoredValue(outSeconds, duration, "out"),
+  };
 }
 
 /**
- * Apply optional zero-cross snap, then clamp in/out together.
- * Used when committing loop marker drags or text input.
+ * Apply optional zero-cross snap, then order in/out so In-point is never after Out-point.
+ * Crossing swaps the two values. Used when committing marker drags, field scrubs, or text input.
  */
 export function commitLoopPointSeconds(
   seconds: number,
