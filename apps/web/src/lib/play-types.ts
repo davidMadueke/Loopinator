@@ -88,6 +88,8 @@ export type Setlist = {
 
 export type BpmBand = "under-80" | "80-99" | "100-129" | "130-159" | "160-plus";
 
+export const BPM_BANDS: BpmBand[] = ["under-80", "80-99", "100-129", "130-159", "160-plus"];
+
 export function getBpmBand(bpm: number): BpmBand {
   if (bpm < 80) return "under-80";
   if (bpm < 100) return "80-99";

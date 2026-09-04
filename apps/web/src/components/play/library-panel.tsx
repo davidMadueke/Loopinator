@@ -31,13 +31,15 @@ function LibraryPanelScrollArea({ children }: LibraryPanelScrollAreaProps) {
 }
 
 type LibraryPanelProps = {
-  defaultTab: LibraryTab;
+  tab: LibraryTab;
+  onTabChange: (tab: LibraryTab) => void;
   activeTrackId?: string;
   activeSetlistId?: string;
 };
 
-export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: LibraryPanelProps) {
-  const [tab, setTab] = useState<LibraryTab>(defaultTab);
+export type { LibraryTab };
+
+export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId }: LibraryPanelProps) {
   const [view, setView] = useState<LibraryView>("browse");
 
   const browseResetKey = useLibraryCreateStore((state) => state.browseResetKey);
@@ -92,7 +94,7 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
         <Filters>
           <Tabs
             value={tab}
-            onValueChange={(value) => setTab(value as LibraryTab)}
+            onValueChange={(value) => onTabChange(value as LibraryTab)}
             className="flex min-h-0 flex-1 flex-col gap-2"
           >
             <div className="mx-auto w-full max-w-215 shrink-0 px-4">
@@ -127,7 +129,7 @@ export function LibraryPanel({ defaultTab, activeTrackId, activeSetlistId }: Lib
                 { tab === "Track" && (
                 <FiltersChips />
                 )}
-                
+
               </div>
             </div>
 

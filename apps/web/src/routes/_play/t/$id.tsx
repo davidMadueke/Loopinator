@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 
 import { PlayScreen } from "@/components/play/play-screen";
 import { getTrackById } from "@/lib/mock-data";
+import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
 
 export const Route = createFileRoute("/_play/t/$id")({
   component: TrackPlayRoute,
@@ -9,7 +10,8 @@ export const Route = createFileRoute("/_play/t/$id")({
 
 function TrackPlayRoute() {
   const { id } = Route.useParams();
-  const track = getTrackById(id);
+  const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
+  const track = getTrackById(id, fixturesEnabled);
 
   if (!track) {
     throw notFound();

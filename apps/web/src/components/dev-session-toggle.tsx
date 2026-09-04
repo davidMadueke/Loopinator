@@ -4,6 +4,7 @@ import { useContext } from "react";
 import { SessionSourceContext } from "@/components/session-provider";
 import { useSession } from "@/hooks/use-session";
 import { useDevSessionStore } from "@/stores/dev-session-store";
+import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
 
 /**
  * Flips the dummy session while editor UI is being built. Renders nothing once the
@@ -14,6 +15,8 @@ export function DevSessionToggle() {
   const { editor, isLoading } = useSession();
   const signIn = useDevSessionStore((state) => state.signIn);
   const signOut = useDevSessionStore((state) => state.signOut);
+  const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
+  const toggleFixtures = usePaginationFixturesStore((state) => state.toggle);
 
   if (source.name !== "dev" || isLoading) {
     return null;
@@ -24,6 +27,17 @@ export function DevSessionToggle() {
       <span className="text-muted-foreground">
         Dev session: {editor ? editor.name : "signed out"}
       </span>
+      {editor ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 rounded-full px-2 text-xs"
+          aria-pressed={fixturesEnabled}
+          onClick={toggleFixtures}
+        >
+          {fixturesEnabled ? "Clear pagination fixtures" : "Add pagination fixtures"}
+        </Button>
+      ) : null}
       <Button
         variant="outline"
         size="sm"
