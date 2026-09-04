@@ -316,7 +316,7 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 | Tempo editor | Dual-thumb range slider, 40–200 BPM, step 1; each bound is a number input beside the track; Apply/Discard footer like c-filters-6 |
 | Tempo chip | Mini track + range text; not a bare number |
 | Time signature | Multi toggle group over `TIME_SIGNATURES` from `play-types` |
-| Key | Multi toggle group over `KEY_CENTERS`; wraps inside the popover. Selected toggle is `bg-primary` / `text-primary-foreground`; chip value uses `text-primary` |
+| Key | Multi toggle group over `KEY_CENTERS` wrapping in the popover, with an exclusive Major/Minor toggle beside it. Scale is disabled when only No Key is selected; neither scale means any. Chip value shows centers then scale, in `text-primary` |
 | Choice operators | Key and Time signature default to **is**, **is not**, **is one of**, **is none of**. Override with `keyOperators` / `timeSignatureOperators` on `Filters` |
 | Chip label wash | Tempo `bg-primary/20`, Time signature `bg-primary/40`, Key `bg-primary/60` |
 | Add control | Default `HoverButton`: icon expands to **Add Filter**. Open matches the Route breadcrumb (`text-primary-on-muted`). Custom `trigger` skips this |
