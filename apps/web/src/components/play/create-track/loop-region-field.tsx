@@ -3,14 +3,19 @@
 import * as React from "react";
 import { Label } from "@loopinator/ui/components/label";
 import { Input } from "@loopinator/ui/components/input";
+import { cn } from "@loopinator/ui/lib/utils";
 import {
   commitLoopPointSeconds,
   LOOP_AUTO_LABEL,
   isAutoPoint,
   parseLoopTimeInput,
   storedValueToSeconds,
-  timeToStoredValue,
+  toStoredLoopRegion,
 } from "@/lib/loop-region-time";
+
+const SCRUB_PX_PER_SEC = 40;
+const SCRUB_FINE_PX_PER_SEC = 160;
+const SCRUB_THRESHOLD_PX = 3;
 
 type LoopRegionFieldProps = {
   inPoint: string;
@@ -25,6 +30,21 @@ function displayValue(stored: string): string {
   return isAutoPoint(stored) ? LOOP_AUTO_LABEL : stored;
 }
 
+function emitLoopRegion(
+  ordered: { inSeconds: number; outSeconds: number },
+  duration: number,
+  onInPointChange: (value: string) => void,
+  onOutPointChange: (value: string) => void,
+) {
+  const stored = toStoredLoopRegion(
+    ordered.inSeconds,
+    ordered.outSeconds,
+    duration,
+  );
+  onInPointChange(stored.inPoint);
+  onOutPointChange(stored.outPoint);
+}
+
 type LoopPointInputProps = {
   id: string;
   label: string;
@@ -33,7 +53,16 @@ type LoopPointInputProps = {
   duration: number;
   edge: "in" | "out";
   snapLoopPoint?: ((seconds: number) => number) | null;
-  onChange: (value: string) => void;
+  onInPointChange: (value: string) => void;
+  onOutPointChange: (value: string) => void;
+};
+
+type ScrubState = {
+  pointerId: number;
+  startX: number;
+  startSeconds: number;
+  otherSeconds: number;
+  moved: boolean;
 };
 
 function LoopPointInput({
@@ -44,16 +73,27 @@ function LoopPointInput({
   duration,
   edge,
   snapLoopPoint,
-  onChange,
+  onInPointChange,
+  onOutPointChange,
 }: LoopPointInputProps) {
   const [draft, setDraft] = React.useState<string | null>(null);
+  const [isFocused, setIsFocused] = React.useState(false);
+  const skipCommitRef = React.useRef(false);
+  const scrubRef = React.useRef<ScrubState | null>(null);
   const value = draft ?? displayValue(storedValue);
 
   const handleFocus = () => {
+    setIsFocused(true);
     setDraft(displayValue(storedValue));
   };
 
   const handleBlur = () => {
+    setIsFocused(false);
+    if (skipCommitRef.current) {
+      skipCommitRef.current = false;
+      setDraft(null);
+      return;
+    }
     if (draft === null) {
       return;
     }
@@ -65,23 +105,116 @@ function LoopPointInput({
     }
 
     if (parsed === "auto") {
-      onChange("");
+      if (edge === "in") {
+        onInPointChange("");
+      } else {
+        onOutPointChange("");
+      }
     } else {
-      const clamped = commitLoopPointSeconds(
-        Math.min(Math.max(0, parsed), duration),
-        otherSeconds,
+      emitLoopRegion(
+        commitLoopPointSeconds(
+          Math.min(Math.max(0, parsed), duration),
+          otherSeconds,
+          duration,
+          edge,
+          {
+            snap: Boolean(snapLoopPoint),
+            snapLoopPoint,
+          },
+        ),
         duration,
-        edge,
-        {
-          snap: Boolean(snapLoopPoint),
-          snapLoopPoint,
-        },
+        onInPointChange,
+        onOutPointChange,
       );
-      const seconds = edge === "in" ? clamped.inSeconds : clamped.outSeconds;
-      onChange(timeToStoredValue(seconds, duration, edge));
     }
 
     setDraft(null);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.currentTarget.blur();
+    }
+    if (event.key === "Escape") {
+      skipCommitRef.current = true;
+      setDraft(null);
+      event.currentTarget.blur();
+    }
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLInputElement>) => {
+    if (event.button !== 0 || duration <= 0 || isFocused) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    scrubRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startSeconds: storedValueToSeconds(storedValue, duration, edge),
+      otherSeconds,
+      moved: false,
+    };
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLInputElement>) => {
+    const scrub = scrubRef.current;
+    if (!scrub || event.pointerId !== scrub.pointerId) {
+      return;
+    }
+
+    const dx = event.clientX - scrub.startX;
+    if (!scrub.moved && Math.abs(dx) < SCRUB_THRESHOLD_PX) {
+      return;
+    }
+
+    scrub.moved = true;
+    const pxPerSec = event.shiftKey ? SCRUB_FINE_PX_PER_SEC : SCRUB_PX_PER_SEC;
+    emitLoopRegion(
+      commitLoopPointSeconds(
+        scrub.startSeconds + dx / pxPerSec,
+        scrub.otherSeconds,
+        duration,
+        edge,
+        { snap: false },
+      ),
+      duration,
+      onInPointChange,
+      onOutPointChange,
+    );
+  };
+
+  const endScrub = (event: React.PointerEvent<HTMLInputElement>) => {
+    const scrub = scrubRef.current;
+    if (!scrub || event.pointerId !== scrub.pointerId) {
+      return;
+    }
+
+    scrubRef.current = null;
+
+    if (scrub.moved) {
+      const dx = event.clientX - scrub.startX;
+      const pxPerSec = event.shiftKey
+        ? SCRUB_FINE_PX_PER_SEC
+        : SCRUB_PX_PER_SEC;
+      emitLoopRegion(
+        commitLoopPointSeconds(
+          scrub.startSeconds + dx / pxPerSec,
+          scrub.otherSeconds,
+          duration,
+          edge,
+          { snap: Boolean(snapLoopPoint), snapLoopPoint },
+        ),
+        duration,
+        onInPointChange,
+        onOutPointChange,
+      );
+      return;
+    }
+
+    event.currentTarget.focus();
+    event.currentTarget.select();
   };
 
   return (
@@ -91,9 +224,18 @@ function LoopPointInput({
         id={id}
         placeholder={LOOP_AUTO_LABEL}
         value={value}
+        className={cn(
+          "touch-none",
+          isFocused ? "cursor-text" : "cursor-ew-resize select-none",
+        )}
         onFocus={handleFocus}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endScrub}
+        onPointerCancel={endScrub}
       />
     </div>
   );
@@ -117,7 +259,8 @@ export function LoopRegionField({
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">Loop region</legend>
       <p className="text-xs text-muted-foreground">
-        Drag the markers on the waveform or enter times as m:ss or m:ss.sss.
+        Drag the markers on the waveform, drag a time field, or type m:ss or
+        m:ss.sss. If In-point would land after Out-point, the two values swap.
         Auto means the file start (in) or end (out). Markers snap to the
         nearest zero crossing when you release a drag or leave a text field.
       </p>
@@ -130,7 +273,8 @@ export function LoopRegionField({
           duration={duration}
           edge="in"
           snapLoopPoint={snapLoopPoint}
-          onChange={onInPointChange}
+          onInPointChange={onInPointChange}
+          onOutPointChange={onOutPointChange}
         />
         <LoopPointInput
           id="track-out-point"
@@ -140,7 +284,8 @@ export function LoopRegionField({
           duration={duration}
           edge="out"
           snapLoopPoint={snapLoopPoint}
-          onChange={onOutPointChange}
+          onInPointChange={onInPointChange}
+          onOutPointChange={onOutPointChange}
         />
       </div>
     </fieldset>

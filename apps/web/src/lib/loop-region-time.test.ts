@@ -4,6 +4,8 @@ import {
   findNearestZeroCrossing,
 } from "@/lib/loop-analysis/zero-crossing";
 import {
+  clampLoopTimes,
+  commitLoopPointSeconds,
   formatLoopTime,
   parseLoopTimeInput,
   storedValueToSeconds,
@@ -29,6 +31,41 @@ describe("loop-region-time", () => {
     const stored = timeToStoredValue(12.347, 120, "in");
     expect(stored).toBe("0:12.347");
     expect(storedValueToSeconds(stored, 120, "in")).toBeCloseTo(12.347, 3);
+  });
+
+  it("keeps in at or before out", () => {
+    expect(clampLoopTimes(3, 10, 60)).toEqual({ inSeconds: 3, outSeconds: 10 });
+    expect(clampLoopTimes(4, 4, 60)).toEqual({ inSeconds: 4, outSeconds: 4 });
+  });
+
+  it("swaps when in is after out", () => {
+    expect(clampLoopTimes(10, 3, 60)).toEqual({ inSeconds: 3, outSeconds: 10 });
+  });
+
+  it("clamps to file bounds before swapping", () => {
+    expect(clampLoopTimes(-1, 100, 60)).toEqual({
+      inSeconds: 0,
+      outSeconds: 60,
+    });
+    expect(clampLoopTimes(100, 2, 60)).toEqual({
+      inSeconds: 2,
+      outSeconds: 60,
+    });
+  });
+
+  it("swaps the edited edge when it crosses the other point", () => {
+    expect(commitLoopPointSeconds(8, 5, 60, "in")).toEqual({
+      inSeconds: 5,
+      outSeconds: 8,
+    });
+    expect(commitLoopPointSeconds(2, 5, 60, "out")).toEqual({
+      inSeconds: 2,
+      outSeconds: 5,
+    });
+    expect(commitLoopPointSeconds(8, 5, 60, "out")).toEqual({
+      inSeconds: 5,
+      outSeconds: 8,
+    });
   });
 });
 

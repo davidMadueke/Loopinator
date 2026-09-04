@@ -16,7 +16,7 @@ import {
   commitLoopPointSeconds,
   LOOP_MIN_GAP_SEC,
   storedValueToSeconds,
-  timeToStoredValue,
+  toStoredLoopRegion,
 } from "@/lib/loop-region-time";
 import { wrapLoopPlayback } from "@/lib/loop-playback";
 
@@ -193,36 +193,20 @@ function useRegionsLoopRegion(
       }
 
       const snap = snapLoopPointRef.current;
-      let nextIn = region.start;
-      let nextOut = region.end;
-
-      if (snap) {
-        if (side === "start") {
-          nextIn = commitLoopPointSeconds(
-            region.start,
-            region.end,
-            duration,
-            "in",
-            { snap: true, snapLoopPoint: snap },
-          ).inSeconds;
-        }
-        if (side === "end") {
-          nextOut = commitLoopPointSeconds(
-            region.end,
-            nextIn,
-            duration,
-            "out",
-            { snap: true, snapLoopPoint: snap },
-          ).outSeconds;
-        }
-      }
-
-      loopRegion.onInPointChange(
-        timeToStoredValue(nextIn, duration, "in"),
+      const ordered = commitLoopPointSeconds(
+        side === "start" ? region.start : region.end,
+        side === "start" ? region.end : region.start,
+        duration,
+        side === "start" ? "in" : "out",
+        { snap: Boolean(snap), snapLoopPoint: snap },
       );
-      loopRegion.onOutPointChange(
-        timeToStoredValue(nextOut, duration, "out"),
+      const stored = toStoredLoopRegion(
+        ordered.inSeconds,
+        ordered.outSeconds,
+        duration,
       );
+      loopRegion.onInPointChange(stored.inPoint);
+      loopRegion.onOutPointChange(stored.outPoint);
     };
 
     plugin.on("region-updated", onUpdated);
