@@ -36,10 +36,11 @@ import {
   operatorTakesValue,
 } from "@/components/reui/filters/filters-operators";
 import { findFilterRule } from "@/components/reui/filters/filters-query";
-import { KEY_CENTERS, TIME_SIGNATURES } from "@/lib/play-types";
+import { KEY_CENTERS, KEY_SCALES, TIME_SIGNATURES, type KeyScale } from "@/lib/play-types";
 import { Button } from "@loopinator/ui/components/button";
 import { HoverButton } from "@loopinator/ui/components/hover-button";
 import { Input } from "@loopinator/ui/components/input";
+import { Separator } from "@loopinator/ui/components/separator";
 import { Slider } from "@loopinator/ui/components/slider";
 import {
   ToggleGroup,
@@ -403,16 +404,149 @@ const KEY_OPTIONS = KEY_CENTERS.map((center) => ({
   label: center,
 }));
 
+const KEY_SCALE_OPTIONS = KEY_SCALES.map((scale) => ({
+  value: scale,
+  label: scale === "major" ? "Major" : "Minor",
+}));
+
 const TOGGLE_ITEM_SELECTED_CLASS =
   "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground";
 
 const TimeSignatureToggles = makeToggleEditor(TIME_SIGNATURE_OPTIONS, {
   itemClassName: TOGGLE_ITEM_SELECTED_CLASS,
 });
-const KeyToggles = makeToggleEditor(KEY_OPTIONS, {
-  groupClassName: "max-w-72 flex-wrap",
-  itemClassName: TOGGLE_ITEM_SELECTED_CLASS,
-});
+
+type KeyFilterSelection = {
+  centers: string[];
+  scale: KeyScale | "";
+};
+
+function parseKeyToken(token: string): { center: string; scale: KeyScale | "" } {
+  if (token === "major" || token === "minor") return { center: "", scale: token };
+  if (token.endsWith(" major")) return { center: token.slice(0, -" major".length), scale: "major" };
+  if (token.endsWith(" minor")) return { center: token.slice(0, -" minor".length), scale: "minor" };
+  return { center: token, scale: "" };
+}
+
+function parseKeyFilterValue(value: unknown): KeyFilterSelection {
+  const tokens =
+    Array.isArray(value)
+      ? (value as string[])
+      : typeof value === "string" && value
+        ? [value]
+        : [];
+  const centers: string[] = [];
+  let scale: KeyScale | "" = "";
+  for (const token of tokens) {
+    const parsed = parseKeyToken(token);
+    if (parsed.center && !centers.includes(parsed.center)) centers.push(parsed.center);
+    if (parsed.scale) scale = parsed.scale;
+  }
+  return { centers, scale };
+}
+
+function serializeKeyFilterValue(centers: string[], scale: KeyScale | ""): string[] {
+  if (centers.length === 0) return scale ? [scale] : [];
+  return centers.map((center) =>
+    !scale || center === "No Key" ? center : `${center} ${scale}`,
+  );
+}
+
+function formatKeyFilterText(centers: string[], scale: KeyScale | ""): string {
+  const scaleLabel = scale === "major" ? "Major" : scale === "minor" ? "Minor" : "";
+  if (centers.length === 0) return scaleLabel ? `any ${scaleLabel}` : "any key";
+  const extra = centers.length > 1 ? ` +${centers.length - 1}` : "";
+  return scaleLabel ? `${centers[0]}${extra} ${scaleLabel}` : `${centers[0]}${extra}`;
+}
+
+function KeyEditor({
+  value,
+  onValueChange,
+  commit,
+  field,
+  operator,
+  autoFocusProps,
+}: FilterEditorProps) {
+  const many = operator.arity === "many";
+  const { centers, scale } = parseKeyFilterValue(value);
+  const currentCenters = many ? centers : centers.slice(0, 1);
+  const scaleDisabled =
+    currentCenters.length > 0 && currentCenters.every((center) => center === "No Key");
+
+  const write = (nextCenters: string[], nextScale: KeyScale | "") => {
+    const next = serializeKeyFilterValue(nextCenters, nextScale);
+    if (many) {
+      onValueChange(next);
+      commit(next, { close: false });
+      return;
+    }
+    const picked = next.length <= 1 ? next[0] : next[next.length - 1];
+    onValueChange(picked);
+    commit(picked, { close: false });
+  };
+
+  return (
+    <div className="flex items-start gap-1.5 p-1">
+      <ToggleGroup
+        {...autoFocusProps}
+        multiple
+        variant="outline"
+        spacing={0}
+        aria-label={field.label}
+        value={currentCenters}
+        className="max-w-72 flex-wrap"
+        onValueChange={(next) => {
+          const nextCenters = Array.isArray(next) ? next : next ? [next] : [];
+          const nextScale =
+            nextCenters.length > 0 && nextCenters.every((center) => center === "No Key")
+              ? ""
+              : scale;
+          write(nextCenters, nextScale);
+        }}
+      >
+        {KEY_OPTIONS.map((option) => (
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            size="sm"
+            className={TOGGLE_ITEM_SELECTED_CLASS}
+          >
+            {option.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      <Separator orientation="vertical" className="self-stretch" />
+      <ToggleGroup
+        multiple
+        variant="outline"
+        spacing={0}
+        aria-label="Scale"
+        value={scaleDisabled || !scale ? [] : [scale]}
+        className="shrink-0"
+        onValueChange={(next) => {
+          const items = Array.isArray(next) ? next : next ? [next] : [];
+          const picked = items.find((item) => item !== scale) ?? items[0] ?? "";
+          write(
+            currentCenters,
+            picked === "major" || picked === "minor" ? picked : "",
+          );
+        }}
+      >
+        {KEY_SCALE_OPTIONS.map((option) => (
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            size="sm"
+            disabled={scaleDisabled}
+            className={TOGGLE_ITEM_SELECTED_CLASS}
+          >
+            {option.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /* Schema                                                                     */
@@ -483,12 +617,39 @@ function makeFields(
       options: KEY_OPTIONS,
       operators: keyOperators,
       defaultOperator: defaultChoiceOperator(keyOperators),
-      editor: KeyToggles as never,
-      renderValue: ({ options }) => (
-        <span className={options.length > 0 ? "text-primary" : undefined}>
-          <PickedLabels options={options} empty="any key" />
-        </span>
-      ),
+      editor: KeyEditor as never,
+      renderValue: (context) => {
+        const { centers, scale } = parseKeyFilterValue(context.value);
+        const empty = centers.length === 0 && !scale;
+        const scaleLabel = scale === "major" ? "Major" : scale === "minor" ? "Minor" : "";
+        return (
+          <span className={!empty ? "text-primary" : undefined}>
+            {empty ? (
+              "any key"
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                {centers.length > 0 ? (
+                  <>
+                    <span>{centers[0]}</span>
+                    {centers.length > 1 ? (
+                      <span className="tabular-nums text-muted-foreground">
+                        +{centers.length - 1}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  <span>any</span>
+                )}
+                {scaleLabel ? <span>{scaleLabel}</span> : null}
+              </span>
+            )}
+          </span>
+        );
+      },
+      valueText: (context) => {
+        const { centers, scale } = parseKeyFilterValue(context.value);
+        return formatKeyFilterText(centers, scale);
+      },
       icon: <Music2Icon className="size-3.5" />,
       chipLabelClassName: "bg-primary/60",
     },
