@@ -1,3 +1,6 @@
+import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
+
+import { PAGINATION_FIXTURE_TRACKS } from "./pagination-fixtures";
 import type { Setlist, Track } from "./play-types";
 
 export const DEMO_TRACKS: Track[] = [
@@ -878,8 +881,22 @@ export const DEMO_SETLISTS: Setlist[] = [
   },
 ];
 
-export function getTrackById(id: string): Track | undefined {
-  return DEMO_TRACKS.find((track) => track.id === id);
+export function getLibraryTracks(fixturesEnabled: boolean): Track[] {
+  return fixturesEnabled ? [...DEMO_TRACKS, ...PAGINATION_FIXTURE_TRACKS] : DEMO_TRACKS;
+}
+
+export function getTrackById(id: string, fixturesEnabled?: boolean): Track | undefined {
+  const includeFixtures = fixturesEnabled ?? usePaginationFixturesStore.getState().enabled;
+  const demo = DEMO_TRACKS.find((track) => track.id === id);
+  if (demo) {
+    return demo;
+  }
+
+  if (!includeFixtures) {
+    return undefined;
+  }
+
+  return PAGINATION_FIXTURE_TRACKS.find((track) => track.id === id);
 }
 
 export function getSetlistById(id: string): Setlist | undefined {

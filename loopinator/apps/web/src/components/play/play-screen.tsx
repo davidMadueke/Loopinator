@@ -6,7 +6,7 @@ import { useLibraryCreateStore } from "@/stores/library-create-store";
 
 import { AdvancedOptionsPanel } from "./advanced-options-panel";
 import { DiscardProgressDialog } from "./discard-progress-dialog";
-import { LibraryPanel } from "./library-panel";
+import { LibraryPanel, type LibraryTab } from "./library-panel";
 import { PlayScreenHeader } from "./play-screen-header";
 import { PlayheadPanel } from "./playhead-panel";
 import { RouteBreadcrumb } from "./route-breadcrumb";
@@ -28,8 +28,13 @@ type PlayScreenProps =
       onSlotChange: (index: number) => void;
     };
 
+function modeTab(mode: PlayScreenProps["mode"]): LibraryTab {
+  return mode === "setlist" ? "Setlist" : "Track";
+}
+
 export function PlayScreen(props: PlayScreenProps) {
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>(() => modeTab(props.mode));
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [transportExpanded, setTransportExpanded] = useState(false);
 
@@ -55,6 +60,7 @@ export function PlayScreen(props: PlayScreenProps) {
 
   const handleLibraryToggle = () => {
     if (!libraryOpen) {
+      setLibraryTab(modeTab(props.mode));
       setLibraryOpen(true);
       return;
     }
@@ -63,6 +69,14 @@ export function PlayScreen(props: PlayScreenProps) {
     if (result === "proceeded") {
       setLibraryOpen(false);
     }
+  };
+
+  const handleOpenLibrary = (tab: LibraryTab) => {
+    setLibraryTab(tab);
+    if (!libraryOpen) {
+      setLibraryOpen(true);
+    }
+    requestDiscard("return-to-browse");
   };
 
   const handleDiscardDialogOpenChange = (open: boolean) => {
@@ -102,7 +116,8 @@ export function PlayScreen(props: PlayScreenProps) {
         {libraryOpen 
         ? <>
         <LibraryPanel
-          defaultTab={props.mode === "setlist" ? "Setlist" : "Track"}
+          tab={libraryTab}
+          onTabChange={setLibraryTab}
           activeTrackId={props.mode === "track" ? props.track.id : undefined}
           activeSetlistId={props.mode === "setlist" ? props.setlist.id : undefined}
         />
@@ -125,9 +140,10 @@ export function PlayScreen(props: PlayScreenProps) {
               setlist={props.setlist}
               slotIndex={props.slotIndex}
               onSlotChange={props.onSlotChange}
+              onOpenLibrary={handleOpenLibrary}
             />
           ) : (
-            <RouteBreadcrumb variant="track" track={props.track} />
+            <RouteBreadcrumb variant="track" track={props.track} onOpenLibrary={handleOpenLibrary} />
           )}
 
           <PlayheadPanel

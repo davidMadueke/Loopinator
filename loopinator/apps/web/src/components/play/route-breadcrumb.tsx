@@ -18,21 +18,31 @@ import {
   CloudIcon,
   CloudOffIcon,
 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@loopinator/ui/components/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@loopinator/ui/components/dropdown-menu";
 
 import { DEMO_SETLISTS, DEMO_TRACKS } from "@/lib/mock-data";
 import type { Setlist, Track } from "@/lib/play-types";
+import type { LibraryTab } from "./library-panel";
 
 type RouteBreadcrumbProps =
   | {
       variant: "track";
       track: Track;
+      onOpenLibrary: (tab: LibraryTab) => void;
     }
   | {
       variant: "setlist";
       setlist: Setlist;
       slotIndex: number;
       onSlotChange: (index: number) => void;
+      onOpenLibrary: (tab: LibraryTab) => void;
     };
 
 export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
@@ -46,7 +56,7 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
 
           <BreadcrumbItem className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-          <SetlistPicker currentSetlist={props.setlist} />
+          <SetlistPicker currentSetlist={props.setlist} onOpenLibrary={props.onOpenLibrary} />
           </div>
           </BreadcrumbItem>
 
@@ -77,7 +87,7 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
         <div className="flex items-center gap-2 w-full">
         <Breadcrumb className="flex min-w-0 max-w-4/5 ">
           <BreadcrumbItem className="min-w-0">
-          <TrackPicker currentTrack={props.track} />
+          <TrackPicker currentTrack={props.track} onOpenLibrary={props.onOpenLibrary} />
           </BreadcrumbItem>
         </Breadcrumb>
         <CacheIndicator cached={props.track.cached} className="shrink-0" />
@@ -87,12 +97,20 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
   );
 }
 
-function SetlistPicker({ currentSetlist }: { currentSetlist: Setlist }) {
+function SetlistPicker({
+  currentSetlist,
+  onOpenLibrary,
+}: {
+  currentSetlist: Setlist;
+  onOpenLibrary: (tab: LibraryTab) => void;
+}) {
   return (
     <PickerChip
       label={currentSetlist.name}
       className="max-w-80 font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
-      /* contentClassName="w-72" */
+      footer={
+        <OpenFullLibraryItem onSelect={() => onOpenLibrary("Setlist")} />
+      }
     >
       {DEMO_SETLISTS.map((setlist) => {
         const current = setlist.id === currentSetlist.id;
@@ -152,12 +170,18 @@ function SlotPicker({
   );
 }
 
-function TrackPicker({ currentTrack }: { currentTrack: Track }) {
+function TrackPicker({
+  currentTrack,
+  onOpenLibrary,
+}: {
+  currentTrack: Track;
+  onOpenLibrary: (tab: LibraryTab) => void;
+}) {
   return (
     <PickerChip
       label={currentTrack.displayName}
       className="max-w-full font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
-      /* contentClassName="w-80" */
+      footer={<OpenFullLibraryItem onSelect={() => onOpenLibrary("Track")} />}
     >
       {DEMO_TRACKS.map((track) => {
         const current = track.id === currentTrack.id;
@@ -220,11 +244,13 @@ function PickerChip({
   className,
   contentClassName,
   children,
+  footer,
 }: {
   label: string;
   className?: string;
   contentClassName?: string;
   children: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
     <DropdownMenu>
@@ -243,8 +269,18 @@ function PickerChip({
               className={cn("max-h-[min(20rem,var(--available-height))] w-full", contentClassName)}
             >
               <DropdownMenuGroup>{children}</DropdownMenuGroup>
+              {footer}
             </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function OpenFullLibraryItem({ onSelect }: { onSelect: () => void }) {
+  return (
+    <div className="sticky bottom-0 bg-popover">
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={onSelect}>Open full Library</DropdownMenuItem>
+    </div>
   );
 }
 
