@@ -266,9 +266,14 @@ function PickerChip({
                 long Library filling a tall viewport. */}
             <DropdownMenuContent
               align="start"
-              className={cn("max-h-[min(20rem,var(--available-height))] w-full", contentClassName)}
+              className={cn(
+                "flex max-h-[min(20rem,var(--available-height))] w-full flex-col overflow-y-hidden",
+                contentClassName,
+              )}
             >
-              <DropdownMenuGroup>{children}</DropdownMenuGroup>
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <DropdownMenuGroup>{children}</DropdownMenuGroup>
+              </div>
               {footer}
             </DropdownMenuContent>
     </DropdownMenu>
@@ -277,7 +282,7 @@ function PickerChip({
 
 function OpenFullLibraryItem({ onSelect }: { onSelect: () => void }) {
   return (
-    <div className="sticky bottom-0 bg-popover">
+    <div className="bg-popover">
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={onSelect}>Open full Library</DropdownMenuItem>
     </div>

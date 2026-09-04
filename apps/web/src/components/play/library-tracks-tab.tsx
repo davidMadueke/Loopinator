@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useImperativeHandle, useMemo, useState, type Ref } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Accordion,
@@ -45,11 +45,17 @@ function trackCountLabel(count: number) {
   return count === 1 ? "(1 track)" : `(${count} tracks)`;
 }
 
-type LibraryTracksTabProps = {
-  activeTrackId?: string;
+export type LibraryTracksTabHandle = {
+  expandAll: () => void;
+  collapseAll: () => void;
 };
 
-export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
+type LibraryTracksTabProps = {
+  activeTrackId?: string;
+  ref?: Ref<LibraryTracksTabHandle>;
+};
+
+export function LibraryTracksTab({ activeTrackId, ref }: LibraryTracksTabProps) {
   const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
   const tracks = useMemo(() => getLibraryTracks(fixturesEnabled), [fixturesEnabled]);
   const bands = useMemo(() => groupTracksByBand(tracks), [tracks]);
@@ -60,16 +66,28 @@ export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
 
   const [previewingId, setPreviewingId] = useState<string | null>(null);
   const [visibleByBand, setVisibleByBand] = useState<Record<BpmBand, number>>(emptyVisibleByBand);
+  const [openBands, setOpenBands] = useState<BpmBand[]>(populatedBands);
 
   useEffect(() => {
     setVisibleByBand(emptyVisibleByBand());
-  }, [fixturesEnabled]);
+    setOpenBands(populatedBands);
+  }, [fixturesEnabled, populatedBands]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      expandAll: () => setOpenBands(populatedBands),
+      collapseAll: () => setOpenBands([]),
+    }),
+    [populatedBands],
+  );
 
   return (
     <Accordion
       key={fixturesEnabled ? "fixtures" : "demo"}
       multiple
-      defaultValue={populatedBands}
+      value={openBands}
+      onValueChange={(value) => setOpenBands(value as BpmBand[])}
       className="w-full"
     >
       {populatedBands.map((band) => {
@@ -78,15 +96,15 @@ export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
 
         return (
           <AccordionItem key={band} value={band}>
-            <AccordionTrigger className="text-sm font-medium hover:no-underline">
-              <span className="flex min-w-0 items-baseline gap-2">
-                <span className="font-medium text-foreground">{BPM_BAND_LABELS[band]}</span>
+            <AccordionTrigger className="text-sm font-medium hover:no-underline ">
+              <span className="flex min-w-0 items-baseline gap-2 ">
+                <span className="font-medium  text-foreground">{BPM_BAND_LABELS[band]}</span>
                 <span className="text-xs font-normal text-muted-foreground">
                   {trackCountLabel(bandTracks.length)}
                 </span>
               </span>
             </AccordionTrigger>
-            <AccordionContent className="[&_a]:no-underline">
+            <AccordionContent className="[&_a]:no-underline pb-8">
               <ul className="divide-y divide-border border border-border">
                 {bandTracks.slice(0, visible).map((track) => (
                   <TrackRow
