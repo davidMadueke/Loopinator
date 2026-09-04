@@ -449,7 +449,7 @@ export function WavePlayer({
   return (
     <Card
       className={cn(
-        "isolate w-full px-0 border-0 rounded-none bg-transparent",
+        "isolate w-full overflow-visible px-0 py-0 border-0 rounded-none bg-transparent",
         className,
       )}
     >
@@ -458,34 +458,36 @@ export function WavePlayer({
           <p className="text-sm font-medium text-foreground truncate">{title}</p>
         ) : null}
 
-        <div className="relative w-full rounded-sm overflow-hidden bg-muted/40">
-          {!isReady ? (
-            <div
-              className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
-              style={{ height: waveHeight }}
-            >
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : null}
-          <WavesurferPlayer
-            url={audioUrl}
-            waveColor={waveColor}
-            progressColor={progressColor}
-            height={waveHeight}
-            barWidth={barWidth}
-            barGap={barGap}
-            barRadius={barRadius}
-            minPxPerSec={minPxPerSec}
-            dragToSeek={!loopRegion}
-            plugins={regionPlugins}
-            onReady={handleReady}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onFinish={handleFinish}
-            onTimeupdate={handleTimeupdate}
-            onSeeking={handleSeeking}
-            onDestroy={handleDestroy}
-          />
+        <div className="relative w-full">
+          <div className="relative w-full overflow-hidden rounded-sm bg-muted/40">
+            {!isReady ? (
+              <div
+                className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
+                style={{ height: waveHeight }}
+              >
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : null}
+            <WavesurferPlayer
+              url={audioUrl}
+              waveColor={waveColor}
+              progressColor={progressColor}
+              height={waveHeight}
+              barWidth={barWidth}
+              barGap={barGap}
+              barRadius={barRadius}
+              minPxPerSec={minPxPerSec}
+              dragToSeek={!loopRegion}
+              plugins={regionPlugins}
+              onReady={handleReady}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onFinish={handleFinish}
+              onTimeupdate={handleTimeupdate}
+              onSeeking={handleSeeking}
+              onDestroy={handleDestroy}
+            />
+          </div>
           {showCustomOverlay && loopRegion ? (
             <LoopRegionOverlay
               duration={duration}

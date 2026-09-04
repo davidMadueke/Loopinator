@@ -18,6 +18,10 @@ type LoopRegionOverlayProps = {
   onOutPointChange: (value: string) => void;
 };
 
+/** Extra height above the waveform so the region and handles remain visible. */
+const OVERLAY_OVERHANG_TOP = 16;
+const HANDLE_HIT_WIDTH = 10;
+
 type DragTarget = "in" | "out";
 
 type DragState = {
@@ -138,8 +142,8 @@ export function LoopRegionOverlay({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-20 pointer-events-none"
-      style={{ height }}
+      className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
+      style={{ height: height + OVERLAY_OVERHANG_TOP }}
     >
       <div
         className={cn(
@@ -183,7 +187,7 @@ function LoopHandle({
   return (
     <div
       className="absolute inset-y-0 -translate-x-1/2 pointer-events-auto touch-none cursor-ew-resize"
-      style={{ left: `${positionRatio * 100}%`, width: 20 }}
+      style={{ left: `${positionRatio * 100}%`, width: HANDLE_HIT_WIDTH }}
       onPointerDown={onPointerDown}
       role="slider"
       aria-label={ariaLabel}
@@ -193,7 +197,7 @@ function LoopHandle({
     >
       <div
         className={cn(
-          "absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 transition-colors duration-150",
+          "absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2 transition-colors duration-150",
           active ? "bg-primary" : "bg-muted-foreground/40",
         )}
       />
