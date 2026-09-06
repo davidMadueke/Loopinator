@@ -73,15 +73,15 @@ export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
       <div className="flex justify-end items-center gap-1.5 sticky top-0 z-10  bg-background">
         <HoverButton
           variant="outline"
-          size="xs"
+          size="sm"
           aria-label="Expand all"
           simpleView={<LayersArrowDown />}
-          expandedView="Expand all"
+          expandedView={"Expand all"}
           onClick={() => setOpenBands(populatedBands)}
         />
         <HoverButton
           variant="outline"
-          size="xs"
+          size="sm"
           aria-label="Collapse all"
           simpleView={<LayersArrowUp />}
           expandedView="Collapse all"
