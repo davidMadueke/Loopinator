@@ -311,6 +311,37 @@ try {
     failures.push("Page reported status=fail");
   }
 
+  const centerStatus = String(
+    await evaluate(
+      cdp,
+      `document.querySelector('[data-testid="hover-button-center-result"]')?.dataset.status ?? "missing"`,
+    ),
+  );
+  if (centerStatus === "fail") {
+    failures.push("Center alignment reported status=fail");
+  } else if (centerStatus !== "pass") {
+    failures.push(`Center alignment stayed "${centerStatus}"`);
+  }
+
+  let opticalStatus = "running";
+  while (Date.now() < deadline) {
+    opticalStatus = String(
+      await evaluate(
+        cdp,
+        `document.querySelector('[data-testid="hover-button-optical-result"]')?.dataset.status ?? "missing"`,
+      ),
+    );
+    if (opticalStatus === "pass" || opticalStatus === "fail") {
+      break;
+    }
+    await wait(250);
+  }
+  if (opticalStatus === "fail") {
+    failures.push("Optical alignment reported status=fail");
+  } else if (opticalStatus !== "pass") {
+    failures.push(`Optical alignment stayed "${opticalStatus}"`);
+  }
+
   const realHover = await measureRealHover(cdp);
   if (!realHover) {
     failures.push(`No element matched ${UNCONTROLLED_SELECTOR}`);

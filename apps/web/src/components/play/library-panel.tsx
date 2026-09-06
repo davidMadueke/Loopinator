@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@loopinator/ui/components/tabs";
 import { Button } from "@loopinator/ui/components/button";
 import { HoverButton } from "@loopinator/ui/components/hover-button";
-import { ChevronsDownIcon, ChevronsUpIcon } from "lucide-react";
 
 import { useLibraryCreateStore } from "@/stores/library-create-store";
 
@@ -10,7 +9,7 @@ import { CreateSetlistPanel } from "./create-setlist-panel";
 import { CreateTrackPanel } from "./create-track-panel";
 import { Filters, FiltersChips, FiltersTrigger } from "./filters";
 import { LibrarySetlistsTab } from "./library-setlists-tab";
-import { LibraryTracksTab, type LibraryTracksTabHandle } from "./library-tracks-tab";
+import { LibraryTracksTab } from "./library-tracks-tab";
 
 type LibraryTab = "Track" | "Setlist";
 type LibraryView = "browse" | "create";
@@ -42,7 +41,6 @@ export type { LibraryTab };
 
 export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId }: LibraryPanelProps) {
   const [view, setView] = useState<LibraryView>("browse");
-  const tracksTabRef = useRef<LibraryTracksTabHandle>(null);
 
   const browseResetKey = useLibraryCreateStore((state) => state.browseResetKey);
   const resetProgress = useLibraryCreateStore((state) => state.resetProgress);
@@ -80,7 +78,7 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
   );
 
   return (
-    <section className="sticky top-0 z-20 flex max-h-[calc(100dvh-8.75rem)] flex-col overflow-hidden border-b border-border bg-card/40">
+    <section className="sticky top-0 z-20 flex max-h-[calc(100dvh-8.75rem)] flex-col overflow-hidden border-b border-border bg-background">
       <div className="mx-auto w-full max-w-215 shrink-0 px-4 pt-4">
         <div className="flex items-center justify-between gap-4 pb-4">
           <h2 className="text-2xl font-medium">{creating ? createLabel(tab) : "Library"}</h2>
@@ -101,7 +99,7 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
           >
             <div className="mx-auto w-full max-w-215 shrink-0 px-4">
               <div className="flex flex-col gap-2">
-                <div className="flex items-start">
+                <div className="flex items-center">
                   <div className="flex w-full justify-start">
                     <TabsList variant="default">
                       <TabsTrigger value="Track">Tracks</TabsTrigger>
@@ -109,14 +107,13 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
                     </TabsList>
                   </div>
 
-
-                  { tab === "Track" && (
+                  {tab === "Track" ? (
                     <div className="flex w-full justify-center">
-                    <FiltersTrigger />
+                      <FiltersTrigger />
                     </div>
-                  ) }
+                  ) : null}
 
-                  <div className="flex w-full flex-col items-end gap-1.5">
+                  <div className="flex w-full justify-end">
                     <HoverButton
                       variant="outline"
                       size="sm"
@@ -125,26 +122,6 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
                       expandedView={tab}
                       expandedClassName="pl-1"
                     />
-                    {tab === "Track" ? (
-                      <div className="flex gap-1.5">
-                        <HoverButton
-                          variant="outline"
-                          size="xs"
-                          aria-label="Expand all"
-                          simpleView={<ChevronsDownIcon />}
-                          expandedView="Expand all"
-                          onClick={() => tracksTabRef.current?.expandAll()}
-                        />
-                        <HoverButton
-                          variant="outline"
-                          size="xs"
-                          aria-label="Collapse all"
-                          simpleView={<ChevronsUpIcon />}
-                          expandedView="Collapse all"
-                          onClick={() => tracksTabRef.current?.collapseAll()}
-                        />
-                      </div>
-                    ) : null}
                   </div>
                 </div>
 
@@ -157,7 +134,7 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
 
             <LibraryPanelScrollArea>
               <TabsContent value="Track" className="pt-4">
-                <LibraryTracksTab ref={tracksTabRef} activeTrackId={activeTrackId} />
+                <LibraryTracksTab activeTrackId={activeTrackId} />
               </TabsContent>
               <TabsContent value="Setlist" className="pt-4">
                 <LibrarySetlistsTab activeSetlistId={activeSetlistId} />
