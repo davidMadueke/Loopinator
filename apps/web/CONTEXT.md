@@ -349,6 +349,11 @@ Open: wiring the filter query into `LibraryTracksTab` / `LibrarySetlistsTab` so 
 narrow the lists. Tempo currently means target BPM in the filter schema; Tracks still group by
 original BPM bands until that hand-off lands.
 
+## Frontend layout testing
+
+HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
+**[packages/ui/CONTEXT.md](../../packages/ui/CONTEXT.md)**. jsdom cannot run them.
+
 ## Related ADRs
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
