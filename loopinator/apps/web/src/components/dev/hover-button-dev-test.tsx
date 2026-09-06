@@ -1,9 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, Repeat } from "lucide-react";
+import { ArrowRight, LayersArrowDown, Repeat } from "lucide-react";
 import { Button } from "@loopinator/ui/components/button";
 import { HoverButton } from "@loopinator/ui/components/hover-button";
+
+import {
+  evaluateElementCenterAlignment,
+  evaluateElementOpticalAlignment,
+  type CenterAlignmentReport,
+  type OpticalAlignmentReport,
+} from "@/lib/center-alignment";
 
 /** Reveal transition is 300ms, so wait past it before measuring the settled size. */
 const SETTLE_MS = 450;
@@ -32,13 +39,32 @@ function measure(element: HTMLElement): { axis: Axis; size: number } {
     : { axis: "width", size: element.offsetWidth };
 }
 
+function formatChild(child: CenterAlignmentReport["children"][number]) {
+  return `${child.label}: before=${child.before.toFixed(2)} after=${child.after.toFixed(2)} delta=${child.delta.toFixed(2)}`;
+}
+
+function formatOptical(report: OpticalAlignmentReport) {
+  return [
+    `iconCenter=${report.iconVisualCenterY.toFixed(2)}`,
+    `baseline=${report.textBaselineY.toFixed(2)}`,
+    `textOptical=${report.textOpticalCenterY.toFixed(2)}`,
+    `parentMid=${report.parentMidY.toFixed(2)}`,
+    `icon-baseline=${report.iconToBaselineDelta.toFixed(2)}`,
+    `icon-textOptical=${report.iconToTextOpticalDelta.toFixed(2)}`,
+    `icon-parentMid=${report.iconToParentMidDelta.toFixed(2)}`,
+  ].join(" ");
+}
+
 export function HoverButtonDevTest() {
   const [hovered, setHovered] = React.useState(false);
   const [running, setRunning] = React.useState(false);
   const [result, setResult] = React.useState<Measurement | null>(null);
+  const [centerReport, setCenterReport] = React.useState<CenterAlignmentReport | null>(null);
+  const [opticalReport, setOpticalReport] = React.useState<OpticalAlignmentReport | null>(null);
 
   const hoverButtonRef = React.useRef<HTMLButtonElement>(null);
   const plainButtonRef = React.useRef<HTMLButtonElement>(null);
+  const centerButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const runCheck = React.useCallback(async () => {
     const hoverButton = hoverButtonRef.current;
@@ -89,6 +115,34 @@ export function HoverButtonDevTest() {
       expanded: expanded.size,
       baseline,
     });
+
+    const centerButton = centerButtonRef.current;
+    const simple = centerButton?.querySelector("[data-slot='hover-button-simple']");
+    const reveal = centerButton?.querySelector("[data-slot='hover-button-reveal']");
+    if (centerButton && simple && reveal) {
+      const report = evaluateElementCenterAlignment(
+        centerButton,
+        [
+          { element: simple, label: "icon" },
+          { element: reveal, label: "text" },
+        ],
+        { axis: "vertical", ink: true },
+      );
+      console.log(
+        `[hover-button-dev] center ${report.axis} ${report.pass ? "PASS" : "FAIL"} ${formatChild(report.children[0])} ${formatChild(report.children[1])}`,
+      );
+      setCenterReport(report);
+
+      const optical = evaluateElementOpticalAlignment(centerButton, simple, reveal);
+      console.log(
+        `[hover-button-dev] optical ${optical.pass ? "PASS" : "FAIL"} ${formatOptical(optical)}`,
+      );
+      setOpticalReport(optical);
+    } else {
+      setCenterReport(null);
+      setOpticalReport(null);
+    }
+
     setRunning(false);
   }, []);
 
@@ -99,6 +153,8 @@ export function HoverButtonDevTest() {
   const grows = result ? result.expanded > result.collapsed : false;
   const leak = result ? Math.abs(result.collapsed - result.baseline) <= 1 : false;
   const status = !result ? "running" : grows && leak ? "pass" : "fail";
+  const centerStatus = !centerReport ? "running" : centerReport.pass ? "pass" : "fail";
+  const opticalStatus = !opticalReport ? "running" : opticalReport.pass ? "pass" : "fail";
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -167,6 +223,71 @@ export function HoverButtonDevTest() {
                 : grows
                   ? `FAIL collapsed state is ${result.collapsed - result.baseline}px wider than icon-only`
                   : "FAIL expandedView is always visible — size did not change"}
+            </p>
+          </>
+        ) : (
+          <p className="text-muted-foreground">Measuring…</p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
+        <HoverButton
+          ref={centerButtonRef}
+          data-testid="hover-button-center"
+          type="button"
+          size="xs"
+          variant="outline"
+          hovered
+          simpleView={<LayersArrowDown />}
+          expandedView="Expand all"
+          aria-label="Center alignment fixture"
+        />
+        <span className="text-xs text-muted-foreground">
+          xs Expand all, held open. Ink boxes must be centered. Icon visual center must line up
+          with the text optical center (midpoint above the baseline).
+        </span>
+      </div>
+
+      <div
+        data-testid="hover-button-center-result"
+        data-status={centerStatus}
+        className="space-y-1 rounded-lg border bg-muted/20 p-3 font-mono text-xs"
+      >
+        {centerReport ? (
+          <>
+            <p>axis: {centerReport.axis}</p>
+            <p>tolerance: {centerReport.tolerance}px</p>
+            <p>{formatChild(centerReport.children[0])}</p>
+            <p>{formatChild(centerReport.children[1])}</p>
+            <p className={centerReport.pass ? "text-green-500" : "text-red-500"}>
+              {centerReport.pass
+                ? "PASS both children are equidistant in the parent"
+                : "FAIL a child is not centered in the parent"}
+            </p>
+          </>
+        ) : (
+          <p className="text-muted-foreground">Measuring…</p>
+        )}
+      </div>
+
+      <div
+        data-testid="hover-button-optical-result"
+        data-status={opticalStatus}
+        className="space-y-1 rounded-lg border bg-muted/20 p-3 font-mono text-xs"
+      >
+        {opticalReport ? (
+          <>
+            <p>icon visual center: {opticalReport.iconVisualCenterY.toFixed(2)}</p>
+            <p>text baseline: {opticalReport.textBaselineY.toFixed(2)}</p>
+            <p>text optical center: {opticalReport.textOpticalCenterY.toFixed(2)}</p>
+            <p>parent mid: {opticalReport.parentMidY.toFixed(2)}</p>
+            <p>icon minus baseline: {opticalReport.iconToBaselineDelta.toFixed(2)}</p>
+            <p>icon minus text optical: {opticalReport.iconToTextOpticalDelta.toFixed(2)}</p>
+            <p>icon minus parent mid: {opticalReport.iconToParentMidDelta.toFixed(2)}</p>
+            <p className={opticalReport.pass ? "text-green-500" : "text-red-500"}>
+              {opticalReport.pass
+                ? "PASS icon visual center matches text optical center and parent mid"
+                : "FAIL icon visual center is off the text optical center or parent mid"}
             </p>
           </>
         ) : (

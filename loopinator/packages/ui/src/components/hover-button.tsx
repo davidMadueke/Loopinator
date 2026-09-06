@@ -72,18 +72,22 @@ function HoverButton({
         onBlur?.(event);
       }}
     >
-      {simpleView}
+      <span data-slot="hover-button-simple" className="flex items-center self-stretch">
+        {simpleView}
+      </span>
       <span
         data-slot="hover-button-reveal"
         className={cn(
-          "inline-grid transition-[grid-template-columns] duration-300 ease-out",
+          "grid self-stretch transition-[grid-template-columns] duration-300 ease-out",
           hovered ? "grid-cols-[1fr]" : "grid-cols-[0fr]",
         )}
       >
         {/* The scroll container must be the grid item: a 0fr track resolves to the
             item's min-content width, and only overflow:hidden drives that to zero. */}
-        <span className="overflow-hidden">
-          <span className={cn("block whitespace-nowrap pl-1.5", expandedClassName)}>
+        <span className="h-full min-w-0 overflow-hidden">
+          <span
+            className={cn("flex h-full items-center whitespace-nowrap pl-1.5", expandedClassName)}
+          >
             {expandedView}
           </span>
         </span>

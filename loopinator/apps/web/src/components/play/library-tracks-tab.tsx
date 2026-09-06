@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useMemo, useState, type Ref } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Accordion,
@@ -7,8 +7,9 @@ import {
   AccordionTrigger,
 } from "@loopinator/ui/components/accordion";
 import { Button } from "@loopinator/ui/components/button";
+import { HoverButton } from "@loopinator/ui/components/hover-button";
 import { cn } from "@loopinator/ui/lib/utils";
-import { PlayIcon, SquareIcon } from "lucide-react";
+import { LayersArrowDown, LayersArrowUp, PlayIcon, SquareIcon } from "lucide-react";
 
 import { LibraryLoadMore, LIBRARY_PAGE_SIZE } from "@/components/play/library-load-more";
 import { getLibraryTracks } from "@/lib/mock-data";
@@ -45,17 +46,11 @@ function trackCountLabel(count: number) {
   return count === 1 ? "(1 track)" : `(${count} tracks)`;
 }
 
-export type LibraryTracksTabHandle = {
-  expandAll: () => void;
-  collapseAll: () => void;
-};
-
 type LibraryTracksTabProps = {
   activeTrackId?: string;
-  ref?: Ref<LibraryTracksTabHandle>;
 };
 
-export function LibraryTracksTab({ activeTrackId, ref }: LibraryTracksTabProps) {
+export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
   const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
   const tracks = useMemo(() => getLibraryTracks(fixturesEnabled), [fixturesEnabled]);
   const bands = useMemo(() => groupTracksByBand(tracks), [tracks]);
@@ -73,66 +68,79 @@ export function LibraryTracksTab({ activeTrackId, ref }: LibraryTracksTabProps) 
     setOpenBands(populatedBands);
   }, [fixturesEnabled, populatedBands]);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      expandAll: () => setOpenBands(populatedBands),
-      collapseAll: () => setOpenBands([]),
-    }),
-    [populatedBands],
-  );
-
   return (
-    <Accordion
-      key={fixturesEnabled ? "fixtures" : "demo"}
-      multiple
-      value={openBands}
-      onValueChange={(value) => setOpenBands(value as BpmBand[])}
-      className="w-full"
-    >
-      {populatedBands.map((band) => {
-        const bandTracks = bands[band];
-        const visible = visibleByBand[band];
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-end items-center gap-1.5 sticky top-0 z-10  bg-background">
+        <HoverButton
+          variant="outline"
+          size="xs"
+          aria-label="Expand all"
+          simpleView={<LayersArrowDown />}
+          expandedView="Expand all"
+          onClick={() => setOpenBands(populatedBands)}
+        />
+        <HoverButton
+          variant="outline"
+          size="xs"
+          aria-label="Collapse all"
+          simpleView={<LayersArrowUp />}
+          expandedView="Collapse all"
+          onClick={() => setOpenBands([])}
+        />
+      </div>
+      <Accordion
+        key={fixturesEnabled ? "fixtures" : "demo"}
+        multiple
+        value={openBands}
+        onValueChange={(value) => setOpenBands(value as BpmBand[])}
+        className="w-full"
+      >
+        {populatedBands.map((band) => {
+          const bandTracks = bands[band];
+          const visible = visibleByBand[band];
 
-        return (
-          <AccordionItem key={band} value={band}>
-            <AccordionTrigger className="text-sm font-medium hover:no-underline ">
-              <span className="flex min-w-0 items-baseline gap-2 ">
-                <span className="font-medium  text-foreground">{BPM_BAND_LABELS[band]}</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  {trackCountLabel(bandTracks.length)}
+          return (
+            <AccordionItem key={band} value={band}>
+              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                <span className="flex min-w-0 items-baseline gap-2">
+                  <span className="font-medium text-foreground">{BPM_BAND_LABELS[band]}</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {trackCountLabel(bandTracks.length)}
+                  </span>
                 </span>
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="[&_a]:no-underline pb-8">
-              <ul className="divide-y divide-border border border-border">
-                {bandTracks.slice(0, visible).map((track) => (
-                  <TrackRow
-                    key={track.id}
-                    track={track}
-                    isCurrent={track.id === activeTrackId}
-                    isPreviewing={previewingId === track.id}
-                    onPreviewToggle={() =>
-                      setPreviewingId((current) => (current === track.id ? null : track.id))
+              </AccordionTrigger>
+              <AccordionContent className="[&_a]:no-underline pb-0">
+                <div className="pt-3 pb-4">
+                  <ul className="divide-y divide-border border border-border">
+                    {bandTracks.slice(0, visible).map((track) => (
+                      <TrackRow
+                        key={track.id}
+                        track={track}
+                        isCurrent={track.id === activeTrackId}
+                        isPreviewing={previewingId === track.id}
+                        onPreviewToggle={() =>
+                          setPreviewingId((current) => (current === track.id ? null : track.id))
+                        }
+                      />
+                    ))}
+                  </ul>
+                  <LibraryLoadMore
+                    total={bandTracks.length}
+                    visible={visible}
+                    onLoadMore={() =>
+                      setVisibleByBand((current) => ({
+                        ...current,
+                        [band]: current[band] + LIBRARY_PAGE_SIZE,
+                      }))
                     }
                   />
-                ))}
-              </ul>
-              <LibraryLoadMore
-                total={bandTracks.length}
-                visible={visible}
-                onLoadMore={() =>
-                  setVisibleByBand((current) => ({
-                    ...current,
-                    [band]: current[band] + LIBRARY_PAGE_SIZE,
-                  }))
-                }
-              />
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
-    </Accordion>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+    </div>
   );
 }
 
@@ -151,7 +159,7 @@ function TrackRow({
     <li
       aria-current={isCurrent ? "page" : undefined}
       className={cn(
-        "flex items-center justify-between gap-3 px-3 py-2",
+        "flex items-center justify-between gap-3 px-3 py-3",
         isCurrent && "pointer-events-none opacity-50",
       )}
     >
