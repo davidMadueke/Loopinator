@@ -54,7 +54,7 @@ function HoverButton({
       data-slot="hover-button"
       data-hovered={hovered ? "" : undefined}
       {...buttonProps}
-      className={cn(HOVER_FILL, "gap-0", className)}
+      className={cn(HOVER_FILL, "gap-0" , /* "h-fit", */ /* "py-1", */ className)}
       onMouseEnter={(event) => {
         hoverProps.onMouseEnter();
         onMouseEnter?.(event);
@@ -78,7 +78,7 @@ function HoverButton({
       <span
         data-slot="hover-button-reveal"
         className={cn(
-          "grid self-stretch transition-[grid-template-columns] duration-300 ease-out",
+          "grid self-stretch transition-[grid-template-columns] duration-300 ease-out leading-none",
           hovered ? "grid-cols-[1fr]" : "grid-cols-[0fr]",
         )}
       >
@@ -86,7 +86,7 @@ function HoverButton({
             item's min-content width, and only overflow:hidden drives that to zero. */}
         <span className="h-full min-w-0 overflow-hidden">
           <span
-            className={cn("flex h-full items-center whitespace-nowrap pl-1.5", expandedClassName)}
+            className={cn("flex h-full items-center whitespace-nowrap pl-1.5 ", expandedClassName)}
           >
             {expandedView}
           </span>
