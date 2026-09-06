@@ -18,14 +18,19 @@ function createLabel(tab: LibraryTab) {
   return `Create New ${tab}`;
 }
 
+const LIBRARY_COLUMN =
+  "mx-auto w-full max-w-215 px-4 scrollbar-gutter-stable";
+
 type LibraryPanelScrollAreaProps = {
   children: ReactNode;
 };
 
 function LibraryPanelScrollArea({ children }: LibraryPanelScrollAreaProps) {
   return (
-    <div className="mx-auto min-h-0 w-full max-w-215 flex-1 overflow-y-auto overscroll-contain">
-      <div className="px-4 pb-4">{children}</div>
+    <div
+      className={`${LIBRARY_COLUMN} min-h-0 flex-1 overflow-y-auto overscroll-contain`}
+    >
+      <div className="pb-4">{children}</div>
     </div>
   );
 }
@@ -79,7 +84,7 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
 
   return (
     <section className="sticky top-0 z-20 flex max-h-[calc(100dvh-8.75rem)] flex-col overflow-hidden border-b border-border bg-background">
-      <div className="mx-auto w-full max-w-215 shrink-0 px-4 pt-4">
+      <div className={`${LIBRARY_COLUMN} shrink-0 overflow-hidden pt-4`}>
         <div className="flex items-center justify-between gap-4 pb-4">
           <h2 className="text-2xl font-medium">{creating ? createLabel(tab) : "Library"}</h2>
           {creating ? (
@@ -97,7 +102,7 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
             onValueChange={(value) => onTabChange(value as LibraryTab)}
             className="flex min-h-0 flex-1 flex-col gap-2"
           >
-            <div className="mx-auto w-full max-w-215 shrink-0 px-4">
+            <div className={`${LIBRARY_COLUMN} shrink-0 overflow-hidden`}>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center">
                   <div className="flex w-full justify-start">
