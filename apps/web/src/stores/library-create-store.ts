@@ -1,6 +1,10 @@
 import { create } from "zustand";
 
-export type LibraryDiscardIntent = "close-library" | "return-to-browse";
+export type LibraryDiscardIntent =
+  | "close-library"
+  | "return-to-browse"
+  | "leave-account"
+  | "reload";
 
 type LibraryCreateStore = {
   hasProgress: boolean;
