@@ -24,8 +24,7 @@ import { wrapLoopPlayback } from "@/lib/loop-playback";
 export const LOOP_REGION_IMPL = "custom" as "custom" | "regions";
 
 const LOOP_REGION_ID = "loop";
-const LOOP_REGION_ACTIVE_COLOR =
-  "color-mix(in oklch, var(--primary) 25%, transparent)";
+const LOOP_REGION_ACTIVE_COLOR = "var(--loop-region)";
 const LOOP_REGION_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 12%, transparent)";
 

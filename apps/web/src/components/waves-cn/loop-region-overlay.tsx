@@ -148,7 +148,7 @@ export function LoopRegionOverlay({
       <div
         className={cn(
           "absolute inset-y-0 transition-colors duration-150",
-          active ? "bg-primary/25" : "bg-muted-foreground/10",
+          active ? "bg-loop-region" : "bg-muted-foreground/10",
         )}
         style={{
           left: `${inRatio * 100}%`,

@@ -159,6 +159,13 @@
    Declared on :root after the palettes so var(--primary) resolves per accent. */
 :root {
   --primary-on-muted: color-mix(in oklch, var(--primary), var(--foreground) 25%);
+  --loop-region: color-mix(in oklch, var(--primary) 25%, transparent);
+}
+
+/* Loop-region fill over the waveform. Neutral light drops opacity so the
+   dark grey primary doesn't flatten the bars. */
+:root[data-accent="neutral"]:not(.dark) {
+  --loop-region: color-mix(in oklch, var(--primary) 10%, transparent);
 }
 
 @theme inline {
@@ -177,6 +184,7 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-playhead: var(--playhead);
+  --color-loop-region: var(--loop-region);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
