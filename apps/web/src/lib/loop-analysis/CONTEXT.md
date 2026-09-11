@@ -63,8 +63,7 @@ loop-analysis/
 |---|---|
 | `use-loop-snap.ts` | Decodes uploaded `File`; returns `snapLoopPoint \| null` |
 | `audio-upload-field.tsx` | Calls `useLoopSnap(file)`; passes snap into WavePlayer and LoopRegionField |
-| `wave-player.tsx` | `loopRegion.snapLoopPoint`; Regions plugin snaps on `region-updated` |
-| `loop-region-overlay.tsx` | Free drag while moving; snap on pointer up (`LOOP_REGION_IMPL === "custom"`) |
+| `wave-player.tsx` | Regions plugin: live times on `region-update`, zero-cross snap on `region-updated` |
 | `loop-region-field.tsx` | Snap on blur or scrub release via `commitLoopPointSeconds`; drag the field to scrub |
 
 WavePlayer opt-in: `loopRegion` prop. Library preview and other uses stay unchanged when `snapLoopPoint` is omitted.

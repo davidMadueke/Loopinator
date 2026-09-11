@@ -11,7 +11,6 @@ import WavesurferPlayer from "@/lib/wave-cn";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 import type WaveSurfer from "wavesurfer.js";
 import type { Region } from "wavesurfer.js/dist/plugins/regions.js";
-import { LoopRegionOverlay } from "./loop-region-overlay";
 import {
   commitLoopPointSeconds,
   LOOP_MIN_GAP_SEC,
@@ -21,13 +20,12 @@ import {
 import { wrapLoopPlayback } from "@/lib/loop-playback";
 import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
 
-/** Switch loop-region rendering: custom React overlay vs Wavesurfer Regions plugin. */
-export const LOOP_REGION_IMPL = "custom" as "custom" | "regions";
-
 const LOOP_REGION_ID = "loop";
 const LOOP_REGION_ACTIVE_COLOR = "var(--loop-region)";
 const LOOP_REGION_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 12%, transparent)";
+const LOOP_HANDLE_INACTIVE_COLOR =
+  "color-mix(in oklch, var(--muted-foreground) 40%, transparent)";
 
 export type LoopRegionControlProps = {
   inPoint: string;
@@ -102,6 +100,40 @@ function useAudioSource(src: string | File): string {
   return audioUrl;
 }
 
+function paintLoopRegionHandles(region: Region, active: boolean) {
+  const element = region.element;
+  if (!element) {
+    return;
+  }
+
+  const handleColor = active ? "var(--primary)" : LOOP_HANDLE_INACTIVE_COLOR;
+  const left = element.querySelector<HTMLElement>(
+    '[part~="region-handle-left"]',
+  );
+  const right = element.querySelector<HTMLElement>(
+    '[part~="region-handle-right"]',
+  );
+
+  const paint = (handle: HTMLElement | null, edge: "left" | "right") => {
+    if (!handle) {
+      return;
+    }
+
+    handle.style.width = "10px";
+    handle.style.background = "transparent";
+    handle.style.borderRadius = "0";
+    handle.style.borderLeft =
+      edge === "left" ? `6px solid ${handleColor}` : "none";
+    handle.style.borderRight =
+      edge === "right" ? `6px solid ${handleColor}` : "none";
+    handle.style.left = edge === "left" ? "-5px" : "";
+    handle.style.right = edge === "right" ? "-5px" : "";
+  };
+
+  paint(left, "left");
+  paint(right, "right");
+}
+
 function useRegionsLoopRegion(
   enabled: boolean,
   wavesurferRef: React.RefObject<WaveSurfer | null>,
@@ -112,33 +144,79 @@ function useRegionsLoopRegion(
   loopPreviewEnabled: boolean,
   loopRegion: LoopRegionControlProps | undefined,
   snapLoopPoint: ((seconds: number) => number) | null,
+  pluginKey: string,
 ) {
-  const regionsPluginRef = React.useRef(RegionsPlugin.create());
-  const regionRef = React.useRef<Region | null>(null);
-  const syncingRef = React.useRef(false);
-  const snapLoopPointRef = React.useRef(snapLoopPoint);
-
-  snapLoopPointRef.current = snapLoopPoint;
+  const plugin = React.useMemo(() => {
+    if (!enabled) {
+      return null;
+    }
+    return RegionsPlugin.create();
+  }, [enabled, pluginKey]);
 
   const plugins = React.useMemo(
-    () => (enabled ? [regionsPluginRef.current] : undefined),
-    [enabled],
+    () => (plugin ? [plugin] : undefined),
+    [plugin],
+  );
+
+  const regionRef = React.useRef<Region | null>(null);
+  const draggingRef = React.useRef(false);
+  const snapLoopPointRef = React.useRef(snapLoopPoint);
+  const loopRegionRef = React.useRef(loopRegion);
+  const durationRef = React.useRef(duration);
+
+  snapLoopPointRef.current = snapLoopPoint;
+  loopRegionRef.current = loopRegion;
+  durationRef.current = duration;
+
+  React.useEffect(() => {
+    regionRef.current = null;
+  }, [plugin]);
+
+  const emitFromRegion = React.useCallback(
+    (region: Region, side: "start" | "end" | undefined, snap: boolean) => {
+      const controls = loopRegionRef.current;
+      const total = durationRef.current;
+      if (!controls || region.id !== LOOP_REGION_ID || total <= 0 || !side) {
+        return;
+      }
+
+      const snapFn = snapLoopPointRef.current;
+      const ordered = commitLoopPointSeconds(
+        side === "start" ? region.start : region.end,
+        side === "start" ? region.end : region.start,
+        total,
+        side === "start" ? "in" : "out",
+        {
+          snap: snap && Boolean(snapFn),
+          snapLoopPoint: snapFn,
+        },
+      );
+      const stored = toStoredLoopRegion(
+        ordered.inSeconds,
+        ordered.outSeconds,
+        total,
+      );
+      controls.onInPointChange(stored.inPoint);
+      controls.onOutPointChange(stored.outPoint);
+    },
+    [],
   );
 
   React.useEffect(() => {
     const wavesurfer = wavesurferRef.current;
-    if (!enabled || !loopRegion || !wavesurfer || !isReady || duration <= 0) {
+    if (!enabled || !plugin || !wavesurfer || !isReady || duration <= 0) {
       return;
     }
 
-    const plugin = regionsPluginRef.current;
-    syncingRef.current = true;
+    if (draggingRef.current) {
+      return;
+    }
 
-    let region = regionRef.current;
     const regionColor = loopPreviewEnabled
       ? LOOP_REGION_ACTIVE_COLOR
       : LOOP_REGION_INACTIVE_COLOR;
 
+    let region = regionRef.current;
     if (!region || region.isRemoved) {
       plugin.clearRegions();
       region = plugin.addRegion({
@@ -161,12 +239,10 @@ function useRegionsLoopRegion(
       });
     }
 
-    queueMicrotask(() => {
-      syncingRef.current = false;
-    });
+    paintLoopRegionHandles(region, loopPreviewEnabled);
   }, [
     enabled,
-    loopRegion,
+    plugin,
     wavesurferRef,
     isReady,
     duration,
@@ -176,44 +252,27 @@ function useRegionsLoopRegion(
   ]);
 
   React.useEffect(() => {
-    if (!enabled || !loopRegion) {
+    if (!enabled || !plugin) {
       return;
     }
 
-    const plugin = regionsPluginRef.current;
+    const onUpdate = (region: Region, side?: "start" | "end") => {
+      draggingRef.current = true;
+      emitFromRegion(region, side, false);
+    };
 
     const onUpdated = (region: Region, side?: "start" | "end") => {
-      if (
-        region.id !== LOOP_REGION_ID ||
-        syncingRef.current ||
-        duration <= 0 ||
-        !side
-      ) {
-        return;
-      }
-
-      const snap = snapLoopPointRef.current;
-      const ordered = commitLoopPointSeconds(
-        side === "start" ? region.start : region.end,
-        side === "start" ? region.end : region.start,
-        duration,
-        side === "start" ? "in" : "out",
-        { snap: Boolean(snap), snapLoopPoint: snap },
-      );
-      const stored = toStoredLoopRegion(
-        ordered.inSeconds,
-        ordered.outSeconds,
-        duration,
-      );
-      loopRegion.onInPointChange(stored.inPoint);
-      loopRegion.onOutPointChange(stored.outPoint);
+      emitFromRegion(region, side, true);
+      draggingRef.current = false;
     };
 
+    plugin.on("region-update", onUpdate);
     plugin.on("region-updated", onUpdated);
     return () => {
+      plugin.un("region-update", onUpdate);
       plugin.un("region-updated", onUpdated);
     };
-  }, [enabled, loopRegion, duration]);
+  }, [enabled, plugin, emitFromRegion]);
 
   return plugins;
 }
@@ -252,9 +311,6 @@ export function WavePlayer({
   loopPreviewRef.current = loopPreviewEnabled;
   loopRegionRef.current = loopRegion;
 
-  const useRegionsImpl =
-    Boolean(loopRegion) && LOOP_REGION_IMPL === "regions";
-
   const inSeconds = loopRegion
     ? storedValueToSeconds(loopRegion.inPoint, duration, "in")
     : 0;
@@ -265,7 +321,7 @@ export function WavePlayer({
   const snapLoopPoint = loopRegion?.snapLoopPoint ?? null;
 
   const regionPlugins = useRegionsLoopRegion(
-    useRegionsImpl,
+    Boolean(loopRegion) && Boolean(audioUrl),
     wavesurferRef,
     isReady,
     duration,
@@ -274,6 +330,7 @@ export function WavePlayer({
     loopPreviewEnabled,
     loopRegion,
     snapLoopPoint,
+    audioUrl,
   );
 
   const runLoopWrap = React.useCallback(
@@ -441,8 +498,6 @@ export function WavePlayer({
   }, [onDurationChange]);
 
   const progress = duration > 0 ? currentTime / duration : 0;
-  const showCustomOverlay =
-    Boolean(loopRegion) && LOOP_REGION_IMPL === "custom" && isReady;
 
   if (!audioUrl) {
     return null;
@@ -451,7 +506,7 @@ export function WavePlayer({
   return (
     <Card
       className={cn(
-        "isolate w-full overflow-visible px-0 py-0 border-0 rounded-none bg-transparent",
+        "isolate w-full px-0 py-0 border-0 rounded-none bg-transparent",
         className,
       )}
     >
@@ -460,48 +515,34 @@ export function WavePlayer({
           <p className="text-sm font-medium text-foreground truncate">{title}</p>
         ) : null}
 
-        <div className="relative w-full">
-          <div className="relative w-full overflow-hidden rounded-sm bg-muted/40">
-            {!isReady ? (
-              <div
-                className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
-                style={{ height: waveHeight }}
-              >
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : null}
-            <WavesurferPlayer
-              url={audioUrl}
-              waveColor={waveColor}
-              progressColor={progressColor}
-              height={waveHeight}
-              barWidth={barWidth}
-              barGap={barGap}
-              barRadius={barRadius}
-              minPxPerSec={minPxPerSec}
-              dragToSeek={!loopRegion}
-              plugins={regionPlugins}
-              onReady={handleReady}
-              onPlay={handlePlay}
-              onPause={handlePause}
-              onFinish={handleFinish}
-              onTimeupdate={handleTimeupdate}
-              onSeeking={handleSeeking}
-              onDestroy={handleDestroy}
-            />
-          </div>
-          {showCustomOverlay && loopRegion ? (
-            <LoopRegionOverlay
-              duration={duration}
-              inSeconds={inSeconds}
-              outSeconds={outSeconds}
-              height={waveHeight}
-              active={loopPreviewEnabled}
-              snapLoopPoint={snapLoopPoint}
-              onInPointChange={loopRegion.onInPointChange}
-              onOutPointChange={loopRegion.onOutPointChange}
-            />
+        <div className="relative w-full overflow-hidden rounded-sm bg-muted/40">
+          {!isReady ? (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
+              style={{ height: waveHeight }}
+            >
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
           ) : null}
+          <WavesurferPlayer
+            url={audioUrl}
+            waveColor={waveColor}
+            progressColor={progressColor}
+            height={waveHeight}
+            barWidth={barWidth}
+            barGap={barGap}
+            barRadius={barRadius}
+            minPxPerSec={minPxPerSec}
+            dragToSeek={!loopRegion}
+            plugins={regionPlugins}
+            onReady={handleReady}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onFinish={handleFinish}
+            onTimeupdate={handleTimeupdate}
+            onSeeking={handleSeeking}
+            onDestroy={handleDestroy}
+          />
         </div>
 
         <div className="flex items-center gap-2">
