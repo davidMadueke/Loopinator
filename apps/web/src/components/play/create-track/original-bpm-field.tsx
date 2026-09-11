@@ -35,6 +35,7 @@ export function OriginalBpmField({ value, onChange }: OriginalBpmFieldProps) {
           id="track-original-bpm"
           type="number"
           placeholder="Detected on upload"
+          defaultValue={120}
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
