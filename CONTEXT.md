@@ -19,19 +19,19 @@ _Avoid_: Open registration, shared kit login, single-use invites
 ## Library
 
 **Track**:
-An uploaded WAV or MP3 with its Loop region and metadata (Display name, Original BPM, Key, Time signature, Song title).
+An uploaded WAV or MP3 with its Loop region and metadata (Display name, Original BPM, Key, Time signature).
 _Avoid_: Loop (for the file), Song, Clip, sample
 
 **Display name**:
 The human name of a Track. The Play screen shows this one.
-_Avoid_: Filename, title, track name
+_Avoid_: Filename, title, track name, Song title
 
 **Filename**:
 The name of the uploaded file. Advanced Options and the Library show it. The Play screen does not.
 _Avoid_: Display name
 
 **Loop region**:
-The In-point and Out-point bounding one Loop cycle. Upload sets a Track default by guessing the first whole bars from the detected BPM. A Setlist slot can hold its own copy.
+The In-point and Out-point bounding one Loop cycle. Upload sets a Track default by guessing the first whole bars from BPM detection. A Setlist slot can hold its own copy.
 _Avoid_: Trim, selection, clip
 
 **In-point**:
@@ -101,8 +101,20 @@ _Avoid_: Hard delete, cleanup
 The source tempo of a Track. Time-stretch measures every change against it.
 _Avoid_: Native BPM, file BPM
 
+**BPM detection**:
+The analysis pass that proposes an Original BPM from Track audio. It runs in a browser Worker when the file decodes. A detection-only value is an Unconfirmed BPM.
+_Avoid_: Auto BPM, auto-detect, guessed BPM
+
+**Tap tempo**:
+The Create Track input that derives Original BPM from a series of taps. Using it confirms the value.
+_Avoid_: TAP as the domain name (TAP is the button label), metronome
+
+**Half/double**:
+×2 and ÷2 on an Unconfirmed BPM when BPM detection landed at half or double the real tempo. Using it confirms the value.
+_Avoid_: Octave error as UI copy, metrical level
+
 **Unconfirmed BPM**:
-An Original BPM that came from detection and that no Editor has confirmed, usually because the percussion was too sparse to read. It still saves and still plays, it files the Track into a BPM band, and the Library flags the row. On the Play screen the Original BPM readout carries the flag; the Target BPM readout still shows the number without a separate warning.
+An Original BPM that came from BPM detection and that no Editor has confirmed by typing, Tap tempo, or Half/double, usually because the percussion was too sparse to read. A low-confidence guess still saves this way. It still plays, it files the Track into a BPM band, and the Library flags the row. On the Play screen the Original BPM readout carries the flag; the Target BPM readout still shows the number without a separate warning.
 _Avoid_: Detected BPM, guessed BPM, auto BPM, needs checking
 
 **Target BPM**:
@@ -110,16 +122,20 @@ The tempo a Track plays at, taken from the Setlist slot and then the live contro
 _Avoid_: Playback rate, speed, pitch
 
 **Key**:
-Musical key stored on a Track, shown but never applied. Defaults to No Key. v1 does not transpose. On the Play screen it is read-only text inside the Playhead circle, not a dropdown or stepper.
+Musical key stored on a Track. v1 shows it and never transposes. High-confidence Key detection may fill it; otherwise it stays No Key.
 _Avoid_: Pitch, transpose, live key control
+
+**No Key**:
+The Key value meaning the Track has no tonal center, including after low-confidence or failed Key detection. Future key-change UI does not apply to a Track whose Key is No Key.
+_Avoid_: Unknown key, unset key, null key
+
+**Key detection**:
+The analysis pass that may fill Key from Track audio. Low confidence or no result leaves No Key.
+_Avoid_: Auto key, guessed key
 
 **Time signature**:
 Meter stored on a Track, chosen from 4/4, 3/4, 6/8, 12/8, and 2/4. Defaults to 4/4. On the Play screen it is read-only text inside the Playhead circle, not a Select or dropdown.
 _Avoid_: Time sig as a live performance control, editable meter
-
-**Song title**:
-Free text on a Track naming a related song, shown on the Play screen under the Display name. It is not a Church OS Song record.
-_Avoid_: Song, hymn
 
 ## Playback
 
@@ -160,7 +176,7 @@ The dropdown on the Display name in the Route breadcrumb on `/t/{id}`, listing t
 _Avoid_: Library dropdown, Slot picker (which lists one Setlist)
 
 **Playhead circle**:
-The large ring on the Play screen. It shows Target BPM at performance size without a "Target" label, a separate Original BPM readout, read-only Key, read-only Time signature, Display name, Song title, and the Advanced Options entry. The green ring is the Playhead.
+The large ring on the Play screen. It shows Target BPM at performance size without a "Target" label, a separate Original BPM readout, read-only Key, read-only Time signature, Display name, and the Advanced Options entry. The green ring is the Playhead.
 _Avoid_: BPM dial, tempo wheel, progress ring (without playhead meaning)
 
 **Target BPM readout**:
@@ -189,6 +205,10 @@ _Avoid_: Space as Restart, Space as page scroll, Space as button activate
 **Tempo stepper**:
 The +/- control on the main Play screen that adjusts Target BPM by 1 per tap, or by 3 while held. Key has no stepper on the Play screen.
 _Avoid_: Tempo slider, pitch control, Key stepper
+
+**Time-stretch**:
+Pitch-preserving Play screen playback at Target BPM rather than Original BPM. Create Track preview and Row preview play the file at its own speed.
+_Avoid_: Playback rate, speed change, varispeed, pitch shift
 
 **Pause**:
 Freezes the Playhead and silences audio. The Transport bar control then shows Restart.

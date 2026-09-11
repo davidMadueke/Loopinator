@@ -5,7 +5,6 @@ import { AudioUploadField } from "./create-track/audio-upload-field";
 import { DisplayNameField } from "./create-track/display-name-field";
 import { KeyField } from "./create-track/key-field";
 import { OriginalBpmField } from "./create-track/original-bpm-field";
-import { SongTitleField } from "./create-track/song-title-field";
 import { TimeSignatureField } from "./create-track/time-signature-field";
 import {
   hasCreateTrackProgress,
@@ -59,10 +58,6 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
         <DisplayNameField
           value={form.displayName}
           onChange={(displayName) => setForm((current) => ({ ...current, displayName }))}
-        />
-        <SongTitleField
-          value={form.songTitle}
-          onChange={(songTitle) => setForm((current) => ({ ...current, songTitle }))}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <OriginalBpmField
