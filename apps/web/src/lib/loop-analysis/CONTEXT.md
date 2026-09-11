@@ -1,6 +1,6 @@
 # Loop region analysis
 
-Browser-side audio analysis for placing Loop region In-points and Out-points. Domain terms (Loop region, In-point, Out-point) live in [../../../../CONTEXT.md](../../../../CONTEXT.md). Create Track UI layout lives in [../../../CONTEXT.md](../../../CONTEXT.md).
+Browser-side audio analysis for Loop region snap, BPM detection, and Key detection. Domain terms live in [../../../../CONTEXT.md](../../../../CONTEXT.md). Create Track UI layout lives in [../../../CONTEXT.md](../../../CONTEXT.md).
 
 ## Why this exists
 
@@ -20,7 +20,7 @@ Loop points are always stored in **source file time**. Time-stretch (Target BPM 
 
 | Decision | Choice |
 |---|---|
-| Decode for analysis | Full sample rate via `AudioContext.decodeAudioData`, separate from Wavesurfer’s 8 kHz waveform decode |
+| Decode for analysis | Full sample rate via `AudioContext.decodeAudioData`. WavePlayer also decodes the waveform at 44.1 kHz so zoom can reach per-sample zero crossings |
 | Snap mode | Zero crossing only, ±50 ms search (`DEFAULT_ZERO_CROSS_SEARCH_MS`) |
 | When snap runs | Marker **drag release**, field **scrub release**, and loop time **text blur** — not on every pointer move |
 | Before decode finishes | Drag and text edit work; snap is skipped until `snapLoopPoint` is available |
@@ -68,6 +68,34 @@ loop-analysis/
 
 WavePlayer opt-in: `loopRegion` prop. Library preview and other uses stay unchanged when `snapLoopPoint` is omitted.
 
+## Agreed (not shipped)
+
+BPM detection, Key detection, and Time-stretch sit next to loop snap. They are not in the tree yet. Create Track already decodes the file on the main thread via `useLoopSnap`.
+
+| Decision | Choice |
+|---|---|
+| Where it runs | Browser **Web Worker**, this folder |
+| When BPM / Key detection run | Automatically when the uploaded file finishes decoding |
+| BPM library | `@audio/beat` (`detect()` → BPM, confidence, beat times, onsets). MIT. Percussion path is energy onsets. See [0016-audiojs-beat-and-stretch](../../../../docs/adr/0016-audiojs-beat-and-stretch.md) |
+| BPM payload | BPM, confidence, and beat times. Create Track UI uses the BPM number now; beat times wait for beat-grid snap |
+| Failed / low-confidence BPM | Still write the best guess as **Unconfirmed BPM** |
+| What confirms Original BPM | Typing, **Tap tempo**, or **Half/double** (×2 / ÷2, Unconfirmed only) |
+| Replace file | Re-run BPM detection while Original BPM is still Unconfirmed. Keep a confirmed value. Loop region still resets to Auto |
+| Key detection | Same Worker, same decode. High confidence fills **Key**. Low confidence or no result leaves **No Key** |
+| No Key | Future key-change UI does not apply. Play screen Key stays read-only either way |
+| Time-stretch | Play screen only. Web Audio graph, `@audio/stretch-transient` in the stretch worklet. Create Track WavePlayer and Row preview play the file at its own speed. [0015-web-audio-stretch-graph](../../../../docs/adr/0015-web-audio-stretch-graph.md) |
+| This pass | Wire BPM detection, Tap tempo, Half/double, and Key detection on Create Track. Prove Play screen stretch on a fixture/sample until upload persists audio |
+
+Suggested Worker pipeline:
+
+```
+decode (full-rate AudioBuffer)
+  → mono mix
+  → @audio/beat detect()
+  → optional Key detection (fill Key only at high confidence)
+  → expose snapLoopPoint from the same buffer
+```
+
 ## Industry reference (condensed)
 
 **DAWs (Logic, Cubase, Ardour, Cakewalk):** layered snap — grid (bar/beat/subdivision), zero crossings, transients, event boundaries; snap on edit completion; optional magnetic intensity.
@@ -92,7 +120,6 @@ WavePlayer opt-in: `loopRegion` prop. Library preview and other uses stay unchan
 | Phase micro-align | Cross-correlate Out against In after zero-cross snap |
 | Auto loop on upload | Default In/Out from bar guess + scoring |
 | Loop compatibility meter | UI feedback after both points set |
-| Web Worker | Move decode + future beat/onset analysis off the main thread |
 | Seam crossfade in preview | Playback concern; pairs with snap but not implemented here |
 
 Suggested snap order when beat grid ships:
@@ -125,5 +152,8 @@ bun test ./src/lib/loop-region-time.test.ts ./src/lib/loop-playback.test.ts
 ## Related
 
 - [../../../CONTEXT.md](../../../CONTEXT.md) — Create Track loop region editor UI
-- [../../../../CONTEXT.md](../../../../CONTEXT.md) — Loop region, seam crossfade, Original BPM
+- [../../../../CONTEXT.md](../../../../CONTEXT.md) — Loop region, Original BPM, Unconfirmed BPM, Key, No Key, Time-stretch
+- [../../../../docs/adr/0004-pitch-preserving-stretch.md](../../../../docs/adr/0004-pitch-preserving-stretch.md) — pitch-preserving stretch, Key stays metadata, No Key has no key-change UI
 - [../../../../docs/adr/0010-save-unconfirmed-bpm.md](../../../../docs/adr/0010-save-unconfirmed-bpm.md) — beat snap must degrade when BPM is unconfirmed
+- [../../../../docs/adr/0015-web-audio-stretch-graph.md](../../../../docs/adr/0015-web-audio-stretch-graph.md) — Play screen Web Audio stretch graph
+- [../../../../docs/adr/0016-audiojs-beat-and-stretch.md](../../../../docs/adr/0016-audiojs-beat-and-stretch.md) — `@audio/beat` and `@audio/stretch-transient`
