@@ -1,5 +1,10 @@
 import { Label } from "@loopinator/ui/components/label";
-import { Input } from "@loopinator/ui/components/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@loopinator/ui/components/input-group";
 
 type OriginalBpmFieldProps = {
   value: string;
@@ -14,13 +19,18 @@ export function OriginalBpmField({ value, onChange }: OriginalBpmFieldProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor="track-original-bpm">Original BPM</Label>
-      <Input
-        id="track-original-bpm"
-        type="number"
-        placeholder="Detected on upload"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <InputGroup className="rounded-3xl">
+        <InputGroupInput
+          id="track-original-bpm"
+          type="number"
+          placeholder="Detected on upload"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupText>BPM</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
       <p className="text-xs text-muted-foreground">
         Unconfirmed BPM from detection still saves and still plays. The Library flags the row until confirmed.
       </p>
