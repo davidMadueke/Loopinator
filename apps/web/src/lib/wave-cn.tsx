@@ -105,6 +105,10 @@ const WavesurferPlayer = memo(
       WAVESURFER_DEFAULTS.cursorWidth;
     const dragToSeek = options.dragToSeek as boolean | undefined;
     const media = options.media as HTMLMediaElement | undefined;
+    const fillParent = options.fillParent;
+    const hideScrollbar = options.hideScrollbar;
+    const autoScroll = options.autoScroll;
+    const autoCenter = options.autoCenter;
 
     useEffect(() => {
       if (!containerRef.current) return;
@@ -120,6 +124,10 @@ const WavesurferPlayer = memo(
         cursorWidth,
         dragToSeek,
         media,
+        ...(fillParent === undefined ? {} : { fillParent }),
+        ...(hideScrollbar === undefined ? {} : { hideScrollbar }),
+        ...(autoScroll === undefined ? {} : { autoScroll }),
+        ...(autoCenter === undefined ? {} : { autoCenter }),
         plugins: optionsRef.current.plugins,
         waveColor: resolvedWaveColor,
         progressColor: resolvedProgressColor,
@@ -157,6 +165,10 @@ const WavesurferPlayer = memo(
       minPxPerSec,
       cursorWidth,
       dragToSeek,
+      fillParent,
+      hideScrollbar,
+      autoScroll,
+      autoCenter,
     ]);
 
     // ── Apply color changes imperatively — zero remount on theme switch
@@ -217,6 +229,10 @@ const WavesurferPlayer = memo(
       "minPxPerSec",
       "cursorWidth",
       "dragToSeek",
+      "fillParent",
+      "hideScrollbar",
+      "autoScroll",
+      "autoCenter",
       "waveColor",
       "progressColor",
     ];

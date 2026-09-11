@@ -101,7 +101,7 @@ export function AudioUploadField({
                   className="p-2"
                   waveColor="var(--muted-foreground)"
                   progressColor="var(--primary)"
-                  waveHeight={128}
+                  waveHeight={144}
                   src={audioFile}
                   onDurationChange={setDuration}
                   loopRegion={{
