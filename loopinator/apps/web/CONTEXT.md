@@ -302,14 +302,14 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | Form state | `inPoint` / `outPoint` stay in `CreateTrackPanel`; passed through `AudioUploadField` as props |
 | Auto (file edge) | Stored as empty string `""`; inputs display **Auto**; markers stay at 0 s (in) or duration (out) |
 | Marker UI | Thin vertical lines, draggable; primary-tinted shade between them |
-| In/Out order | In-point is always at or before Out-point. Dragging or typing past the other point swaps the two values |
-| Overlay ↔ fields | Both write In-point and Out-point together after every edit, so the waveform markers and the time fields never drift |
+| In/Out order | In-point is always at or before Out-point. Typing or field-scrubbing past the other point swaps the two values. Region handles stop at the other point |
+| Region ↔ fields | Both write In-point and Out-point together after every edit, so the waveform markers and the time fields never drift |
 | Time fields | Drag horizontally to scrub; click (no drag) to type m:ss or m:ss.sss. Shift tightens the scrub |
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
 | Replace / Remove | Panel `onFileChange` resets both points to auto |
-| Implementation switch | `LOOP_REGION_IMPL` constant at top of `wave-player.tsx`: `"custom"` (React overlay) or `"regions"` (Wavesurfer Regions plugin) |
+| Markers | Wavesurfer Regions plugin, on the waveform canvas, so they scroll with long audio. `LoopRegionField` still scrubs, types, snaps, and swaps |
 
 ### Create Track file layout
 
@@ -320,8 +320,7 @@ apps/web/src/
   lib/use-loop-snap.ts               ← decode uploaded file for marker snap
   hooks/use-spacebar-play-pause.ts   ← Active transport stack (see Space play/pause)
   components/waves-cn/
-    wave-player.tsx                  ← WavePlayer + LOOP_REGION_IMPL + Space when ready
-    loop-region-overlay.tsx          ← custom overlay markers
+    wave-player.tsx                  ← WavePlayer + Regions plugin loop markers + Space when ready
   components/play/create-track/
     audio-upload-field.tsx           ← upload + WavePlayer + LoopRegionField
     loop-region-field.tsx            ← in/out text inputs

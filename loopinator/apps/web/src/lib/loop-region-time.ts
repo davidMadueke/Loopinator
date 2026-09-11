@@ -1,7 +1,7 @@
 /** Snap within this distance of file start/end stores as auto (empty string). */
 export const LOOP_EDGE_SNAP_SEC = 0.05;
 
-/** Minimum region length for the Wavesurfer Regions plugin. Overlay/fields swap instead. */
+/** Minimum region length for the Wavesurfer Regions plugin. Fields swap instead. */
 export const LOOP_MIN_GAP_SEC = 0.05;
 
 export const LOOP_AUTO_LABEL = "Auto";
