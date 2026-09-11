@@ -4,6 +4,7 @@ export type CreateTrackFormState = {
   audioFile: File | null;
   displayName: string;
   originalBpm: string;
+  bpmUnconfirmed: boolean;
   key: TrackKey;
   timeSignature: TimeSignature;
   inPoint: string;
@@ -14,6 +15,7 @@ export const INITIAL_CREATE_TRACK_FORM: CreateTrackFormState = {
   audioFile: null,
   displayName: "",
   originalBpm: "",
+  bpmUnconfirmed: false,
   key: DEFAULT_TRACK_KEY,
   timeSignature: "4/4",
   inPoint: "",

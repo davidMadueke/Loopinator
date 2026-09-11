@@ -7,6 +7,7 @@ import {
   clampOriginalBpm,
   commitOriginalBpmInput,
   sanitizeOriginalBpmDraft,
+  scaleOriginalBpm,
   stepOriginalBpm,
 } from "@/lib/play-types";
 
@@ -73,6 +74,22 @@ describe("stepOriginalBpm", () => {
     );
     expect(stepOriginalBpm(String(MAX_ORIGINAL_BPM), 1)).toBe(
       String(MAX_ORIGINAL_BPM),
+    );
+  });
+});
+
+describe("scaleOriginalBpm", () => {
+  it("doubles and halves inside the bounds", () => {
+    expect(scaleOriginalBpm("60", 2)).toBe("120");
+    expect(scaleOriginalBpm("120", 0.5)).toBe("60");
+  });
+
+  it("clamps Half/double at the bounds", () => {
+    expect(scaleOriginalBpm(String(MAX_ORIGINAL_BPM), 2)).toBe(
+      String(MAX_ORIGINAL_BPM),
+    );
+    expect(scaleOriginalBpm(String(MIN_ORIGINAL_BPM), 0.5)).toBe(
+      String(MIN_ORIGINAL_BPM),
     );
   });
 });

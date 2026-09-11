@@ -11,6 +11,12 @@ import {
   INITIAL_CREATE_TRACK_FORM,
   type CreateTrackFormState,
 } from "./create-form-state";
+import {
+  applyDetectedAnalysis,
+  resetAnalysisForNewFile,
+} from "@/lib/loop-analysis/apply-detection";
+import { useTrackAnalysis } from "@/lib/loop-analysis/use-track-analysis";
+import { useLoopSnap } from "@/lib/use-loop-snap";
 
 type CreateTrackPanelProps = {
   onProgressChange: (hasProgress: boolean) => void;
@@ -18,6 +24,8 @@ type CreateTrackPanelProps = {
 
 export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
   const [form, setForm] = useState<CreateTrackFormState>(INITIAL_CREATE_TRACK_FORM);
+  const { snapLoopPoint, audioBuffer } = useLoopSnap(form.audioFile);
+  const { result, isAnalyzing } = useTrackAnalysis(audioBuffer);
 
   const handleInPointChange = useCallback((inPoint: string) => {
     setForm((current) => ({ ...current, inPoint }));
@@ -27,9 +35,24 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
     setForm((current) => ({ ...current, outPoint }));
   }, []);
 
+  const handleOriginalBpmChange = useCallback((originalBpm: string) => {
+    setForm((current) => ({
+      ...current,
+      originalBpm,
+      bpmUnconfirmed: false,
+    }));
+  }, []);
+
   useEffect(() => {
     onProgressChange(hasCreateTrackProgress(form));
   }, [form, onProgressChange]);
+
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+    setForm((current) => applyDetectedAnalysis(current, result));
+  }, [result]);
 
   return (
     <div className="pt-4">
@@ -44,13 +67,9 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
           file={form.audioFile}
           inPoint={form.inPoint}
           outPoint={form.outPoint}
+          snapLoopPoint={snapLoopPoint}
           onFileChange={(audioFile) =>
-            setForm((current) => ({
-              ...current,
-              audioFile,
-              inPoint: "",
-              outPoint: "",
-            }))
+            setForm((current) => resetAnalysisForNewFile(current, audioFile))
           }
           onInPointChange={handleInPointChange}
           onOutPointChange={handleOutPointChange}
@@ -62,7 +81,9 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <OriginalBpmField
             value={form.originalBpm}
-            onChange={(originalBpm) => setForm((current) => ({ ...current, originalBpm }))}
+            unconfirmed={form.bpmUnconfirmed}
+            detecting={isAnalyzing}
+            onChange={handleOriginalBpmChange}
           />
           <TimeSignatureField
             value={form.timeSignature}
