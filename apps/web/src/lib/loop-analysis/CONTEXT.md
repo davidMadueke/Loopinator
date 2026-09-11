@@ -30,11 +30,11 @@ Loop points are always stored in **source file time**. Time-stretch (Target BPM 
 | Mono mix | All channels averaged before zero-cross search |
 | Crossing pick | Nearest to target time; tie-break on lower amplitude at the crossing |
 | BPM / Key detection | Browser **Web Worker** after the same full-rate decode. UI talks to `audioAnalysisEngine`, never `@audio/*`. [0017-audio-engine-seam](../../../../docs/adr/0017-audio-engine-seam.md) |
-| BPM library | `@audio/beat` `detect()` behind `engine/bpm.ts`. Always writes the guess as **Unconfirmed BPM** |
-| What confirms Original BPM | Typing, **Tap tempo**, or **Half/double** (×2 / ÷2, Unconfirmed only) |
-| Replace file | Re-run BPM detection while Original BPM is still Unconfirmed. Keep a confirmed value. Loop region still resets to Auto |
+| BPM library | `@audio/beat` `detect()` behind `engine/bpm.ts`. Always writes the guess as **Auto-detected BPM** |
+| What clears Auto-detected BPM | Typing, **Tap tempo**, or **Half/double** (×2 / ÷2) |
+| Replace file | Reset every Create Track field. Detection fills Original BPM and Key from the new file. Loop region resets to Auto |
 | Key library | `@audio/mir-chroma` + `@audio/mir-key` behind `engine/key.ts`. High confidence fills **Key**. Low confidence or no result leaves **No Key** |
-| Key on replace | Detect only while Key is still **No Key**. A filled Key is never overwritten |
+| Key on replace | Reset Key to **No Key**. Detection fills it again from the new file |
 | Key confidence | Pearson r ≥ `KEY_MIN_CONFIDENCE` (0.75) and winner–runner-up gap ≥ `KEY_MIN_CONFIDENCE_GAP` (0.08) |
 
 ### Snap pipeline (on commit)
@@ -57,7 +57,7 @@ loop-analysis/
   mono-mix.ts                ← AudioBuffer → Float32Array mono
   zero-crossing.ts           ← findNearestZeroCrossing()
   snap-loop-point.ts         ← snapLoopPointToZeroCrossing()
-  apply-detection.ts         ← Unconfirmed BPM / No Key write rules
+  apply-detection.ts         ← Auto-detected BPM / Key write rules
   tap-tempo.ts               ← TAP interval → Original BPM
   track-analysis.worker.ts   ← BPM + Key Worker
   use-track-analysis.ts      ← post decoded buffer to the Worker
@@ -81,7 +81,7 @@ loop-analysis/
 |---|---|
 | `use-loop-snap.ts` | Decodes uploaded `File`; returns `snapLoopPoint \| null` and the buffer |
 | `use-track-analysis.ts` | Sends that buffer to the Worker; returns BPM and Key results |
-| `create-track-panel.tsx` | Owns confirmation: detection writes Unconfirmed BPM / No Key only |
+| `create-track-panel.tsx` | Owns Auto-detected: detection writes Auto-detected BPM / Key only |
 | `audio-upload-field.tsx` | Receives `snapLoopPoint`; passes snap into WavePlayer and LoopRegionField |
 | `wave-player.tsx` | Regions plugin: live times on `region-update`, zero-cross snap on `region-updated` |
 | `loop-region-field.tsx` | Snap on blur or scrub release via `commitLoopPointSeconds`; drag the field to scrub |
@@ -104,7 +104,7 @@ Worker pipeline now:
 decode (full-rate AudioBuffer, main thread)
   → mono mix
   → Worker: audioAnalysisEngine.detectBpm + detectKey
-  → Create Track applies Unconfirmed BPM / high-confidence Key
+  → Create Track applies Auto-detected BPM / high-confidence Key
   → expose snapLoopPoint from the same buffer
 ```
 
@@ -127,7 +127,7 @@ decode (full-rate AudioBuffer, main thread)
 
 | Feature | Notes |
 |---|---|
-| Beat grid snap | Original BPM + time signature + optional downbeat offset; prefer detected beats over math grid when BPM is Unconfirmed |
+| Beat grid snap | Original BPM + time signature + optional downbeat offset; prefer detected beats over math grid when BPM is Auto-detected |
 | Transient snap | Onset peaks when beat detection is weak |
 | Phase micro-align | Cross-correlate Out against In after zero-cross snap |
 | Auto loop on upload | Default In/Out from bar guess + scoring |
@@ -170,9 +170,9 @@ bun test ./src/lib/loop-region-time.test.ts ./src/lib/loop-playback.test.ts ./sr
 ## Related
 
 - [../../../CONTEXT.md](../../../CONTEXT.md) — Create Track loop region editor UI
-- [../../../../CONTEXT.md](../../../../CONTEXT.md) — Loop region, Original BPM, Unconfirmed BPM, Key, No Key, Time-stretch
+- [../../../../CONTEXT.md](../../../../CONTEXT.md) — Loop region, Original BPM, Auto-detected BPM, Key, Auto-detected Key, No Key, Time-stretch
 - [../../../../docs/adr/0004-pitch-preserving-stretch.md](../../../../docs/adr/0004-pitch-preserving-stretch.md) — pitch-preserving stretch, Key stays metadata, No Key has no key-change UI
-- [../../../../docs/adr/0010-save-unconfirmed-bpm.md](../../../../docs/adr/0010-save-unconfirmed-bpm.md) — beat snap must degrade when BPM is unconfirmed
+- [../../../../docs/adr/0010-save-unconfirmed-bpm.md](../../../../docs/adr/0010-save-unconfirmed-bpm.md) — beat snap must degrade when BPM is Auto-detected
 - [../../../../docs/adr/0015-web-audio-stretch-graph.md](../../../../docs/adr/0015-web-audio-stretch-graph.md) — Play screen Web Audio stretch graph
 - [../../../../docs/adr/0016-audiojs-beat-and-stretch.md](../../../../docs/adr/0016-audiojs-beat-and-stretch.md) — `@audio/beat` and `@audio/stretch-transient`
 - [../../../../docs/adr/0017-audio-engine-seam.md](../../../../docs/adr/0017-audio-engine-seam.md) — UI never imports `@audio/*`; swap backends in `engine/`

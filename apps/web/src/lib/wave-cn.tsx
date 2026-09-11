@@ -109,6 +109,7 @@ const WavesurferPlayer = memo(
     const hideScrollbar = options.hideScrollbar;
     const autoScroll = options.autoScroll;
     const autoCenter = options.autoCenter;
+    const sampleRate = options.sampleRate as number | undefined;
 
     useEffect(() => {
       if (!containerRef.current) return;
@@ -128,6 +129,7 @@ const WavesurferPlayer = memo(
         ...(hideScrollbar === undefined ? {} : { hideScrollbar }),
         ...(autoScroll === undefined ? {} : { autoScroll }),
         ...(autoCenter === undefined ? {} : { autoCenter }),
+        ...(sampleRate === undefined ? {} : { sampleRate }),
         plugins: optionsRef.current.plugins,
         waveColor: resolvedWaveColor,
         progressColor: resolvedProgressColor,
@@ -169,6 +171,7 @@ const WavesurferPlayer = memo(
       hideScrollbar,
       autoScroll,
       autoCenter,
+      sampleRate,
     ]);
 
     // ── Apply color changes imperatively — zero remount on theme switch
@@ -233,6 +236,7 @@ const WavesurferPlayer = memo(
       "hideScrollbar",
       "autoScroll",
       "autoCenter",
+      "sampleRate",
       "waveColor",
       "progressColor",
     ];

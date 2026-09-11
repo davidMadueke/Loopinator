@@ -13,19 +13,24 @@ import {
   type KeyScale,
   type TrackKey,
 } from "@/lib/play-types";
+import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
 
 type KeyFieldProps = {
   value: TrackKey;
+  autoDetected: boolean;
   onChange: (value: TrackKey) => void;
 };
 
-/** Metadata only. Defaults to No Key. v1 does not transpose. */
-export function KeyField({ value, onChange }: KeyFieldProps) {
+/** Metadata only. Defaults to No Key. v1 does not transpose. High-confidence Key detection may fill this as Auto-detected Key; otherwise it stays No Key. Future key-change UI does not apply while Key is No Key. */
+export function KeyField({ value, autoDetected, onChange }: KeyFieldProps) {
   const scaleDisabled = value.center === "No Key";
 
   return (
     <fieldset className="space-y-3">
-      <legend className="text-sm font-medium">Key</legend>
+      <legend className="flex items-center gap-1 text-sm font-medium">
+        Key
+        {autoDetected ? <AutoDetectedIcon kind="key" /> : null}
+      </legend>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           {/* <Label htmlFor="track-key-center">Key centre</Label> */}

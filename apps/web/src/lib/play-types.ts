@@ -62,7 +62,7 @@ export type Track = {
   displayName: string;
   filename: string;
   originalBpm: number;
-  bpmUnconfirmed: boolean;
+  bpmAutoDetected: boolean;
   key: string;
   keyMode: "major" | "minor";
   timeSignature: TimeSignature;

@@ -1,11 +1,12 @@
-import { clampOriginalBpm, type TrackKey } from "@/lib/play-types";
+import { DEFAULT_TRACK_KEY, clampOriginalBpm, type TrackKey } from "@/lib/play-types";
 
 import type { TrackAnalysisResult } from "./engine/types";
 
 export type DetectionFormSlice = {
   originalBpm: string;
-  bpmUnconfirmed: boolean;
+  bpmAutoDetected: boolean;
   key: TrackKey;
+  keyAutoDetected: boolean;
   audioFile: File | null;
   inPoint: string;
   outPoint: string;
@@ -13,13 +14,16 @@ export type DetectionFormSlice = {
 
 export function shouldWriteDetectedBpm(
   originalBpm: string,
-  bpmUnconfirmed: boolean,
+  bpmAutoDetected: boolean,
 ): boolean {
-  return originalBpm.trim() === "" || bpmUnconfirmed;
+  return originalBpm.trim() === "" || bpmAutoDetected;
 }
 
-export function shouldWriteDetectedKey(key: TrackKey): boolean {
-  return key.center === "No Key";
+export function shouldWriteDetectedKey(
+  key: TrackKey,
+  keyAutoDetected: boolean,
+): boolean {
+  return key.center === "No Key" || keyAutoDetected;
 }
 
 type WithDetectionSlice<T extends DetectionFormSlice> = Omit<
@@ -36,17 +40,21 @@ export function applyDetectedAnalysis<T extends DetectionFormSlice>(
 
   if (
     detected.bpm &&
-    shouldWriteDetectedBpm(form.originalBpm, form.bpmUnconfirmed)
+    shouldWriteDetectedBpm(form.originalBpm, form.bpmAutoDetected)
   ) {
     next = {
       ...next,
       originalBpm: String(clampOriginalBpm(detected.bpm.bpm)),
-      bpmUnconfirmed: true,
+      bpmAutoDetected: true,
     };
   }
 
-  if (detected.key && shouldWriteDetectedKey(next.key)) {
-    next = { ...next, key: detected.key.key };
+  if (detected.key && shouldWriteDetectedKey(next.key, next.keyAutoDetected)) {
+    next = {
+      ...next,
+      key: detected.key.key,
+      keyAutoDetected: true,
+    };
   }
 
   return next;
@@ -56,17 +64,14 @@ export function resetAnalysisForNewFile<T extends DetectionFormSlice>(
   form: T,
   audioFile: File | null,
 ): WithDetectionSlice<T> {
-  const rewriteBpm = shouldWriteDetectedBpm(
-    form.originalBpm,
-    form.bpmUnconfirmed,
-  );
-
   return {
     ...form,
     audioFile,
     inPoint: "",
     outPoint: "",
-    originalBpm: rewriteBpm ? "" : form.originalBpm,
-    bpmUnconfirmed: rewriteBpm ? false : form.bpmUnconfirmed,
+    originalBpm: "",
+    bpmAutoDetected: false,
+    key: DEFAULT_TRACK_KEY,
+    keyAutoDetected: false,
   };
 }

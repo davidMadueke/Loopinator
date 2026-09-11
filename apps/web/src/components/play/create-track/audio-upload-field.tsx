@@ -1,11 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Button } from "@loopinator/ui/components/button";
 import { FileUpload } from "@loopinator/ui/components/file-upload";
-import { WavePlayer } from "@/components/waves-cn/wave-player";
-import { LoopRegionField } from "./loop-region-field";
-import { storedValueToSeconds } from "@/lib/loop-region-time";
 
 const AUDIO_ACCEPT = {
   "audio/wav": [".wav"],
@@ -24,41 +20,11 @@ function formatFileSize(bytes: number): string {
 
 type AudioUploadFieldProps = {
   file: File | null;
-  inPoint: string;
-  outPoint: string;
-  snapLoopPoint: ((seconds: number) => number) | null;
   onFileChange: (file: File | null) => void;
-  onInPointChange: (value: string) => void;
-  onOutPointChange: (value: string) => void;
 };
 
 /** WAV or MP3 upload. Filename comes from the file; Display name is separate. */
-export function AudioUploadField({
-  file,
-  inPoint,
-  outPoint,
-  snapLoopPoint,
-  onFileChange,
-  onInPointChange,
-  onOutPointChange,
-}: AudioUploadFieldProps) {
-  const [duration, setDuration] = React.useState(0);
-
-  React.useLayoutEffect(() => {
-    if (duration <= 0) {
-      return;
-    }
-
-    const inSeconds = storedValueToSeconds(inPoint, duration, "in");
-    const outSeconds = storedValueToSeconds(outPoint, duration, "out");
-    if (inSeconds <= outSeconds) {
-      return;
-    }
-
-    onInPointChange(outPoint);
-    onOutPointChange(inPoint);
-  }, [duration, inPoint, onInPointChange, onOutPointChange, outPoint]);
-
+export function AudioUploadField({ file, onFileChange }: AudioUploadFieldProps) {
   return (
     <div className="space-y-2">
       <FileUpload
@@ -77,7 +43,7 @@ export function AudioUploadField({
 
           return (
             <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-              <div className="flex items-center justify-between gap-3 border-b bg-muted/30 px-4 py-3">
+              <div className="flex items-center justify-between gap-3 bg-muted/30 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">
                     {audioFile.name}
@@ -94,35 +60,6 @@ export function AudioUploadField({
                     Remove
                   </Button>
                 </div>
-              </div>
-
-              <div className="space-y-3 p-4">
-                <WavePlayer
-                  className="p-2"
-                  waveColor="var(--muted-foreground)"
-                  progressColor="var(--primary)"
-                  waveHeight={144}
-                  src={audioFile}
-                  onDurationChange={setDuration}
-                  loopRegion={{
-                    inPoint,
-                    outPoint,
-                    snapLoopPoint,
-                    onInPointChange,
-                    onOutPointChange,
-                  }}
-                />
-                <LoopRegionField
-                  inPoint={inPoint}
-                  outPoint={outPoint}
-                  duration={duration}
-                  snapLoopPoint={snapLoopPoint}
-                  onInPointChange={onInPointChange}
-                  onOutPointChange={onOutPointChange}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Filename is kept for Advanced Options and the Library.
-                </p>
               </div>
             </div>
           );

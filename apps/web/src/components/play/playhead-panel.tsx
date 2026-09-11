@@ -1,7 +1,7 @@
 import { PlayheadCircle } from "@loopinator/ui/components/playhead-circle";
 import { Separator } from "@loopinator/ui/components/separator";
-import { AlertTriangleIcon } from "lucide-react";
 
+import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
 import type { Track } from "@/lib/play-types";
 
 type PlayheadPanelProps = {
@@ -34,12 +34,10 @@ export function PlayheadPanel({
               <span>M</span>
             </div>
           </div>
-          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {track.originalBpm} BPM original
-            {track.bpmUnconfirmed ? (
-              <AlertTriangleIcon className="size-3 text-amber-500" aria-label="Unconfirmed BPM" />
-            ) : null}
-          </p>
+            {track.bpmAutoDetected ? <AutoDetectedIcon kind="bpm" /> : null}
+          </div>
           <Separator className="my-3 w-24" />
           <p className=" text-medium font-medium">{track.displayName}</p>
           <div className="mt-3 flex items-center gap-1 w-fit">

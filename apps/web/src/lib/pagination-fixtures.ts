@@ -24,7 +24,7 @@ export const PAGINATION_FIXTURE_TRACKS: Track[] = BPM_BANDS.flatMap((band) => {
       displayName: `Pagination fixture ${label} ${n}`,
       filename: `pagination-fixture-${band}-${n}.wav`,
       originalBpm,
-      bpmUnconfirmed: false,
+      bpmAutoDetected: false,
       key: "C",
       keyMode: "major" as const,
       timeSignature: "4/4" as const,
