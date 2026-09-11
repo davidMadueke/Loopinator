@@ -8,7 +8,7 @@ Wireframe layout with these domain overrides:
 
 | Wireframe element | Decision |
 |---|---|
-| Key +/- and dropdown | Read-only text inside the Playhead circle |
+| Key +/- and dropdown | Read-only text inside the Playhead circle. A Track whose Key is **No Key** never gets key-change UI |
 | 4/4 dropdown | Read-only text inside the Playhead circle |
 | Fade on main screen | Transport fade in the Advanced Options panel only |
 | Split Play \| Pause | One contextual Transport bar button: Play, then Pause, then Restart |
@@ -22,7 +22,7 @@ Wireframe layout with these domain overrides:
 | Setlist editing | Create new and Edit on Setlist rows inside the Setlists tab |
 | Route context row | **Route breadcrumb** in the Playback frame; its chips open the Setlist, Slot, and Track pickers |
 | Play screen width | Playback frame max ~860px, centered on wider viewports |
-| Tempo stepper | ±1 BPM per tap, ±3 BPM while held |
+| Tempo stepper | ±1 BPM per tap, ±3 BPM while held. Drives Play screen Time-stretch |
 | Playhead ring color | `--playhead` from `packages/ui` globals; follows the Accent colour |
 | Hamburger | Library, Setlists, Upload, Account/Login per ADR-0002 |
 | Appearance menu | Palette icon button left of the hamburger; Theme and Accent colour |
@@ -72,10 +72,10 @@ apps/web/src/components/play/
   playback-frame.tsx        ← max-w ~860px centered column
   transport-bar.tsx         ← single large Button (Play / Pause / Restart)
   tempo-stepper.tsx         ← Label + Button +/− (±1 tap, ±3 hold)
-  library-panel.tsx         ← Tabs: Tracks | Setlists; Filters in toolbar centre
+  library-panel.tsx         ← Tabs: Tracks | Setlists
   filters.tsx               ← Library Filters provider, trigger, chip row
   advanced-options-panel.tsx ← Reset this device, Save for everyone
-  library-tracks-tab.tsx    ← Tracks by BPM band
+  library-tracks-tab.tsx    ← Tracks by BPM band; filter toolbar + chips
   library-setlists-tab.tsx  ← Setlist rows, Create new, Edit
 
 apps/web/src/components/reui/
@@ -93,13 +93,13 @@ apps/web/src/components/reui/
 | Slot prev/next | `Button` variant ghost + Lucide chevrons |
 | Playhead ring | `PlayheadCircle` (`packages/ui`) |
 | Target / Original BPM | Plain text; unconfirmed flag on Original only |
-| Key, Time signature | Plain text, wireframe styling |
+| Key, Time signature | Plain text, wireframe styling. No Key shows no Major/Minor and no key-change controls |
 | Advanced Options entry | `Button` outline + Override dot |
 | Transport | One `Button`, size lg |
 | Tempo stepper | `Button` +/− in bordered container |
 | Advanced Options body | Custom panel; full-width block above the Playback frame |
 | Library panel | `Tabs` + custom lists; full-width block above Playback frame |
-| Library Filters | ReUI provider wrapping browse Tabs; `HoverButton` Add in the centre column, chips in a second toolbar row |
+| Library Filters | ReUI provider in the Tracks tab; `HoverButton` Add on the same sticky row as Expand all / Collapse all, chips in a second sticky row |
 
 ## Page structure
 
@@ -308,8 +308,34 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
-| Replace / Remove | Panel `onFileChange` resets both points to auto |
+| Replace / Remove | Panel `onFileChange` resets both points to Auto. Re-runs BPM detection while Original BPM is still Unconfirmed; keeps a confirmed value |
 | Markers | Wavesurfer Regions plugin, on the waveform canvas, so they scroll with long audio. `LoopRegionField` still scrubs, types, snaps, and swaps |
+| Preview tempo | File speed. Time-stretch is Play screen only |
+
+## Create Track — Original BPM and Key
+
+Domain: [../../CONTEXT.md](../../CONTEXT.md). Analysis: **[src/lib/loop-analysis/CONTEXT.md](src/lib/loop-analysis/CONTEXT.md)**.
+
+| Decision | Choice |
+|---|---|
+| BPM detection | Runs in a Worker when the file decodes. Fills Original BPM as **Unconfirmed BPM**, including a low-confidence guess |
+| Confirm Original BPM | Typing, **Tap tempo** (TAP button), or **Half/double** (×2 / ÷2, Unconfirmed only) |
+| Empty until decode | Placeholder stays “Detected on upload” until the Worker returns |
+| Key detection | Same decode. High confidence fills **Key**. Low confidence or no result leaves **No Key** |
+| No Key | Future key-change UI does not apply. Create Track still has the Key field so an Editor can set one. Play screen Key is read-only |
+| Preview | WavePlayer does not Time-stretch |
+
+## Play screen — Time-stretch
+
+Upload Track is still disabled and Play screen Tracks have no audio URL. This pass proves the engine on a fixture/sample.
+
+| Decision | Choice |
+|---|---|
+| Graph | Web Audio, pitch-preserving stretch worklet. [0015-web-audio-stretch-graph](../../docs/adr/0015-web-audio-stretch-graph.md) |
+| Algorithm | `@audio/stretch-transient`. [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) |
+| Live control | Tempo stepper changes Target BPM; stretch ratio is Target / Original, clamped ±20% |
+| Loop wrap | Source file time. Stretch does not move In-point or Out-point |
+| What does not stretch | Create Track preview, Row preview |
 
 ### Create Track file layout
 
@@ -324,22 +350,24 @@ apps/web/src/
   components/play/create-track/
     audio-upload-field.tsx           ← upload + WavePlayer + LoopRegionField
     loop-region-field.tsx            ← in/out text inputs
+    original-bpm-field.tsx           ← Original BPM, TAP, Half/double, Unconfirmed copy
+    key-field.tsx                    ← Key; detection may fill, else No Key
     create-track-panel.tsx           ← form state; no standalone loop section
 ```
 
 ## Library Filters
 
-Browse-mode filter bar in the Library panel toolbar, between the Tracks/Setlists tabs and
-**Create New**. Hidden while creating a Track or Setlist. Built on ReUI Filters; field editors
+Browse-mode filter bar on the Tracks tab, same sticky row as Expand all / Collapse all.
+Hidden on Setlists and while creating a Track or Setlist. Built on ReUI Filters; field editors
 follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patterns.
 
 | Decision | Choice |
 |---|---|
-| Add/Clear placement | Centre column of the Library toolbar (`justify-center`), same row as tabs and Create New |
-| Chip placement | Second row in the same padded `max-w-215` toolbar box, above the list; `shrink-0` so chips stay put while the list scrolls |
-| Chip row layout | `w-full flex-wrap`, start aligned, `gap-1.5`; no extra chrome; unlimited wrap |
-| Chip row when empty | Unmounts; the toolbar box collapses back to the 3-column row |
-| Toolbar-to-chips gap | `gap-2`, same as the Library column |
+| Add/Clear placement | Left side of the Tracks sticky toolbar, opposite Expand all / Collapse all |
+| Chip placement | Second row in that same sticky stack, above the BPM-band list |
+| Chip row layout | `w-full flex-wrap`, start aligned, `gap-3`; no extra chrome; unlimited wrap |
+| Chip row when empty | Unmounts; the sticky stack collapses back to the Add / Expand / Collapse row |
+| Toolbar stickiness | Add Filter row and chip row share one `sticky top-0` wrapper with `bg-background`, so both stay put while the list scrolls |
 | List padding | TabsContent keeps `pt-4` whether chips are showing or not |
 | Fields (order) | **Tempo** (target BPM range), **Time signature**, **Key** |
 | Tempo editor | Dual-thumb range slider, 40–200 BPM, step 1; each bound is a number input beside the track; Apply/Discard footer like c-filters-6 |
@@ -350,10 +378,10 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 | Chip label wash | Tempo `bg-primary/20`, Time signature `bg-primary/40`, Key `bg-primary/60` |
 | Add control | Default `HoverButton`: icon expands to **Add Filter**. Open matches the Route breadcrumb (`text-primary-on-muted`). Custom `trigger` skips this |
 | Custom trigger API | Optional `trigger` prop on `FiltersTrigger` |
-| With filters active | Same HoverButton, idle fill `bg-primary` (icon only); hover still expands; open still `text-primary-on-muted`. ReUI **Clear** joins it in the centre column |
+| With filters active | Same HoverButton, idle fill `bg-primary` (icon only); hover still expands; open still `text-primary-on-muted`. ReUI **Clear** joins it on the left of the Tracks toolbar |
 | Field picker search | Hidden on Add Filter (`searchable={false}`); input stays `sr-only` for keyboard |
 | Clear | Outline `sm`, ReUI **Clear** label; no `ms-auto` |
-| Composition | `Filters` provider wraps the browse Tabs; `FiltersTrigger` in the centre; `FiltersChips` as the second toolbar row. ReUI `FiltersRow` is unused |
+| Composition | `Filters` provider wraps the Tracks tab; `FiltersTrigger` shares the Expand/Collapse row; `FiltersChips` is the second sticky row. ReUI `FiltersRow` is unused |
 | Query ownership | Local React state in `filters.tsx` for now; not yet applied to Tracks/Setlists lists |
 | Why a wrapper trigger | ReUI `PopoverTrigger` merges click/ref onto the `trigger` element; that element must forward props to the real button or the picker never opens |
 
@@ -362,7 +390,8 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 ```
 apps/web/src/
   components/play/filters.tsx          ← schema, editors, Filters provider, FiltersTrigger, FiltersChips
-  components/play/library-panel.tsx    ← Filters wraps Tabs; Trigger in centre; Chips under the 3-col row
+  components/play/library-tracks-tab.tsx ← Filters wraps the tab; Trigger + Expand/Collapse; Chips under that row
+  components/play/library-panel.tsx    ← Tabs + Create New; no filter chrome
   components/reui/filters/*            ← ReUI Filters (CLI)
   components/reui/cascader/*           ← Cascader (CLI)
   lib/play-types.ts                    ← TIME_SIGNATURES, KEY_CENTERS
@@ -383,6 +412,10 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 ## Related ADRs
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
+- [0004-pitch-preserving-stretch](../../docs/adr/0004-pitch-preserving-stretch.md) — Time-stretch, Key stays metadata, No Key has no key-change UI
+- [0010-save-unconfirmed-bpm](../../docs/adr/0010-save-unconfirmed-bpm.md) — Unconfirmed BPM still saves
 - [0012-library-scroll-stack](../../docs/adr/0012-library-scroll-stack.md) — Library panel above Playback frame
 - [0013-session-source-seam](../../docs/adr/0013-session-source-seam.md) — one swappable session source
 - [0014-link-scope-breadcrumb-pickers](../../docs/adr/0014-link-scope-breadcrumb-pickers.md) — which pickers a Musician may open
+- [0015-web-audio-stretch-graph](../../docs/adr/0015-web-audio-stretch-graph.md) — Play screen stretch graph
+- [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) — `@audio/beat` and `@audio/stretch-transient`

@@ -734,7 +734,7 @@ export function FiltersTrigger({ trigger }: FiltersTriggerProps) {
   const { ruleCount, announcement, announcementSeq } = useFilterState();
 
   return (
-    <div className="flex items-center justify-center gap-1.5">
+    <div className="flex items-center gap-1.5">
       <FiltersBuilder trigger={trigger ?? <DefaultAddFilterTrigger compact={ruleCount > 0} />} />
       {ruleCount > 0 ? (
         <Button
@@ -843,7 +843,7 @@ export function FiltersChips() {
       {...(actions.readOnly
         ? { "aria-description": actions.labels.readOnly }
         : null)}
-      className="flex w-full flex-wrap items-center gap-3 pt-2 pb-2"
+      className="flex w-full flex-wrap items-center gap-3 bg-background pt-2 pb-2"
       onKeyDown={onKeyDown}
     >
       {rules.map((rule, index) => (

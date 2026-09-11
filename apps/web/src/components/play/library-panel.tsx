@@ -7,7 +7,6 @@ import { useLibraryCreateStore } from "@/stores/library-create-store";
 
 import { CreateSetlistPanel } from "./create-setlist-panel";
 import { CreateTrackPanel } from "./create-track-panel";
-import { Filters, FiltersChips, FiltersTrigger } from "./filters";
 import { LibrarySetlistsTab } from "./library-setlists-tab";
 import { LibraryTracksTab } from "./library-tracks-tab";
 
@@ -96,57 +95,37 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
       </div>
 
       {creating ? null : (
-        <Filters>
-          <Tabs
-            value={tab}
-            onValueChange={(value) => onTabChange(value as LibraryTab)}
-            className="flex min-h-0 flex-1 flex-col gap-2"
-          >
-            <div className={`${LIBRARY_COLUMN} shrink-0 overflow-hidden`}>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center">
-                  <div className="flex w-full justify-start">
-                    <TabsList variant="default">
-                      <TabsTrigger value="Track">Tracks</TabsTrigger>
-                      <TabsTrigger value="Setlist">Setlists</TabsTrigger>
-                    </TabsList>
-                  </div>
-
-                  {tab === "Track" ? (
-                    <div className="flex w-full justify-center">
-                      <FiltersTrigger />
-                    </div>
-                  ) : null}
-
-                  <div className="flex w-full justify-end">
-                    <HoverButton
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCreateOpen}
-                      simpleView="Create New"
-                      expandedView={tab}
-                      expandedClassName="pl-1"
-                    />
-                  </div>
-                </div>
-
-                { tab === "Track" && (
-                <FiltersChips />
-                )}
-
-              </div>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => onTabChange(value as LibraryTab)}
+          className="flex min-h-0 flex-1 flex-col gap-2"
+        >
+          <div className={`${LIBRARY_COLUMN} shrink-0 overflow-hidden`}>
+            <div className="flex items-center justify-between gap-4">
+              <TabsList variant="default">
+                <TabsTrigger value="Track">Tracks</TabsTrigger>
+                <TabsTrigger value="Setlist">Setlists</TabsTrigger>
+              </TabsList>
+              <HoverButton
+                variant="outline"
+                size="sm"
+                onClick={handleCreateOpen}
+                simpleView="Create New"
+                expandedView={tab}
+                expandedClassName="pl-1"
+              />
             </div>
+          </div>
 
-            <LibraryPanelScrollArea>
-              <TabsContent value="Track" className="pt-4">
-                <LibraryTracksTab activeTrackId={activeTrackId} />
-              </TabsContent>
-              <TabsContent value="Setlist" className="pt-4">
-                <LibrarySetlistsTab activeSetlistId={activeSetlistId} />
-              </TabsContent>
-            </LibraryPanelScrollArea>
-          </Tabs>
-        </Filters>
+          <LibraryPanelScrollArea>
+            <TabsContent value="Track" className="pt-4">
+              <LibraryTracksTab activeTrackId={activeTrackId} />
+            </TabsContent>
+            <TabsContent value="Setlist" className="pt-4">
+              <LibrarySetlistsTab activeSetlistId={activeSetlistId} />
+            </TabsContent>
+          </LibraryPanelScrollArea>
+        </Tabs>
       )}
 
       {creating && tab === "Track" && (
