@@ -19,6 +19,7 @@ import {
   toStoredLoopRegion,
 } from "@/lib/loop-region-time";
 import { wrapLoopPlayback } from "@/lib/loop-playback";
+import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
 
 /** Switch loop-region rendering: custom React overlay vs Wavesurfer Regions plugin. */
 export const LOOP_REGION_IMPL = "custom" as "custom" | "regions";
@@ -360,6 +361,8 @@ export function WavePlayer({
     void ws.playPause();
   }, [ensurePlaybackInLoop]);
 
+  useSpacebarPlayPause(togglePlay, isReady);
+
   const restart = React.useCallback(() => {
     if (!wavesurferRef.current || !isReady) return;
     if (!loopRegion) return;
@@ -537,6 +540,7 @@ export function WavePlayer({
               className="h-9 w-9"
               disabled={!isReady}
               onClick={togglePlay}
+              aria-keyshortcuts="Space"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause size={17} /> : <Play size={17} />}

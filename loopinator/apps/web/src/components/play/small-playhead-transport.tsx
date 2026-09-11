@@ -202,6 +202,7 @@ function TransportIsland({
             style={{ width: PLAY_SIZE, height: PLAY_SIZE }}
             aria-label={playing ? "Pause" : "Play"}
             aria-pressed={playing}
+            aria-keyshortcuts="Space"
             onClick={handlePlayPause}
           >
             {playing ? (
