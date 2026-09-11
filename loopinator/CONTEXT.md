@@ -178,6 +178,14 @@ The current position inside the Loop region. The green stroke on the Playhead ci
 The primary playback control below the Playhead circle. One large button: Play while stopped, Pause while playing, Restart while paused after a Pause. There is no always-visible split Play and Pause pair.
 _Avoid_: Transport controls (plural), dual transport
 
+**Active transport**:
+The playback Space currently drives. A ready waveform preview takes it from the Play screen Transport bar. Distinct from Row preview.
+_Avoid_: Focused button, keyboard target, whatever is highlighted
+
+**Space play/pause**:
+Space toggles Play and Pause on the Active transport. It never Restarts, and it never activates a focused button. A focused form field keeps Space for typing.
+_Avoid_: Space as Restart, Space as page scroll, Space as button activate
+
 **Tempo stepper**:
 The +/- control on the main Play screen that adjusts Target BPM by 1 per tap, or by 3 while held. Key has no stepper on the Play screen.
 _Avoid_: Tempo slider, pitch control, Key stepper

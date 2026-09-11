@@ -12,6 +12,7 @@ Wireframe layout with these domain overrides:
 | 4/4 dropdown | Read-only text inside the Playhead circle |
 | Fade on main screen | Transport fade in the Advanced Options panel only |
 | Split Play \| Pause | One contextual Transport bar button: Play, then Pause, then Restart |
+| Space | **Space play/pause** on the **Active transport**. Form fields keep Space. A ready WavePlayer outranks the Play screen Transport |
 | "Advanced Settings" | **Advanced Options panel**, scroll-stacked like the Library panel |
 | Single large BPM | **Target BPM readout** at performance size, no "Target" label |
 | Source tempo | **Original BPM readout** row directly under Target BPM, smaller type |
@@ -65,7 +66,7 @@ packages/ui/src/components/
   breadcrumb.tsx, sheet.tsx, separator.tsx, tabs.tsx   ← CLI
 
 apps/web/src/components/play/
-  play-screen.tsx           ← page shell: header + scroll column
+  play-screen.tsx           ← page shell: header + scroll column; Space play/pause for Transport
   play-screen-header.tsx    ← Church OS mark, title, hamburger (DropdownMenu)
   route-breadcrumb.tsx      ← picker chips + Slot navigator + Cache indicator
   playback-frame.tsx        ← max-w ~860px centered column
@@ -266,6 +267,31 @@ the dropdown container.
 | Per-item cap | None. The container is the only limit |
 | Reading the full name | Same `title` hover as the chips |
 
+## Space play/pause
+
+Space is hard-mapped to Play/Pause on the **Active transport**. It does not Restart, scroll the page, or fire the focused button. Domain terms: [../../CONTEXT.md](../../CONTEXT.md).
+
+Highest matching row wins:
+
+| Priority | When | Space does |
+|---|---|---|
+| 1 | A form field is focused: text, number, textarea, select, combobox, contenteditable | Stays with that field |
+| 2 | A WavePlayer is ready (Create Track upload preview, `/dev/loop-preview`) | Toggles that WavePlayer |
+| 3 | Play screen is open | Toggles Play screen Transport |
+
+The header island and the Transport bar are one playback. Space hits `usePlayback` play/pause, not a particular button. Row preview is not on this stack.
+
+| Decision | Choice |
+|---|---|
+| Focused buttons | Restart, Loop preview, Tempo +/−, hamburger, and other buttons do not keep Space |
+| Hold | First press only. No strobe |
+| Modifiers | Ctrl, Meta, Alt leave Space alone |
+| Two WavePlayers | Last mounted ready instance is the Active transport |
+| WavePlayer still loading | Falls through to the Play screen Transport |
+| Create Track over Play screen | The ready WavePlayer outranks Transport, so previewing an upload does not toggle the live Track |
+
+Hook: `apps/web/src/hooks/use-spacebar-play-pause.ts`. WavePlayer registers when ready. PlayScreen always registers.
+
 ## Create Track — loop region editor
 
 Loop region editing lives inside the audio upload success panel, not as a separate form section. Snap, decode, time format, and analysis roadmap: **[src/lib/loop-analysis/CONTEXT.md](src/lib/loop-analysis/CONTEXT.md)**.
@@ -292,8 +318,9 @@ apps/web/src/
   lib/loop-analysis/                   ← analysis CONTEXT + decode, zero-cross, snap
   lib/loop-region-time.ts            ← parse, format, clamp, commit helpers
   lib/use-loop-snap.ts               ← decode uploaded file for marker snap
+  hooks/use-spacebar-play-pause.ts   ← Active transport stack (see Space play/pause)
   components/waves-cn/
-    wave-player.tsx                  ← WavePlayer + LOOP_REGION_IMPL
+    wave-player.tsx                  ← WavePlayer + LOOP_REGION_IMPL + Space when ready
     loop-region-overlay.tsx          ← custom overlay markers
   components/play/create-track/
     audio-upload-field.tsx           ← upload + WavePlayer + LoopRegionField
