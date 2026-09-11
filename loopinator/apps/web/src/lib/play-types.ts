@@ -156,3 +156,12 @@ export function stepOriginalBpm(current: string, direction: 1 | -1) {
   const base = Number.isFinite(parsed) ? parsed : DEFAULT_ORIGINAL_BPM;
   return String(clampOriginalBpm(base + direction));
 }
+
+/** ×2 or ÷2 for Half/double. Empty or invalid stays put. */
+export function scaleOriginalBpm(current: string, factor: 2 | 0.5) {
+  const parsed = Number(current);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return current;
+  }
+  return String(clampOriginalBpm(parsed * factor));
+}

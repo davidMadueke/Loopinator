@@ -308,7 +308,7 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
-| Replace / Remove | Panel `onFileChange` resets both points to Auto. Re-runs BPM detection while Original BPM is still Unconfirmed; keeps a confirmed value |
+| Replace / Remove | Panel `onFileChange` resets both points to Auto. Re-runs BPM detection while Original BPM is still Unconfirmed; keeps a confirmed value. Key detection runs only while Key is still No Key |
 | Markers | Wavesurfer Regions plugin, on the waveform canvas, so they scroll with long audio. `LoopRegionField` still scrubs, types, snaps, and swaps |
 | Preview tempo | File speed. Time-stretch is Play screen only |
 
@@ -321,7 +321,9 @@ Domain: [../../CONTEXT.md](../../CONTEXT.md). Analysis: **[src/lib/loop-analysis
 | BPM detection | Runs in a Worker when the file decodes. Fills Original BPM as **Unconfirmed BPM**, including a low-confidence guess |
 | Confirm Original BPM | Typing, **Tap tempo** (TAP button), or **Half/double** (×2 / ÷2, Unconfirmed only) |
 | Empty until decode | Placeholder stays “Detected on upload” until the Worker returns |
-| Key detection | Same decode. High confidence fills **Key**. Low confidence or no result leaves **No Key** |
+| Key detection | Same Worker. High confidence fills **Key**. Low confidence or no result leaves **No Key** |
+| Key on replace | Detect only while Key is still **No Key**. A filled Key is never overwritten |
+| Backends | UI calls `audioAnalysisEngine`. Swap `@audio/beat` / `@audio/mir-*` in `engine/`. [0017-audio-engine-seam](../../docs/adr/0017-audio-engine-seam.md) |
 | No Key | Future key-change UI does not apply. Create Track still has the Key field so an Editor can set one. Play screen Key is read-only |
 | Preview | WavePlayer does not Time-stretch |
 
@@ -341,7 +343,7 @@ Upload Track is still disabled and Play screen Tracks have no audio URL. This pa
 
 ```
 apps/web/src/
-  lib/loop-analysis/                   ← analysis CONTEXT + decode, zero-cross, snap
+  lib/loop-analysis/                   ← analysis CONTEXT + decode, snap, Worker, engine seam
   lib/loop-region-time.ts            ← parse, format, clamp, commit helpers
   lib/use-loop-snap.ts               ← decode uploaded file for marker snap
   hooks/use-spacebar-play-pause.ts   ← Active transport stack (see Space play/pause)
@@ -352,7 +354,7 @@ apps/web/src/
     loop-region-field.tsx            ← in/out text inputs
     original-bpm-field.tsx           ← Original BPM, TAP, Half/double, Unconfirmed copy
     key-field.tsx                    ← Key; detection may fill, else No Key
-    create-track-panel.tsx           ← form state; no standalone loop section
+  components/play/create-track-panel.tsx ← form state; applies detection write rules
 ```
 
 ## Library Filters
@@ -419,3 +421,4 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 - [0014-link-scope-breadcrumb-pickers](../../docs/adr/0014-link-scope-breadcrumb-pickers.md) — which pickers a Musician may open
 - [0015-web-audio-stretch-graph](../../docs/adr/0015-web-audio-stretch-graph.md) — Play screen stretch graph
 - [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) — `@audio/beat` and `@audio/stretch-transient`
+- [0017-audio-engine-seam](../../docs/adr/0017-audio-engine-seam.md) — analysis backends sit behind `engine/`
