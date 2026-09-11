@@ -37,9 +37,65 @@ const LOOP_HANDLE_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 40%, transparent)";
 /** Vertical inset so the horizontal scrollbar sits in padding instead of the canvas. */
 const WAVEFORM_PAD_Y_PX = 4;
+/** WaveSurfer's default 8 kHz peaks cannot show real zero crossings. */
+const WAVEFORM_DECODE_SAMPLE_RATE = 44100;
+/** At max zoom, each decoded sample is this many pixels wide. */
+const ZERO_CROSS_PX_PER_SAMPLE = 8;
 
 function getWaveformScroller(ws: WaveSurfer) {
   return ws.getWrapper().parentElement;
+}
+
+/** Pixels per second that draws the whole duration in the visible scroller.
+ *  Floored so WaveSurfer's `Math.ceil(duration * minPxPerSec)` cannot overflow by 1px. */
+function getFitZoomPxPerSec(ws: WaveSurfer): number {
+  const total = ws.getDuration();
+  const scroller = getWaveformScroller(ws);
+  if (total <= 0 || !scroller) {
+    return 0;
+  }
+
+  const style = getComputedStyle(scroller);
+  const padding =
+    (Number.parseFloat(style.paddingLeft) || 0) +
+    (Number.parseFloat(style.paddingRight) || 0);
+  const width = Math.floor(scroller.clientWidth - padding);
+  if (width <= 0) {
+    return 0;
+  }
+
+  return width / total;
+}
+
+function clampZoom(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function maxZoomForSampleRate(sampleRate: number, fallback: number) {
+  if (sampleRate <= 0) {
+    return fallback;
+  }
+
+  return sampleRate * ZERO_CROSS_PX_PER_SAMPLE;
+}
+
+function zoomToSliderValue(zoom: number, min: number, max: number) {
+  if (max <= min) {
+    return 0;
+  }
+
+  const clamped = clampZoom(zoom, min, max);
+  return (
+    (Math.log(clamped) - Math.log(min)) / (Math.log(max) - Math.log(min))
+  );
+}
+
+function sliderValueToZoom(value: number, min: number, max: number) {
+  if (max <= min) {
+    return min;
+  }
+
+  return Math.exp(Math.log(min) + value * (Math.log(max) - Math.log(min)));
 }
 
 function padWaveformScroller(ws: WaveSurfer) {
@@ -101,9 +157,9 @@ export interface WavePlayerProps {
   waveHeight?: number;
   /** Initial zoom in pixels per second. `minPxPerSec` overrides this when set. @default 50 */
   defaultZoom?: number;
-  /** Minimum zoom in pixels per second @default 10 */
+  /** Fallback minimum zoom before the waveform can measure a fit-to-track zoom. @default 10 */
   minZoom?: number;
-  /** Maximum zoom in pixels per second @default 500 */
+  /** Fallback maximum zoom before sample rate is known. Live max is sample-rate × 8 px. @default 500 */
   maxZoom?: number;
   /** Initial zoom in pixels per second. Prefer `defaultZoom`. */
   minPxPerSec?: number;
@@ -363,9 +419,21 @@ export function WavePlayer({
   const [duration, setDuration] = React.useState(0);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [zoom, setZoom] = React.useState(initialZoom);
+  const [fitZoom, setFitZoom] = React.useState(0);
+  const [waveformSampleRate, setWaveformSampleRate] = React.useState(0);
   const [loopPreviewEnabled, setLoopPreviewEnabled] = React.useState(true);
   const [snapToPlayhead, setSnapToPlayhead] = React.useState(true);
   const snapToPlayheadRef = React.useRef(snapToPlayhead);
+  const zoomRef = React.useRef(zoom);
+  zoomRef.current = zoom;
+
+  const effectiveMinZoom = fitZoom > 0 ? fitZoom : minZoom;
+  const effectiveMaxZoom = Math.max(
+    maxZoomForSampleRate(waveformSampleRate, maxZoom),
+    effectiveMinZoom,
+  );
+  const effectiveMaxZoomRef = React.useRef(effectiveMaxZoom);
+  effectiveMaxZoomRef.current = effectiveMaxZoom;
 
   loopPreviewRef.current = loopPreviewEnabled;
   loopRegionRef.current = loopRegion;
@@ -499,24 +567,32 @@ export function WavePlayer({
     [isReady],
   );
 
-  const handleZoom = React.useCallback((value: number | readonly number[]) => {
-    const next = Array.isArray(value) ? value[0] : value;
-    if (next === undefined) return;
-    setZoom(next);
-    wavesurferRef.current?.zoom(next);
-  }, []);
+  const applyZoom = React.useCallback(
+    (next: number) => {
+      const clamped = clampZoom(next, effectiveMinZoom, effectiveMaxZoom);
+      zoomRef.current = clamped;
+      setZoom(clamped);
+      wavesurferRef.current?.zoom(clamped);
+    },
+    [effectiveMinZoom, effectiveMaxZoom],
+  );
+
+  const handleZoom = React.useCallback(
+    (value: number | readonly number[]) => {
+      const next = Array.isArray(value) ? value[0] : value;
+      if (next === undefined) return;
+      applyZoom(sliderValueToZoom(next, effectiveMinZoom, effectiveMaxZoom));
+    },
+    [applyZoom, effectiveMaxZoom, effectiveMinZoom],
+  );
 
   const zoomIn = React.useCallback(() => {
-    const next = Math.min(zoom * 1.5, maxZoom);
-    setZoom(next);
-    wavesurferRef.current?.zoom(next);
-  }, [zoom, maxZoom]);
+    applyZoom(zoom * 1.5);
+  }, [applyZoom, zoom]);
 
   const zoomOut = React.useCallback(() => {
-    const next = Math.max(zoom / 1.5, minZoom);
-    setZoom(next);
-    wavesurferRef.current?.zoom(next);
-  }, [zoom, minZoom]);
+    applyZoom(zoom / 1.5);
+  }, [applyZoom, zoom]);
 
   const toggleSnapToPlayhead = React.useCallback(() => {
     const next = !snapToPlayheadRef.current;
@@ -533,12 +609,29 @@ export function WavePlayer({
       padWaveformScroller(ws);
       setSnapViewToPlayhead(ws, snapToPlayheadRef.current);
       const nextDuration = ws.getDuration();
+      const nextFit = getFitZoomPxPerSec(ws);
+      const nextRate =
+        ws.getDecodedData()?.sampleRate ?? WAVEFORM_DECODE_SAMPLE_RATE;
+      setFitZoom(nextFit);
+      setWaveformSampleRate(nextRate);
+      if (nextFit > 0) {
+        const nextMax = Math.max(
+          maxZoomForSampleRate(nextRate, maxZoom),
+          nextFit,
+        );
+        const clamped = clampZoom(zoomRef.current, nextFit, nextMax);
+        if (clamped !== zoomRef.current) {
+          zoomRef.current = clamped;
+          setZoom(clamped);
+          ws.zoom(clamped);
+        }
+      }
       if (autoPlay) ws.play();
       setDuration(nextDuration);
       onDurationChange?.(nextDuration);
       setIsReady(true);
     },
-    [autoPlay, onDurationChange],
+    [autoPlay, maxZoom, onDurationChange],
   );
 
   const handlePlay = React.useCallback(() => {
@@ -585,8 +678,48 @@ export function WavePlayer({
     setCurrentTime(0);
     setDuration(0);
     setZoom(initialZoom);
+    setFitZoom(0);
+    setWaveformSampleRate(0);
     onDurationChange?.(0);
   }, [initialZoom, onDurationChange]);
+
+  React.useEffect(() => {
+    const ws = wavesurferRef.current;
+    if (!ws || !isReady) {
+      return;
+    }
+
+    const syncFitZoom = () => {
+      const nextFit = getFitZoomPxPerSec(ws);
+      setFitZoom(nextFit);
+      if (nextFit <= 0) {
+        return;
+      }
+
+      const clamped = clampZoom(
+        zoomRef.current,
+        nextFit,
+        Math.max(effectiveMaxZoomRef.current, nextFit),
+      );
+      if (clamped === zoomRef.current) {
+        return;
+      }
+
+      zoomRef.current = clamped;
+      setZoom(clamped);
+      ws.zoom(clamped);
+    };
+
+    syncFitZoom();
+    const scroller = getWaveformScroller(ws);
+    if (!scroller) {
+      return;
+    }
+
+    const observer = new ResizeObserver(syncFitZoom);
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  }, [duration, isReady]);
 
   const progress = duration > 0 ? currentTime / duration : 0;
 
@@ -625,6 +758,38 @@ export function WavePlayer({
               expandedView="Follow Playhead"
             />
           </div>
+          <div className="flex items-center gap-2 w-full">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+              disabled={!isReady || zoom <= effectiveMinZoom}
+              onClick={zoomOut}
+              aria-label="Zoom out"
+            >
+              <ZoomOut size={15} />
+            </Button>
+            <Slider
+              className={cn("flex-1")}
+              value={[zoomToSliderValue(zoom, effectiveMinZoom, effectiveMaxZoom)]}
+              min={0}
+              max={1}
+              step={0.001}
+              disabled={!isReady}
+              onValueChange={handleZoom}
+              aria-label="Zoom"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+              disabled={!isReady || zoom >= effectiveMaxZoom}
+              onClick={zoomIn}
+              aria-label="Zoom in"
+            >
+              <ZoomIn size={15} />
+            </Button>
+          </div>
           <div className="relative w-full overflow-hidden rounded-sm bg-muted/40 py-1">
             {!isReady ? (
               <div
@@ -642,6 +807,7 @@ export function WavePlayer({
               barGap={barGap}
               barRadius={barRadius}
               minPxPerSec={initialZoom}
+              sampleRate={WAVEFORM_DECODE_SAMPLE_RATE}
               fillParent
               dragToSeek={!loopRegion}
               hideScrollbar={false}
@@ -675,7 +841,7 @@ export function WavePlayer({
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
             <Button
               size="icon"
@@ -697,37 +863,6 @@ export function WavePlayer({
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause size={17} /> : <Play size={17} />}
-            </Button>
-          </div>
-          <div className="flex items-center gap-2 flex-1 max-w-50">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-              disabled={!isReady || zoom <= minZoom}
-              onClick={zoomOut}
-              aria-label="Zoom out"
-            >
-              <ZoomOut size={15} />
-            </Button>
-            <Slider
-              value={[zoom]}
-              min={minZoom}
-              max={maxZoom}
-              step={1}
-              disabled={!isReady}
-              onValueChange={handleZoom}
-              aria-label="Zoom"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-              disabled={!isReady || zoom >= maxZoom}
-              onClick={zoomIn}
-              aria-label="Zoom in"
-            >
-              <ZoomIn size={15} />
             </Button>
           </div>
           {loopRegion ? (

@@ -12,8 +12,9 @@ import { DEFAULT_TRACK_KEY, type TrackKey } from "@/lib/play-types";
 const emptyForm: DetectionFormSlice = {
   audioFile: null,
   originalBpm: "",
-  bpmUnconfirmed: false,
+  bpmAutoDetected: false,
   key: DEFAULT_TRACK_KEY,
+  keyAutoDetected: false,
   inPoint: "",
   outPoint: "",
 };
@@ -35,91 +36,107 @@ describe("shouldWriteDetectedBpm", () => {
     expect(shouldWriteDetectedBpm("", false)).toBe(true);
   });
 
-  it("overwrites an Unconfirmed BPM", () => {
+  it("overwrites an Auto-detected BPM", () => {
     expect(shouldWriteDetectedBpm("120", true)).toBe(true);
   });
 
-  it("keeps a confirmed value", () => {
+  it("keeps an Editor-set value", () => {
     expect(shouldWriteDetectedBpm("120", false)).toBe(false);
   });
 });
 
 describe("shouldWriteDetectedKey", () => {
   it("fills No Key", () => {
-    expect(shouldWriteDetectedKey(DEFAULT_TRACK_KEY)).toBe(true);
+    expect(shouldWriteDetectedKey(DEFAULT_TRACK_KEY, false)).toBe(true);
   });
 
-  it("does not overwrite a filled Key", () => {
-    expect(shouldWriteDetectedKey({ center: "C", scale: "minor" })).toBe(false);
+  it("overwrites an Auto-detected Key", () => {
+    expect(shouldWriteDetectedKey({ center: "C", scale: "minor" }, true)).toBe(true);
+  });
+
+  it("does not overwrite an Editor-set Key", () => {
+    expect(shouldWriteDetectedKey({ center: "C", scale: "minor" }, false)).toBe(false);
   });
 });
 
 describe("applyDetectedAnalysis", () => {
-  it("saves a low-confidence BPM as Unconfirmed BPM", () => {
+  it("saves a low-confidence BPM as Auto-detected BPM", () => {
     const next = applyDetectedAnalysis(emptyForm, {
       bpm: detectedBpm,
       key: null,
     });
     expect(next.originalBpm).toBe("128");
-    expect(next.bpmUnconfirmed).toBe(true);
+    expect(next.bpmAutoDetected).toBe(true);
   });
 
-  it("fills Key only while it is No Key", () => {
+  it("fills Key as Auto-detected Key while it is No Key", () => {
     const filled = applyDetectedAnalysis(emptyForm, {
       bpm: null,
       key: detectedKey,
     });
     expect(filled.key).toEqual({ center: "G", scale: "major" });
+    expect(filled.keyAutoDetected).toBe(true);
 
     const kept = applyDetectedAnalysis(
-      { ...emptyForm, key: { center: "D", scale: "minor" } },
+      {
+        ...emptyForm,
+        key: { center: "D", scale: "minor" },
+        keyAutoDetected: false,
+      },
       { bpm: null, key: detectedKey },
     );
     expect(kept.key).toEqual({ center: "D", scale: "minor" });
+    expect(kept.keyAutoDetected).toBe(false);
   });
 
-  it("does not overwrite a confirmed Original BPM", () => {
+  it("does not overwrite an Editor-set Original BPM", () => {
     const next = applyDetectedAnalysis(
-      { ...emptyForm, originalBpm: "90", bpmUnconfirmed: false },
+      { ...emptyForm, originalBpm: "90", bpmAutoDetected: false },
       { bpm: detectedBpm, key: null },
     );
     expect(next.originalBpm).toBe("90");
-    expect(next.bpmUnconfirmed).toBe(false);
+    expect(next.bpmAutoDetected).toBe(false);
   });
 });
 
 describe("resetAnalysisForNewFile", () => {
-  it("clears Unconfirmed BPM so the next pass can fill it", () => {
+  it("clears Auto-detected BPM, Key, and loop points", () => {
     const next = resetAnalysisForNewFile(
       {
         ...emptyForm,
         originalBpm: "128",
-        bpmUnconfirmed: true,
+        bpmAutoDetected: true,
+        key: { center: "A", scale: "minor" },
+        keyAutoDetected: true,
         inPoint: "0:01",
         outPoint: "0:04",
       },
       null,
     );
     expect(next.originalBpm).toBe("");
-    expect(next.bpmUnconfirmed).toBe(false);
+    expect(next.bpmAutoDetected).toBe(false);
+    expect(next.key).toEqual(DEFAULT_TRACK_KEY);
+    expect(next.keyAutoDetected).toBe(false);
     expect(next.inPoint).toBe("");
     expect(next.outPoint).toBe("");
   });
 
-  it("keeps a confirmed Original BPM and a filled Key", () => {
+  it("clears an Editor-set Original BPM and Key on replace", () => {
     const file = new File(["x"], "loop.wav", { type: "audio/wav" });
     const next = resetAnalysisForNewFile(
       {
         ...emptyForm,
         originalBpm: "96",
-        bpmUnconfirmed: false,
+        bpmAutoDetected: false,
         key: { center: "A", scale: "minor" },
+        keyAutoDetected: false,
       },
       file,
     );
-    expect(next.originalBpm).toBe("96");
-    expect(next.bpmUnconfirmed).toBe(false);
-    expect(next.key).toEqual({ center: "A", scale: "minor" });
+    expect(next.originalBpm).toBe("");
+    expect(next.bpmAutoDetected).toBe(false);
+    expect(next.key).toEqual(DEFAULT_TRACK_KEY);
+    expect(next.keyAutoDetected).toBe(false);
     expect(next.audioFile).toBe(file);
   });
 });

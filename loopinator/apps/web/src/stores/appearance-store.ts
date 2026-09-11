@@ -23,17 +23,19 @@ type AppearanceStore = {
   setAccent: (accent: Accent) => void;
 };
 
+const clientTheme = typeof window === "undefined" ? DEFAULT_THEME : readStoredTheme();
+const clientAccent = typeof window === "undefined" ? DEFAULT_ACCENT : readStoredAccent();
+
 export const useAppearanceStore = create<AppearanceStore>((set, get) => ({
-  theme: DEFAULT_THEME,
-  accent: DEFAULT_ACCENT,
+  theme: clientTheme,
+  accent: clientAccent,
   hydrated: false,
   hydrate: () => {
-    if (get().hydrated) {
-      return;
+    if (!get().hydrated) {
+      set({ theme: readStoredTheme(), accent: readStoredAccent(), hydrated: true });
     }
-
-    // The head script already wrote these to <html>, so this only catches state up.
-    set({ theme: readStoredTheme(), accent: readStoredAccent(), hydrated: true });
+    const { theme, accent } = get();
+    applyAppearance(theme, accent);
   },
   reapply: () => {
     const { theme, accent } = get();

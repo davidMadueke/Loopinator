@@ -1,20 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { Button } from "@loopinator/ui/components/button";
 
+import { WavePlayer } from "@/components/waves-cn/wave-player";
 import { AudioUploadField } from "./create-track/audio-upload-field";
 import { DisplayNameField } from "./create-track/display-name-field";
 import { KeyField } from "./create-track/key-field";
+import { LoopRegionField } from "./create-track/loop-region-field";
 import { OriginalBpmField } from "./create-track/original-bpm-field";
 import { TimeSignatureField } from "./create-track/time-signature-field";
 import {
   hasCreateTrackProgress,
   INITIAL_CREATE_TRACK_FORM,
+  resetCreateTrackForm,
   type CreateTrackFormState,
 } from "./create-form-state";
-import {
-  applyDetectedAnalysis,
-  resetAnalysisForNewFile,
-} from "@/lib/loop-analysis/apply-detection";
+import { applyDetectedAnalysis } from "@/lib/loop-analysis/apply-detection";
+import { storedValueToSeconds } from "@/lib/loop-region-time";
 import { useTrackAnalysis } from "@/lib/loop-analysis/use-track-analysis";
 import { useLoopSnap } from "@/lib/use-loop-snap";
 
@@ -24,6 +25,7 @@ type CreateTrackPanelProps = {
 
 export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
   const [form, setForm] = useState<CreateTrackFormState>(INITIAL_CREATE_TRACK_FORM);
+  const [duration, setDuration] = useState(0);
   const { snapLoopPoint, audioBuffer } = useLoopSnap(form.audioFile);
   const { result, isAnalyzing } = useTrackAnalysis(audioBuffer);
 
@@ -39,7 +41,15 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
     setForm((current) => ({
       ...current,
       originalBpm,
-      bpmUnconfirmed: false,
+      bpmAutoDetected: false,
+    }));
+  }, []);
+
+  const handleKeyChange = useCallback((key: CreateTrackFormState["key"]) => {
+    setForm((current) => ({
+      ...current,
+      key,
+      keyAutoDetected: false,
     }));
   }, []);
 
@@ -54,26 +64,81 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
     setForm((current) => applyDetectedAnalysis(current, result));
   }, [result]);
 
-  return (
-    <div className="pt-4">
-      <div className="space-y-1 pb-4">
-        <p className="text-sm text-muted-foreground text-center">
-          Upload a WAV or MP3 and set the Track default Loop region and metadata.
-        </p>
-      </div>
+  useEffect(() => {
+    setDuration(0);
+  }, [form.audioFile]);
 
-      <div className="space-y-5">
+  useLayoutEffect(() => {
+    if (duration <= 0) {
+      return;
+    }
+
+    const inSeconds = storedValueToSeconds(form.inPoint, duration, "in");
+    const outSeconds = storedValueToSeconds(form.outPoint, duration, "out");
+    if (inSeconds <= outSeconds) {
+      return;
+    }
+
+    handleInPointChange(form.outPoint);
+    handleOutPointChange(form.inPoint);
+  }, [
+    duration,
+    form.inPoint,
+    form.outPoint,
+    handleInPointChange,
+    handleOutPointChange,
+  ]);
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-gutter-stable">
+      <div className="flex flex-col gap-5 pt-4 pb-4">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground text-center">
+            Upload a WAV or MP3 and set the Track default Loop region and metadata.
+          </p>
+        </div>
+
         <AudioUploadField
           file={form.audioFile}
-          inPoint={form.inPoint}
-          outPoint={form.outPoint}
-          snapLoopPoint={snapLoopPoint}
-          onFileChange={(audioFile) =>
-            setForm((current) => resetAnalysisForNewFile(current, audioFile))
-          }
-          onInPointChange={handleInPointChange}
-          onOutPointChange={handleOutPointChange}
+          onFileChange={(audioFile) => setForm(resetCreateTrackForm(audioFile))}
         />
+
+        {form.audioFile ? (
+          <div className="sticky top-0 z-10 bg-background py-2">
+            <WavePlayer
+              className="p-2"
+              waveColor="var(--muted-foreground)"
+              progressColor="var(--primary)"
+              waveHeight={144}
+              src={form.audioFile}
+              onDurationChange={setDuration}
+              loopRegion={{
+                inPoint: form.inPoint,
+                outPoint: form.outPoint,
+                snapLoopPoint,
+                onInPointChange: handleInPointChange,
+                onOutPointChange: handleOutPointChange,
+              }}
+            />
+          </div>
+        ) : null}
+
+        {form.audioFile ? (
+          <div className="space-y-3">
+            <LoopRegionField
+              inPoint={form.inPoint}
+              outPoint={form.outPoint}
+              duration={duration}
+              snapLoopPoint={snapLoopPoint}
+              onInPointChange={handleInPointChange}
+              onOutPointChange={handleOutPointChange}
+            />
+            <p className="text-xs text-muted-foreground">
+              Filename is kept for Advanced Options and the Library.
+            </p>
+          </div>
+        ) : null}
+
         <DisplayNameField
           value={form.displayName}
           onChange={(displayName) => setForm((current) => ({ ...current, displayName }))}
@@ -81,7 +146,7 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <OriginalBpmField
             value={form.originalBpm}
-            unconfirmed={form.bpmUnconfirmed}
+            autoDetected={form.bpmAutoDetected}
             detecting={isAnalyzing}
             onChange={handleOriginalBpmChange}
           />
@@ -92,12 +157,13 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
         </div>
         <KeyField
           value={form.key}
-          onChange={(key) => setForm((current) => ({ ...current, key }))}
+          autoDetected={form.keyAutoDetected}
+          onChange={handleKeyChange}
         />
-      </div>
 
-      <div className="flex justify-end pt-6">
-        <Button disabled>Upload Track</Button>
+        <div className="flex justify-end">
+          <Button disabled>Upload Track</Button>
+        </div>
       </div>
     </div>
   );

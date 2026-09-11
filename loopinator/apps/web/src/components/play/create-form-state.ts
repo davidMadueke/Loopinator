@@ -4,8 +4,9 @@ export type CreateTrackFormState = {
   audioFile: File | null;
   displayName: string;
   originalBpm: string;
-  bpmUnconfirmed: boolean;
+  bpmAutoDetected: boolean;
   key: TrackKey;
+  keyAutoDetected: boolean;
   timeSignature: TimeSignature;
   inPoint: string;
   outPoint: string;
@@ -15,12 +16,17 @@ export const INITIAL_CREATE_TRACK_FORM: CreateTrackFormState = {
   audioFile: null,
   displayName: "",
   originalBpm: "",
-  bpmUnconfirmed: false,
+  bpmAutoDetected: false,
   key: DEFAULT_TRACK_KEY,
+  keyAutoDetected: false,
   timeSignature: "4/4",
   inPoint: "",
   outPoint: "",
 };
+
+export function resetCreateTrackForm(audioFile: File | null): CreateTrackFormState {
+  return { ...INITIAL_CREATE_TRACK_FORM, audioFile };
+}
 
 export function hasCreateTrackProgress(form: CreateTrackFormState) {
   return (

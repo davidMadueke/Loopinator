@@ -11,10 +11,12 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { useLayoutEffect } from "react";
 
 import { DevSessionToggle } from "../components/dev-session-toggle";
 import Header from "../components/header";
-import { DEFAULT_ACCENT, appearanceInitScript } from "../lib/appearance";
+import { appearanceInitScript } from "../lib/appearance";
+import { useAppearanceStore } from "../stores/appearance-store";
 
 import appCss from "../index.css?url";
 export interface RouterAppContext {
@@ -51,11 +53,17 @@ function RootDocument() {
   const isPlayRoute = useRouterState({
     select: (state) => /^\/(s|t)\//.test(state.location.pathname),
   });
+  const accent = useAppearanceStore((state) => state.accent);
+  const hydrate = useAppearanceStore((state) => state.hydrate);
 
-  // The head script rewrites the class and data-accent below before first paint, so
-  // the server markup and the hydrated DOM disagree by design.
+  useLayoutEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  // The head script rewrites class and data-accent before first paint. After hydrate,
+  // data-accent follows the store so a later root render cannot pin it back to Neutral.
   return (
-    <html lang="en" className="dark" data-accent={DEFAULT_ACCENT} suppressHydrationWarning>
+    <html lang="en" className="dark" data-accent={accent} suppressHydrationWarning>
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: appearanceInitScript }} />

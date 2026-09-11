@@ -20,10 +20,11 @@ import {
   stepOriginalBpm,
 } from "@/lib/play-types";
 import { bpmFromTaps, recordTap } from "@/lib/loop-analysis/tap-tempo";
+import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
 
 type OriginalBpmFieldProps = {
   value: string;
-  unconfirmed: boolean;
+  autoDetected: boolean;
   detecting?: boolean;
   onChange: (value: string) => void;
 };
@@ -45,12 +46,12 @@ function seedStepperOrigin(input: HTMLInputElement) {
 }
 
 /**
- * Source tempo for Time-stretch. Detection can save as Unconfirmed BPM
- * until an Editor confirms it by typing, Tap tempo, or Half/double.
+ * Source tempo for Time-stretch. Detection can save as Auto-detected BPM
+ * until an Editor sets it by typing, Tap tempo, or Half/double.
  */
 export function OriginalBpmField({
   value,
-  unconfirmed,
+  autoDetected,
   detecting = false,
   onChange,
 }: OriginalBpmFieldProps) {
@@ -66,7 +67,10 @@ export function OriginalBpmField({
   return (
     <div>
       <div className="flex items-center gap-4">
-        <Label htmlFor="track-original-bpm">Original BPM</Label>
+        <div className="flex items-center gap-1">
+          <Label htmlFor="track-original-bpm">Original BPM</Label>
+          {autoDetected ? <AutoDetectedIcon kind="bpm" /> : null}
+        </div>
         <Button
           type="button"
           variant="outline"
@@ -156,8 +160,8 @@ export function OriginalBpmField({
       </div>
 
       <p className="pt-2 text-xs text-muted-foreground">
-        Unconfirmed BPM from detection still saves and still plays. The Library
-        flags the row until confirmed.
+        Auto-detected BPM still saves and still plays. The Library flags the
+        row until you set it yourself.
       </p>
     </div>
   );

@@ -16,7 +16,7 @@ Wireframe layout with these domain overrides:
 | "Advanced Settings" | **Advanced Options panel**, scroll-stacked like the Library panel |
 | Single large BPM | **Target BPM readout** at performance size, no "Target" label |
 | Source tempo | **Original BPM readout** row directly under Target BPM, smaller type |
-| Unconfirmed BPM | Flag on Original BPM readout only; Target still shows the number |
+| Auto-detected BPM | Flag on Original BPM readout only; Target still shows the number |
 | Library as overlay | **Library panel** scroll-stacked above the Playback frame; audio keeps playing |
 | Library structure | **Tracks tab** and **Setlists tab** inside the Library panel |
 | Setlist editing | Create new and Edit on Setlist rows inside the Setlists tab |
@@ -92,7 +92,7 @@ apps/web/src/components/reui/
 | Route breadcrumb | `Breadcrumb` chips; each is a `DropdownMenu` trigger holding one picker |
 | Slot prev/next | `Button` variant ghost + Lucide chevrons |
 | Playhead ring | `PlayheadCircle` (`packages/ui`) |
-| Target / Original BPM | Plain text; unconfirmed flag on Original only |
+| Target / Original BPM | Plain text; Auto-detected flag on Original only |
 | Key, Time signature | Plain text, wireframe styling. No Key shows no Major/Minor and no key-change controls |
 | Advanced Options entry | `Button` outline + Override dot |
 | Transport | One `Button`, size lg |
@@ -298,7 +298,7 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 
 | Decision | Choice |
 |---|---|
-| Layout | `WavePlayer` on top, `LoopRegionField` inputs below, inside `AudioUploadField` `renderOnSuccess` |
+| Layout | `AudioUploadField` is the file header. `WavePlayer` sticks to the top of `CreateTrackPanel` while the form scrolls. `LoopRegionField` sits below the player |
 | Form state | `inPoint` / `outPoint` stay in `CreateTrackPanel`; passed through `AudioUploadField` as props |
 | Auto (file edge) | Stored as empty string `""`; inputs display **Auto**; markers stay at 0 s (in) or duration (out) |
 | Marker UI | Thin vertical lines, draggable; primary-tinted shade between them |
@@ -308,7 +308,7 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
-| Replace / Remove | Panel `onFileChange` resets both points to Auto. Re-runs BPM detection while Original BPM is still Unconfirmed; keeps a confirmed value. Key detection runs only while Key is still No Key |
+| Replace / Remove | Panel `onFileChange` resets every Create Track field to the empty defaults, then detection fills Original BPM and Key from the new file |
 | Markers | Wavesurfer Regions plugin, on the waveform canvas, so they scroll with long audio. `LoopRegionField` still scrubs, types, snaps, and swaps |
 | Preview tempo | File speed. Time-stretch is Play screen only |
 
@@ -318,11 +318,11 @@ Domain: [../../CONTEXT.md](../../CONTEXT.md). Analysis: **[src/lib/loop-analysis
 
 | Decision | Choice |
 |---|---|
-| BPM detection | Runs in a Worker when the file decodes. Fills Original BPM as **Unconfirmed BPM**, including a low-confidence guess |
-| Confirm Original BPM | Typing, **Tap tempo** (TAP button), or **Half/double** (×2 / ÷2, Unconfirmed only) |
+| BPM detection | Runs in a Worker when the file decodes. Fills Original BPM as **Auto-detected BPM**, including a low-confidence guess |
+| Clear Auto-detected BPM | Typing, **Tap tempo** (TAP button), or **Half/double** (×2 / ÷2) |
 | Empty until decode | Placeholder stays “Detected on upload” until the Worker returns |
-| Key detection | Same Worker. High confidence fills **Key**. Low confidence or no result leaves **No Key** |
-| Key on replace | Detect only while Key is still **No Key**. A filled Key is never overwritten |
+| Key detection | Same Worker. High confidence fills **Key** as **Auto-detected Key**. Low confidence or no result leaves **No Key** |
+| Key on replace | Replace and Remove reset Key to **No Key**. Detection fills it again from the new file |
 | Backends | UI calls `audioAnalysisEngine`. Swap `@audio/beat` / `@audio/mir-*` in `engine/`. [0017-audio-engine-seam](../../docs/adr/0017-audio-engine-seam.md) |
 | No Key | Future key-change UI does not apply. Create Track still has the Key field so an Editor can set one. Play screen Key is read-only |
 | Preview | WavePlayer does not Time-stretch |
@@ -350,11 +350,11 @@ apps/web/src/
   components/waves-cn/
     wave-player.tsx                  ← WavePlayer + Regions plugin loop markers + Space when ready
   components/play/create-track/
-    audio-upload-field.tsx           ← upload + WavePlayer + LoopRegionField
+    audio-upload-field.tsx           ← upload / file header
     loop-region-field.tsx            ← in/out text inputs
-    original-bpm-field.tsx           ← Original BPM, TAP, Half/double, Unconfirmed copy
-    key-field.tsx                    ← Key; detection may fill, else No Key
-  components/play/create-track-panel.tsx ← form state; applies detection write rules
+    original-bpm-field.tsx           ← Original BPM, TAP, Half/double, Auto-detected icon
+    key-field.tsx                    ← Key; Auto-detected icon when detection fills it
+  components/play/create-track-panel.tsx ← form state; sticky WavePlayer; LoopRegionField; detection
 ```
 
 ## Library Filters
@@ -415,7 +415,7 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
 - [0004-pitch-preserving-stretch](../../docs/adr/0004-pitch-preserving-stretch.md) — Time-stretch, Key stays metadata, No Key has no key-change UI
-- [0010-save-unconfirmed-bpm](../../docs/adr/0010-save-unconfirmed-bpm.md) — Unconfirmed BPM still saves
+- [0010-save-unconfirmed-bpm](../../docs/adr/0010-save-unconfirmed-bpm.md) — Auto-detected BPM still saves
 - [0012-library-scroll-stack](../../docs/adr/0012-library-scroll-stack.md) — Library panel above Playback frame
 - [0013-session-source-seam](../../docs/adr/0013-session-source-seam.md) — one swappable session source
 - [0014-link-scope-breadcrumb-pickers](../../docs/adr/0014-link-scope-breadcrumb-pickers.md) — which pickers a Musician may open

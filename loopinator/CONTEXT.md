@@ -102,27 +102,27 @@ The source tempo of a Track. Time-stretch measures every change against it.
 _Avoid_: Native BPM, file BPM
 
 **BPM detection**:
-The analysis pass that proposes an Original BPM from Track audio. It runs in a browser Worker when the file decodes. A detection-only value is an Unconfirmed BPM.
-_Avoid_: Auto BPM, auto-detect, guessed BPM
+The analysis pass that proposes an Original BPM from Track audio. It runs in a browser Worker when the file decodes. A detection-only value is an Auto-detected BPM.
+_Avoid_: Auto BPM, guessed BPM
 
 **Tap tempo**:
-The Create Track input that derives Original BPM from a series of taps. Using it confirms the value.
+The Create Track input that derives Original BPM from a series of taps. Using it clears Auto-detected.
 _Avoid_: TAP as the domain name (TAP is the button label), metronome
 
 **Half/double**:
-×2 and ÷2 on an Unconfirmed BPM when BPM detection landed at half or double the real tempo. Using it confirms the value.
+×2 and ÷2 on an Auto-detected BPM when BPM detection landed at half or double the real tempo. Using it clears Auto-detected.
 _Avoid_: Octave error as UI copy, metrical level
 
-**Unconfirmed BPM**:
-An Original BPM that came from BPM detection and that no Editor has confirmed by typing, Tap tempo, or Half/double, usually because the percussion was too sparse to read. A low-confidence guess still saves this way. It still plays, it files the Track into a BPM band, and the Library flags the row. On the Play screen the Original BPM readout carries the flag; the Target BPM readout still shows the number without a separate warning.
-_Avoid_: Detected BPM, guessed BPM, auto BPM, needs checking
+**Auto-detected BPM**:
+An Original BPM that came from BPM detection and that no Editor has set by typing, Tap tempo, or Half/double. A low-confidence guess still saves this way. It still plays, it files the Track into a BPM band, and the Library flags the row. On the Play screen the Original BPM readout carries the flag; the Target BPM readout still shows the number without a separate warning.
+_Avoid_: Unconfirmed BPM, guessed BPM, auto BPM, needs checking
 
 **Target BPM**:
 The tempo a Track plays at, taken from the Setlist slot and then the live control. Clamped to ±20% of Original BPM.
 _Avoid_: Playback rate, speed, pitch
 
 **Key**:
-Musical key stored on a Track. v1 shows it and never transposes. High-confidence Key detection may fill it; otherwise it stays No Key.
+Musical key stored on a Track. v1 shows it and never transposes. High-confidence Key detection may fill it as an Auto-detected Key; otherwise it stays No Key.
 _Avoid_: Pitch, transpose, live key control
 
 **No Key**:
@@ -130,8 +130,12 @@ The Key value meaning the Track has no tonal center, including after low-confide
 _Avoid_: Unknown key, unset key, null key
 
 **Key detection**:
-The analysis pass that may fill Key from Track audio. Low confidence or no result leaves No Key.
+The analysis pass that may fill Key from Track audio as an Auto-detected Key. Low confidence or no result leaves No Key.
 _Avoid_: Auto key, guessed key
+
+**Auto-detected Key**:
+A Key that came from Key detection and that no Editor has set. The Create Track Key label carries the flag. Choosing a Key centre or scale clears it.
+_Avoid_: Unconfirmed Key, guessed key, auto key
 
 **Time signature**:
 Meter stored on a Track, chosen from 4/4, 3/4, 6/8, 12/8, and 2/4. Defaults to 4/4. On the Play screen it is read-only text inside the Playhead circle, not a Select or dropdown.
@@ -184,7 +188,7 @@ The large tempo figure inside the Playhead circle, formatted like the wireframe 
 _Avoid_: Target tempo label, playback speed display
 
 **Original BPM readout**:
-A dedicated row inside the Playhead circle, directly under the Target BPM readout and above Key and Time signature, in smaller type. It shows the Track's Original BPM from upload and does not change when the Tempo stepper adjusts Target BPM.
+A dedicated row inside the Playhead circle, directly under the Target BPM readout and above Key and Time signature, in smaller type. It shows the Track's Original BPM from upload and does not change when the Tempo stepper adjusts Target BPM. An Auto-detected BPM carries the flag on this row.
 _Avoid_: Source BPM label, file tempo, native BPM
 
 **Playhead**:

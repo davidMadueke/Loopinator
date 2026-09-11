@@ -129,9 +129,9 @@ export function LibraryPanel({ tab, onTabChange, activeTrackId, activeSetlistId 
       )}
 
       {creating && tab === "Track" && (
-        <LibraryPanelScrollArea>
+        <div className={`${LIBRARY_COLUMN} flex min-h-0 flex-1 flex-col`}>
           <CreateTrackPanel onProgressChange={handleProgressChange} />
-        </LibraryPanelScrollArea>
+        </div>
       )}
 
       {creating && tab === "Setlist" && (
