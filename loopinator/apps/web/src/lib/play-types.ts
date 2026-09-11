@@ -61,7 +61,6 @@ export type Track = {
   id: string;
   displayName: string;
   filename: string;
-  songTitle: string | null;
   originalBpm: number;
   bpmUnconfirmed: boolean;
   key: string;

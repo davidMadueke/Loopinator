@@ -55,10 +55,6 @@ export function PlayheadPanel({
               </p>
             </div>
           </div>
-          
-          {/* {track.songTitle ? (
-            <p className="text-xs text-muted-foreground">{track.songTitle}</p>
-          ) : null} */}
           <div className="mt-4">
             <AdvancedOptionsEntry
               hasLocalOverride={hasLocalOverride}
