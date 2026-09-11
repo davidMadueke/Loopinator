@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   Loader2,
+  LocateFixed,
   RotateCcw,
   Repeat,
   ZoomIn,
@@ -37,8 +38,12 @@ const LOOP_HANDLE_INACTIVE_COLOR =
 /** Vertical inset so the horizontal scrollbar sits in padding instead of the canvas. */
 const WAVEFORM_PAD_Y_PX = 4;
 
+function getWaveformScroller(ws: WaveSurfer) {
+  return ws.getWrapper().parentElement;
+}
+
 function padWaveformScroller(ws: WaveSurfer) {
-  const scroller = ws.getWrapper().parentElement;
+  const scroller = getWaveformScroller(ws);
   if (!scroller) {
     return;
   }
@@ -47,6 +52,25 @@ function padWaveformScroller(ws: WaveSurfer) {
   scroller.style.paddingBottom = `${WAVEFORM_PAD_Y_PX}px`;
   scroller.style.boxSizing = "content-box";
   scroller.style.scrollbarGutter = "stable";
+}
+
+/** Mutates options in place. `setOptions` re-renders and recenters on the cursor. */
+function setSnapViewToPlayhead(ws: WaveSurfer, enabled: boolean) {
+  ws.options.autoScroll = enabled;
+  ws.options.autoCenter = enabled;
+
+  if (!enabled) {
+    return;
+  }
+
+  const duration = ws.getDuration();
+  const scroller = getWaveformScroller(ws);
+  if (duration <= 0 || !scroller) {
+    return;
+  }
+
+  const playheadPx = (ws.getCurrentTime() / duration) * scroller.scrollWidth;
+  scroller.scrollLeft = playheadPx - scroller.clientWidth / 2;
 }
 
 export type LoopRegionControlProps = {
@@ -340,9 +364,12 @@ export function WavePlayer({
   const [currentTime, setCurrentTime] = React.useState(0);
   const [zoom, setZoom] = React.useState(initialZoom);
   const [loopPreviewEnabled, setLoopPreviewEnabled] = React.useState(true);
+  const [snapToPlayhead, setSnapToPlayhead] = React.useState(true);
+  const snapToPlayheadRef = React.useRef(snapToPlayhead);
 
   loopPreviewRef.current = loopPreviewEnabled;
   loopRegionRef.current = loopRegion;
+  snapToPlayheadRef.current = snapToPlayhead;
 
   const inSeconds = loopRegion
     ? storedValueToSeconds(loopRegion.inPoint, duration, "in")
@@ -491,10 +518,20 @@ export function WavePlayer({
     wavesurferRef.current?.zoom(next);
   }, [zoom, minZoom]);
 
+  const toggleSnapToPlayhead = React.useCallback(() => {
+    const next = !snapToPlayheadRef.current;
+    setSnapToPlayhead(next);
+    const ws = wavesurferRef.current;
+    if (ws) {
+      setSnapViewToPlayhead(ws, next);
+    }
+  }, []);
+
   const handleReady = React.useCallback(
     (ws: WaveSurfer) => {
       wavesurferRef.current = ws;
       padWaveformScroller(ws);
+      setSnapViewToPlayhead(ws, snapToPlayheadRef.current);
       const nextDuration = ws.getDuration();
       if (autoPlay) ws.play();
       setDuration(nextDuration);
@@ -569,35 +606,55 @@ export function WavePlayer({
           <p className="text-sm font-medium text-foreground truncate">{title}</p>
         ) : null}
 
-        <div className="relative w-full overflow-hidden rounded-sm bg-muted/40 py-1">
-          {!isReady ? (
-            <div
-              className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
-            >
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : null}
-          <WavesurferPlayer
-            url={audioUrl}
-            waveColor={waveColor}
-            progressColor={progressColor}
-            height={waveHeight}
-            barWidth={barWidth}
-            barGap={barGap}
-            barRadius={barRadius}
-            minPxPerSec={initialZoom}
-            fillParent
-            dragToSeek={!loopRegion}
-            hideScrollbar={false}
-            plugins={regionPlugins}
-            onReady={handleReady}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onFinish={handleFinish}
-            onTimeupdate={handleTimeupdate}
-            onSeeking={handleSeeking}
-            onDestroy={handleDestroy}
-          />
+        <div className="space-y-1">
+          <div className="flex items-center justify-end">
+            <HoverButton
+              type="button"
+              size="sm"
+              variant={snapToPlayhead ? "default" : "ghost"}
+              className="h-8 text-xs"
+              disabled={!isReady}
+              onClick={toggleSnapToPlayhead}
+              aria-pressed={snapToPlayhead}
+              aria-label={
+                snapToPlayhead
+                  ? "Disable snap to playhead"
+                  : "Enable snap to playhead"
+              }
+              simpleView={<LocateFixed size={14} />}
+              expandedView="Follow Playhead"
+            />
+          </div>
+          <div className="relative w-full overflow-hidden rounded-sm bg-muted/40 py-1">
+            {!isReady ? (
+              <div
+                className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
+              >
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : null}
+            <WavesurferPlayer
+              url={audioUrl}
+              waveColor={waveColor}
+              progressColor={progressColor}
+              height={waveHeight}
+              barWidth={barWidth}
+              barGap={barGap}
+              barRadius={barRadius}
+              minPxPerSec={initialZoom}
+              fillParent
+              dragToSeek={!loopRegion}
+              hideScrollbar={false}
+              plugins={regionPlugins}
+              onReady={handleReady}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onFinish={handleFinish}
+              onTimeupdate={handleTimeupdate}
+              onSeeking={handleSeeking}
+              onDestroy={handleDestroy}
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
