@@ -120,3 +120,40 @@ export function clampTargetBpm(originalBpm: number, targetBpm: number) {
   const max = originalBpm * 1.2;
   return Math.min(max, Math.max(min, targetBpm));
 }
+
+/** Inclusive Original BPM bounds. Change these to retune Create Track validation. */
+export const MIN_ORIGINAL_BPM = 30;
+export const MAX_ORIGINAL_BPM = 999;
+
+/** Implicit Original BPM when the field is empty and the stepper is used. */
+export const DEFAULT_ORIGINAL_BPM = 120;
+
+export function clampOriginalBpm(bpm: number) {
+  return Math.min(MAX_ORIGINAL_BPM, Math.max(MIN_ORIGINAL_BPM, Math.round(bpm)));
+}
+
+/** Draft sanitizer. Empty stays empty. Values below min are kept so "50" can be typed. */
+export function sanitizeOriginalBpmDraft(raw: string): string | null {
+  if (raw === "") return "";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return null;
+  if (parsed > MAX_ORIGINAL_BPM) return String(MAX_ORIGINAL_BPM);
+  if (parsed < 0) return null;
+  if (!Number.isInteger(parsed)) return String(Math.trunc(parsed));
+  return String(parsed);
+}
+
+/** Blur/commit: empty stays empty, anything else clamps into range. */
+export function commitOriginalBpmInput(raw: string) {
+  const trimmed = raw.trim();
+  if (trimmed === "") return "";
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return "";
+  return String(clampOriginalBpm(parsed));
+}
+
+export function stepOriginalBpm(current: string, direction: 1 | -1) {
+  const parsed = current.trim() === "" ? Number.NaN : Number(current);
+  const base = Number.isFinite(parsed) ? parsed : DEFAULT_ORIGINAL_BPM;
+  return String(clampOriginalBpm(base + direction));
+}
