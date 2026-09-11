@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { usePlayback } from "@/hooks/use-playback";
 import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
@@ -7,6 +8,7 @@ import { useLibraryCreateStore } from "@/stores/library-create-store";
 
 import { AdvancedOptionsPanel } from "./advanced-options-panel";
 import { DiscardProgressDialog } from "./discard-progress-dialog";
+import { isReloadShortcut } from "./is-reload-shortcut";
 import { LibraryPanel, type LibraryTab } from "./library-panel";
 import { PlayScreenHeader } from "./play-screen-header";
 import { PlayheadPanel } from "./playhead-panel";
@@ -38,6 +40,7 @@ export function PlayScreen(props: PlayScreenProps) {
   const [libraryTab, setLibraryTab] = useState<LibraryTab>(() => modeTab(props.mode));
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [transportExpanded, setTransportExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const discardDialogOpen = useLibraryCreateStore((state) => state.discardDialogOpen);
   const requestDiscard = useLibraryCreateStore((state) => state.requestDiscard);
@@ -88,6 +91,13 @@ export function PlayScreen(props: PlayScreenProps) {
     requestDiscard("return-to-browse");
   };
 
+  const handleAccountNavigate = () => {
+    const result = requestDiscard("leave-account");
+    if (result === "proceeded") {
+      void navigate({ to: "/dashboard" });
+    }
+  };
+
   const handleDiscardDialogOpenChange = (open: boolean) => {
     if (!open) {
       cancelDiscard();
@@ -99,13 +109,47 @@ export function PlayScreen(props: PlayScreenProps) {
     if (intent === "close-library") {
       setLibraryOpen(false);
     }
+    if (intent === "leave-account") {
+      void navigate({ to: "/dashboard" });
+    }
+    if (intent === "reload") {
+      window.location.reload();
+    }
   };
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!useLibraryCreateStore.getState().hasProgress) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!useLibraryCreateStore.getState().hasProgress || !isReloadShortcut(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      requestDiscard("reload");
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [requestDiscard]);
 
   return (
     <div className="flex min-h-dvh flex-col font-[system-ui,-apple-system,BlinkMacSystemFont,sans-serif]">
       <PlayScreenHeader
         libraryOpen={libraryOpen}
         onLibraryToggle={handleLibraryToggle}
+        onAccountNavigate={handleAccountNavigate}
         advancedOpen={advancedOpen}
         onAdvancedClose={() => setAdvancedOpen(false)}
         transportExpanded={transportExpanded}

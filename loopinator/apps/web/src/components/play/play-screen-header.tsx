@@ -17,6 +17,7 @@ import { Separator } from "@loopinator/ui/components/separator";
 type PlayScreenHeaderProps = {
   libraryOpen: boolean;
   onLibraryToggle: () => void;
+  onAccountNavigate: () => void;
   advancedOpen: boolean;
   onAdvancedClose: () => void;
   transport: ReactNode;
@@ -26,6 +27,7 @@ type PlayScreenHeaderProps = {
 export function PlayScreenHeader({
   libraryOpen,
   onLibraryToggle,
+  onAccountNavigate,
   advancedOpen,
   onAdvancedClose,
   transport,
@@ -90,7 +92,7 @@ export function PlayScreenHeader({
                   {libraryOpen ? "Close library" : "Library"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link to="/dashboard" />}>Account</DropdownMenuItem>
+                <DropdownMenuItem onClick={onAccountNavigate}>Account</DropdownMenuItem>
               </>
             ) : (
               <>

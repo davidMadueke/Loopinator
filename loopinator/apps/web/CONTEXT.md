@@ -161,15 +161,16 @@ apps/web/src/
 
 ## Library create — discard progress
 
-Leaving a part-filled **Create New Track** or **Create New Setlist** form asks for confirmation first. Both exits run the same guard, so the warning cannot appear on one and not the other.
+Leaving a part-filled **Create New Track** or **Create New Setlist** form asks for confirmation first. Every exit runs the same guard, so the warning cannot appear on one and not the other.
 
 | Decision | Choice |
 |---|---|
-| Guarded exits | **Back to Library** button, and **Close library** in the hamburger |
+| Guarded exits | **Back to Library**, **Close library**, **Account**, and **reload** (F5 / Ctrl+R / Cmd+R) |
+| Browser chrome | Refresh button, typed URL, and tab close cannot wait for the dialog. Those use the browser leave-site prompt |
 | In progress | Any field touched: `hasCreateTrackProgress` / `hasCreateSetlistProgress` |
 | Nothing entered | Leaves immediately, no dialog |
-| Keep editing | Dialog closes; form, Library view, and panel visibility all unchanged |
-| Discard | Clears the form **and** its parent: Back to Library returns the panel to browse, Close library closes the panel |
+| Keep editing | Dialog closes; form, Library view, panel visibility, and route all unchanged |
+| Discard | Clears the form **and** its parent: Back to Library returns the panel to browse, Close library closes the panel, Account goes to the dashboard, reload reloads the page |
 | Clearing mechanism | The create panel unmounts on exit, which drops its field state; no manual field reset, no remount key |
 | Shared state | `hasProgress`, the discard intent, and dialog visibility live in `src/stores/library-create-store.ts` (Zustand) |
 | Dialog owner | One `DiscardProgressDialog`, rendered by `play-screen.tsx`; opened on the next microtask so the hamburger can close first |
