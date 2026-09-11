@@ -32,6 +32,7 @@ export function TransportBar({ mode, playhead, onPlay, onPause, onRestart }: Tra
         tone={playing ? "engaged" : "idle"}
         aria-label={playing ? "Pause" : "Play"}
         aria-pressed={playing}
+        aria-keyshortcuts="Space"
         onClick={playing ? onPause : onPlay}
       >
         {playing ? (

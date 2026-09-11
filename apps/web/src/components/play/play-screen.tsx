@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { usePlayback } from "@/hooks/use-playback";
+import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
 import type { Setlist, Track } from "@/lib/play-types";
 import { useLibraryCreateStore } from "@/stores/library-create-store";
 
@@ -51,6 +52,14 @@ export function PlayScreen(props: PlayScreenProps) {
   const playback = usePlayback({
     originalBpm: props.track.originalBpm,
     initialTargetBpm,
+  });
+
+  useSpacebarPlayPause(() => {
+    if (playback.state.mode === "playing") {
+      playback.pause();
+    } else {
+      playback.play();
+    }
   });
 
   const transportLabel =
