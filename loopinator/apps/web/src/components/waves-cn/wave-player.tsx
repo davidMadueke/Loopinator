@@ -6,7 +6,15 @@ import { Card, CardContent } from "@loopinator/ui/components/card";
 import { Button } from "@loopinator/ui/components/button";
 import { HoverButton } from "@loopinator/ui/components/hover-button";
 import { Slider } from "@loopinator/ui/components/slider";
-import { Play, Pause, Loader2, RotateCcw, Repeat } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Loader2,
+  RotateCcw,
+  Repeat,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import WavesurferPlayer from "@/lib/wave-cn";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 import type WaveSurfer from "wavesurfer.js";
@@ -26,6 +34,20 @@ const LOOP_REGION_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 12%, transparent)";
 const LOOP_HANDLE_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 40%, transparent)";
+/** Vertical inset so the horizontal scrollbar sits in padding instead of the canvas. */
+const WAVEFORM_PAD_Y_PX = 4;
+
+function padWaveformScroller(ws: WaveSurfer) {
+  const scroller = ws.getWrapper().parentElement;
+  if (!scroller) {
+    return;
+  }
+
+  scroller.style.paddingTop = `${WAVEFORM_PAD_Y_PX}px`;
+  scroller.style.paddingBottom = `${WAVEFORM_PAD_Y_PX}px`;
+  scroller.style.boxSizing = "content-box";
+  scroller.style.scrollbarGutter = "stable";
+}
 
 export type LoopRegionControlProps = {
   inPoint: string;
@@ -51,9 +73,15 @@ export interface WavePlayerProps {
   barGap?: number;
   /** Rounded borders for bars @default 2 */
   barRadius?: number;
-  /** Waveform height in px @default 64 */
+  /** Waveform height in px @default 80 */
   waveHeight?: number;
-  /** Minimum pixels per second (zoom level) @default 1 */
+  /** Initial zoom in pixels per second. `minPxPerSec` overrides this when set. @default 50 */
+  defaultZoom?: number;
+  /** Minimum zoom in pixels per second @default 10 */
+  minZoom?: number;
+  /** Maximum zoom in pixels per second @default 500 */
+  maxZoom?: number;
+  /** Initial zoom in pixels per second. Prefer `defaultZoom`. */
   minPxPerSec?: number;
   /** Autoplay on mount */
   autoPlay?: boolean;
@@ -285,7 +313,10 @@ export function WavePlayer({
   barWidth,
   barGap,
   barRadius,
-  waveHeight = 64,
+  waveHeight = 80,
+  defaultZoom = 50,
+  minZoom = 10,
+  maxZoom = 500,
   minPxPerSec,
   autoPlay = false,
   onPlay,
@@ -302,10 +333,12 @@ export function WavePlayer({
   const loopPreviewRef = React.useRef(true);
   const loopRegionRef = React.useRef(loopRegion);
 
+  const initialZoom = minPxPerSec ?? defaultZoom;
   const [isReady, setIsReady] = React.useState(false);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [duration, setDuration] = React.useState(0);
   const [currentTime, setCurrentTime] = React.useState(0);
+  const [zoom, setZoom] = React.useState(initialZoom);
   const [loopPreviewEnabled, setLoopPreviewEnabled] = React.useState(true);
 
   loopPreviewRef.current = loopPreviewEnabled;
@@ -439,9 +472,29 @@ export function WavePlayer({
     [isReady],
   );
 
+  const handleZoom = React.useCallback((value: number | readonly number[]) => {
+    const next = Array.isArray(value) ? value[0] : value;
+    if (next === undefined) return;
+    setZoom(next);
+    wavesurferRef.current?.zoom(next);
+  }, []);
+
+  const zoomIn = React.useCallback(() => {
+    const next = Math.min(zoom * 1.5, maxZoom);
+    setZoom(next);
+    wavesurferRef.current?.zoom(next);
+  }, [zoom, maxZoom]);
+
+  const zoomOut = React.useCallback(() => {
+    const next = Math.max(zoom / 1.5, minZoom);
+    setZoom(next);
+    wavesurferRef.current?.zoom(next);
+  }, [zoom, minZoom]);
+
   const handleReady = React.useCallback(
     (ws: WaveSurfer) => {
       wavesurferRef.current = ws;
+      padWaveformScroller(ws);
       const nextDuration = ws.getDuration();
       if (autoPlay) ws.play();
       setDuration(nextDuration);
@@ -494,8 +547,9 @@ export function WavePlayer({
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setZoom(initialZoom);
     onDurationChange?.(0);
-  }, [onDurationChange]);
+  }, [initialZoom, onDurationChange]);
 
   const progress = duration > 0 ? currentTime / duration : 0;
 
@@ -515,11 +569,10 @@ export function WavePlayer({
           <p className="text-sm font-medium text-foreground truncate">{title}</p>
         ) : null}
 
-        <div className="relative w-full overflow-hidden rounded-sm bg-muted/40">
+        <div className="relative w-full overflow-hidden rounded-sm bg-muted/40 py-1">
           {!isReady ? (
             <div
               className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-[2px]"
-              style={{ height: waveHeight }}
             >
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
@@ -532,8 +585,10 @@ export function WavePlayer({
             barWidth={barWidth}
             barGap={barGap}
             barRadius={barRadius}
-            minPxPerSec={minPxPerSec}
+            minPxPerSec={initialZoom}
+            fillParent
             dragToSeek={!loopRegion}
+            hideScrollbar={false}
             plugins={regionPlugins}
             onReady={handleReady}
             onPlay={handlePlay}
@@ -563,7 +618,7 @@ export function WavePlayer({
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5">
             <Button
               size="icon"
@@ -585,6 +640,37 @@ export function WavePlayer({
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause size={17} /> : <Play size={17} />}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 flex-1 max-w-50">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+              disabled={!isReady || zoom <= minZoom}
+              onClick={zoomOut}
+              aria-label="Zoom out"
+            >
+              <ZoomOut size={15} />
+            </Button>
+            <Slider
+              value={[zoom]}
+              min={minZoom}
+              max={maxZoom}
+              step={1}
+              disabled={!isReady}
+              onValueChange={handleZoom}
+              aria-label="Zoom"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+              disabled={!isReady || zoom >= maxZoom}
+              onClick={zoomIn}
+              aria-label="Zoom in"
+            >
+              <ZoomIn size={15} />
             </Button>
           </div>
           {loopRegion ? (
