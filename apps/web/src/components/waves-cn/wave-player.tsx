@@ -770,7 +770,7 @@ export function WavePlayer({
               <ZoomOut size={15} />
             </Button>
             <Slider
-              className={cn("flex-1")}
+              className="flex-1 [&_[data-slot=slider-range]]:bg-[color-mix(in_oklch,var(--primary)_45%,white)]"
               value={[zoomToSliderValue(zoom, effectiveMinZoom, effectiveMaxZoom)]}
               min={0}
               max={1}
