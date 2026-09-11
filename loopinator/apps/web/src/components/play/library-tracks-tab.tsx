@@ -12,6 +12,7 @@ import { cn } from "@loopinator/ui/lib/utils";
 import { LayersArrowDown, LayersArrowUp, PlayIcon, SquareIcon } from "lucide-react";
 
 import { LibraryLoadMore, LIBRARY_PAGE_SIZE } from "@/components/play/library-load-more";
+import { Filters, FiltersChips, FiltersTrigger } from "@/components/play/filters";
 import { getLibraryTracks } from "@/lib/mock-data";
 import { BPM_BANDS, BPM_BAND_LABELS, getBpmBand, type BpmBand, type Track } from "@/lib/play-types";
 import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
@@ -69,78 +70,86 @@ export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
   }, [fixturesEnabled, populatedBands]);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-end items-center gap-1.5 sticky top-0 z-10  bg-background">
-        <HoverButton
-          variant="outline"
-          size="sm"
-          aria-label="Expand all"
-          simpleView={<LayersArrowDown />}
-          expandedView={"Expand all"}
-          onClick={() => setOpenBands(populatedBands)}
-        />
-        <HoverButton
-          variant="outline"
-          size="sm"
-          aria-label="Collapse all"
-          simpleView={<LayersArrowUp />}
-          expandedView="Collapse all"
-          onClick={() => setOpenBands([])}
-        />
-      </div>
-      <Accordion
-        key={fixturesEnabled ? "fixtures" : "demo"}
-        multiple
-        value={openBands}
-        onValueChange={(value) => setOpenBands(value as BpmBand[])}
-        className="w-full"
-      >
-        {populatedBands.map((band) => {
-          const bandTracks = bands[band];
-          const visible = visibleByBand[band];
+    <Filters>
+      <div className="flex flex-col gap-2">
+        <div className="sticky top-0 z-10 bg-background">
+          <div className="flex items-center justify-between gap-1.5">
+            <FiltersTrigger />
+            <div className="flex items-center gap-1.5">
+              <HoverButton
+                variant="outline"
+                size="sm"
+                aria-label="Expand all"
+                simpleView={<LayersArrowDown />}
+                expandedView={"Expand all"}
+                onClick={() => setOpenBands(populatedBands)}
+              />
+              <HoverButton
+                variant="outline"
+                size="sm"
+                aria-label="Collapse all"
+                simpleView={<LayersArrowUp />}
+                expandedView="Collapse all"
+                onClick={() => setOpenBands([])}
+              />
+            </div>
+          </div>
+          <FiltersChips />
+        </div>
+        <Accordion
+          key={fixturesEnabled ? "fixtures" : "demo"}
+          multiple
+          value={openBands}
+          onValueChange={(value) => setOpenBands(value as BpmBand[])}
+          className="w-full"
+        >
+          {populatedBands.map((band) => {
+            const bandTracks = bands[band];
+            const visible = visibleByBand[band];
 
-          return (
-            <AccordionItem key={band} value={band}>
-              <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="font-medium text-foreground">{BPM_BAND_LABELS[band]}</span>
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {trackCountLabel(bandTracks.length)}
+            return (
+              <AccordionItem key={band} value={band}>
+                <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                  <span className="flex min-w-0 items-baseline gap-2">
+                    <span className="font-medium text-foreground">{BPM_BAND_LABELS[band]}</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {trackCountLabel(bandTracks.length)}
+                    </span>
                   </span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="[&_a]:no-underline pb-0">
-                <div className="pt-3 pb-4">
-                  <ul className="divide-y divide-border border border-border">
-                    {bandTracks.slice(0, visible).map((track) => (
-                      <TrackRow
-                        key={track.id}
-                        track={track}
-                        isCurrent={track.id === activeTrackId}
-                        isPreviewing={previewingId === track.id}
-                        onPreviewToggle={() =>
-                          setPreviewingId((current) => (current === track.id ? null : track.id))
-                        }
-                      />
-                    ))}
-                  </ul>
-                  <LibraryLoadMore
-                    total={bandTracks.length}
-                    visible={visible}
-                    onLoadMore={() =>
-                      setVisibleByBand((current) => ({
-                        ...current,
-                        [band]: current[band] + LIBRARY_PAGE_SIZE,
-                      }))
-                    }
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-    </div>
+                </AccordionTrigger>
+                <AccordionContent className="[&_a]:no-underline pb-0">
+                  <div className="pt-3 pb-4">
+                    <ul className="divide-y divide-border border border-border">
+                      {bandTracks.slice(0, visible).map((track) => (
+                        <TrackRow
+                          key={track.id}
+                          track={track}
+                          isCurrent={track.id === activeTrackId}
+                          isPreviewing={previewingId === track.id}
+                          onPreviewToggle={() =>
+                            setPreviewingId((current) => (current === track.id ? null : track.id))
+                          }
+                        />
+                      ))}
+                    </ul>
+                    <LibraryLoadMore
+                      total={bandTracks.length}
+                      visible={visible}
+                      onLoadMore={() =>
+                        setVisibleByBand((current) => ({
+                          ...current,
+                          [band]: current[band] + LIBRARY_PAGE_SIZE,
+                        }))
+                      }
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
+    </Filters>
   );
 }
 
