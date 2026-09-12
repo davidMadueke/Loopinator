@@ -49,10 +49,10 @@ A named, ordered list of Tracks. The same Track may occupy more than one slot. A
 _Avoid_: Playlist, service, Sunday, AllTracks
 
 **Setlist slot**:
-One Track on one Setlist. It can hold its own Loop region, Target BPM, Transport fade, Key, and Time signature. Track name stays on the Track. Removing the Track from the Setlist destroys those copies, so adding it back starts from the Track default.
+One Track on one Setlist. It can hold its own Loop region, Target BPM, Transport fade, Key, and Time signature. Track name stays on the Track. The Track name line picks or replaces the Track. Replacing it resets Target BPM, Key, and Time signature to the new Track; Slot label sticks. Removing the Track from the Setlist destroys those copies, so adding it back starts from the Track default.
 
 **Empty slot**:
-A Setlist slot with no Track yet. It exists only while creating or editing a Setlist. The Editor assigns a Track from the Track name line, which reads Pick a Track while empty. Duplicate below is disabled. Create Setlist stays disabled until every slot has a Track.
+A Setlist slot with no Track yet. It exists only while creating or editing a Setlist. The Editor assigns a Track from the Track name line, which reads Pick a Track while empty. Duplicate below and Edit are disabled. Create Setlist stays disabled until every slot has a Track.
 _Avoid_: Placeholder row, unassigned slot
 
 **Library**:
@@ -110,23 +110,23 @@ The analysis pass that proposes an Original BPM from Track audio. It runs in a b
 _Avoid_: Auto BPM, guessed BPM
 
 **Tap tempo**:
-The Create Track input that derives Original BPM from a series of taps. Using it clears Auto-detected.
+The tap input that derives a BPM from a series of taps. On Create Track it sets Original BPM and clears Auto-detected. On a Setlist slot it sets Target BPM.
 _Avoid_: TAP as the domain name (TAP is the button label), metronome
 
 **Half/double**:
-×2 and ÷2 on an Auto-detected BPM when BPM detection landed at half or double the real tempo. Using it clears Auto-detected.
+×2 and ÷2. On Create Track it scales Original BPM and clears Auto-detected. On a Setlist slot it scales Target BPM, then clamps into a legal band. The Play screen does not have Half/double.
 _Avoid_: Octave error as UI copy, metrical level
 
 **Auto-detected BPM**:
-An Original BPM that came from BPM detection and that no Editor has set by typing, Tap tempo, or Half/double. A low-confidence guess still saves this way. It still plays, it files the Track into a BPM band, and the Library flags the row. On the Play screen the Original BPM readout carries the flag; the Target BPM readout still shows the number without a separate warning.
+An Original BPM that came from BPM detection and that no Editor has set by typing, Tap tempo, or Half/double. A low-confidence guess still saves this way. It still plays, it files the Track into a BPM band, and the Library flags the row. On the Play screen the Original BPM readout carries the flag; the Target BPM readout still shows the number without a separate warning. On a Setlist slot the flag shows only while Target BPM still equals that Original BPM.
 _Avoid_: Unconfirmed BPM, guessed BPM, auto BPM, needs checking
 
 **Target BPM**:
-The tempo a Track plays at, taken from the Setlist slot and then the live control. Clamped to ±20% of Original BPM.
+The tempo a Track plays at, taken from the Setlist slot and then the live control. Legal values are three bands around Original BPM: half ±20%, original ±20%, and double ±20%. Typing, Tap tempo, and the Tempo stepper stay inside the current band.
 _Avoid_: Playback rate, speed, pitch
 
 **Key**:
-Musical key stored on a Track. v1 shows it and never transposes. High-confidence Key detection may fill it as an Auto-detected Key; otherwise it stays No Key.
+Musical key stored on a Track, and a Setlist slot may hold its own copy. v1 shows it and never transposes. High-confidence Key detection may fill it as an Auto-detected Key; otherwise it stays No Key.
 _Avoid_: Pitch, transpose, live key control
 
 **No Key**:
@@ -138,11 +138,11 @@ The analysis pass that may fill Key from Track audio as an Auto-detected Key. Lo
 _Avoid_: Auto key, guessed key
 
 **Auto-detected Key**:
-A Key that came from Key detection and that no Editor has set. The Create Track Key label carries the flag. Choosing a Key centre or scale clears it.
+A Key that came from Key detection and that no Editor has set. The Create Track Key label carries the flag. Choosing a Key centre or scale clears it. On a Setlist slot the flag shows only while the slot Key still equals the Track Key.
 _Avoid_: Unconfirmed Key, guessed key, auto key
 
 **Time signature**:
-Meter stored on a Track, chosen from 4/4, 3/4, 6/8, 12/8, and 2/4. Defaults to 4/4. On the Play screen it is read-only text inside the Playhead circle, not a Select or dropdown.
+Meter stored on a Track, and a Setlist slot may hold its own copy. Chosen from 4/4, 3/4, 6/8, 12/8, and 2/4. Defaults to 4/4. On the Play screen it is read-only text inside the Playhead circle, not a Select or dropdown.
 _Avoid_: Time sig as a live performance control, editable meter
 
 ## Playback
@@ -180,8 +180,19 @@ The dropdown on the Slot label, listing the Tracks in the Setlist being played. 
 _Avoid_: Queue, slot menu, Track picker (which lists the Library)
 
 **Track picker**:
-The dropdown on the Track name in the Route breadcrumb on `/t/{id}`, listing the whole Library. Only an Editor sees it.
-_Avoid_: Library dropdown, Slot picker (which lists one Setlist)
+The dropdown on the Track name in the Route breadcrumb on `/t/{id}`, listing the whole Library. Only an Editor sees it. It has no Filters.
+_Avoid_: Library dropdown, Slot picker, Slot Track picker
+
+**Slot Track picker**:
+The picker on a Setlist slot's Track name line. It lists the Library with Filters. It is not the breadcrumb Track picker.
+_Avoid_: Track picker, Slot picker
+
+**Create Setlist**:
+The write that inserts a new Setlist. Same payload as Save Setlist.
+
+**Save Setlist**:
+A write that needs a signed-in account. It writes the Setlist name and every slot's Track, Slot label, Target BPM, Key, and Time signature. It is not Save for everyone.
+_Avoid_: Save for everyone
 
 **Playhead circle**:
 The large ring on the Play screen. It shows Target BPM at performance size without a "Target" label, a separate Original BPM readout, read-only Key, read-only Time signature, Track name, and the Advanced Options entry. The green ring is the Playhead.
@@ -211,7 +222,7 @@ Space toggles Play and Pause on the Active transport. It never Restarts, and it 
 _Avoid_: Space as Restart, Space as page scroll, Space as button activate
 
 **Tempo stepper**:
-The +/- control on the main Play screen that adjusts Target BPM by 1 per tap, or by 3 while held. Key has no stepper on the Play screen.
+The +/- control on the main Play screen that adjusts Target BPM by 1 per tap, or by 3 while held. It stays inside the current Target BPM band and cannot cross a gap. Key has no stepper on the Play screen.
 _Avoid_: Tempo slider, pitch control, Key stepper
 
 **Time-stretch**:
