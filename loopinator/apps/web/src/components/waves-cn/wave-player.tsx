@@ -251,13 +251,17 @@ function WavePlayerMeta({
   }
 
   return (
-    <div className="min-w-0 flex w-full items-center gap-2">
+    <div className="flex min-w-0 flex-1 items-center gap-2">
       {name ? (
-        <span className="min-w-0 max-w-4/5 flex-1 truncate text-sm font-medium text-foreground">{name}</span>
+        <span
+          className="max-w-[40%] flex-1 truncate text-sm font-medium text-foreground"
+          title={name}
+        >
+          {name}
+        </span>
       ) : null}
       {items.length > 0 ? (
-        <div className="flex items-center w-full justify-center gap-1.5">
-        <span className="shrink-0 inline-flex items-center gap-1.5 tabular-nums text-xs text-muted-foreground">
+        <span className="inline-flex shrink-0 items-center gap-1.5 tabular-nums text-xs text-muted-foreground">
           {items.flatMap((item, index) =>
             index === 0
               ? [item]
@@ -268,8 +272,7 @@ function WavePlayerMeta({
                   item,
                 ],
           )}
-        </span> 
-        </div>
+        </span>
       ) : null}
     </div>
   );
@@ -303,6 +306,9 @@ function paintLoopRegionHandles(region: Region, active: boolean) {
     return;
   }
 
+  /** Region body would otherwise swallow waveform clicks. Handles stay live. */
+  element.style.pointerEvents = "none";
+
   const handleColor = active ? "var(--primary)" : LOOP_HANDLE_INACTIVE_COLOR;
   const left = element.querySelector<HTMLElement>(
     '[part~="region-handle-left"]',
@@ -316,6 +322,16 @@ function paintLoopRegionHandles(region: Region, active: boolean) {
       return;
     }
 
+    handle.style.pointerEvents = "auto";
+    if (!handle.dataset.seekGuard) {
+      handle.dataset.seekGuard = "1";
+      handle.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      handle.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+    }
     handle.style.width = "10px";
     handle.style.background = "transparent";
     handle.style.borderRadius = "0";
@@ -471,7 +487,7 @@ function useRegionsLoopRegion(
     };
   }, [enabled, plugin, emitFromRegion]);
 
-  return plugins;
+  return { plugins, isHandleDraggingRef: draggingRef };
 }
 
 export function WavePlayer({
@@ -579,7 +595,7 @@ export function WavePlayer({
 
   const snapLoopPoint = loopRegion?.snapLoopPoint ?? null;
 
-  const regionPlugins = useRegionsLoopRegion(
+  const { plugins: regionPlugins, isHandleDraggingRef } = useRegionsLoopRegion(
     Boolean(loopRegion) && Boolean(audioUrl),
     wavesurferRef,
     isReady,
@@ -711,9 +727,14 @@ export function WavePlayer({
     }
   }, []);
 
+  const seekFileTimeRef = React.useRef(playback.seekFileTime);
+  seekFileTimeRef.current = playback.seekFileTime;
+  const [waveformEpoch, setWaveformEpoch] = React.useState(0);
+
   const handleReady = React.useCallback(
     (ws: WaveSurfer) => {
       wavesurferRef.current = ws;
+      setWaveformEpoch((epoch) => epoch + 1);
       padWaveformScroller(ws);
       setSnapViewToPlayhead(ws, snapToPlayheadRef.current);
       const nextDuration = ws.getDuration();
@@ -752,12 +773,48 @@ export function WavePlayer({
     void playback.play();
   }, [autoPlay, canPlay, playback.play]);
 
-  const handleSeeking = React.useCallback(
-    (ws: WaveSurfer) => {
-      playback.seekFileTime(ws.getCurrentTime());
-    },
-    [playback.seekFileTime],
-  );
+  React.useEffect(() => {
+    const ws = wavesurferRef.current;
+    if (!ws || !isReady) {
+      return;
+    }
+
+    const wrapper = ws.getWrapper();
+    const seekFromRatio = (ratio: number) => {
+      if (isHandleDraggingRef.current) {
+        return;
+      }
+      const duration = ws.getDuration();
+      if (duration <= 0) {
+        return;
+      }
+      seekFileTimeRef.current(
+        Math.min(1, Math.max(0, ratio)) * duration,
+      );
+    };
+
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest('[part~="region-handle"]')) {
+        return;
+      }
+      const rect = wrapper.getBoundingClientRect();
+      if (rect.width <= 0) {
+        return;
+      }
+      seekFromRatio((event.clientX - rect.left) / rect.width);
+    };
+
+    wrapper.addEventListener("click", onClick);
+    const unsubDrag = ws.on("drag", (ratio) => {
+      seekFromRatio(ratio);
+    });
+
+    return () => {
+      wrapper.removeEventListener("click", onClick);
+      unsubDrag();
+    };
+  }, [isHandleDraggingRef, isReady, waveformEpoch]);
 
   const handleDestroy = React.useCallback(() => {
     wavesurferRef.current = null;
@@ -903,11 +960,10 @@ export function WavePlayer({
               minPxPerSec={initialZoom}
               sampleRate={WAVEFORM_DECODE_SAMPLE_RATE}
               fillParent
-              dragToSeek={!loopRegion}
+              dragToSeek
               hideScrollbar={false}
               plugins={regionPlugins}
               onReady={handleReady}
-              onSeeking={loopRegion ? undefined : handleSeeking}
               onDestroy={handleDestroy}
             />
           </div>
