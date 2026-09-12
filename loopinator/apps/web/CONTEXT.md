@@ -308,7 +308,8 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | Time fields | Drag horizontally to scrub; click (no drag) to type m:ss or m:ss.sss. Shift tightens the scrub |
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
-| Loop edge fade | Fixed 4 ms on WavePlayer Play, Pause, Restart, and Out-point wrap. Always on, no control. Not Seam crossfade |
+| Loop edge fade | Fixed 4 ms on the shared playback engine. Always on, no control. Not Seam crossfade |
+| Preview audio | `createPlaybackEngine` at stretch ratio 1. WaveSurfer draws the waveform and does not play |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
 | Replace / Remove | Panel `onFileChange` resets every Create Track field to the empty defaults, then detection fills Original BPM and Key from the new file |
 | Markers | Wavesurfer Regions plugin, on the waveform canvas, so they scroll with long audio. `LoopRegionField` still scrubs, types, snaps, and swaps |
@@ -331,7 +332,7 @@ Domain: [../../CONTEXT.md](../../CONTEXT.md). Analysis: **[src/lib/loop-analysis
 
 ## Play screen — Time-stretch
 
-Upload Track is still disabled and Play screen Tracks have no audio URL. This pass proves the engine on a fixture/sample.
+Upload Track is still disabled and Play screen Tracks have no audio URL. `usePlayback` already runs the shared file-time clock. A stand-in Loop region of 4 beats at Original BPM keeps the Playhead circle moving. Audio stays silent until the stretch worklet and a real buffer land.
 
 | Decision | Choice |
 |---|---|
@@ -346,11 +347,13 @@ Upload Track is still disabled and Play screen Tracks have no audio URL. This pa
 ```
 apps/web/src/
   lib/loop-analysis/                   ← analysis CONTEXT + decode, snap, Worker, engine seam
+  lib/playback/                      ← file-time clock, Loop bounds, Transport fade, Loop edge fade
   lib/loop-region-time.ts            ← parse, format, clamp, commit helpers
   lib/use-loop-snap.ts               ← decode uploaded file for marker snap
+  hooks/use-playback.ts              ← Play screen session over createPlaybackEngine
   hooks/use-spacebar-play-pause.ts   ← Active transport stack (see Space play/pause)
   components/waves-cn/
-    wave-player.tsx                  ← WavePlayer + Regions plugin loop markers + Space when ready
+    wave-player.tsx                  ← waveform + regions. Audio from the playback engine
   components/play/create-track/
     audio-upload-field.tsx           ← upload / file header
     loop-region-field.tsx            ← in/out text inputs
@@ -424,3 +427,5 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 - [0015-web-audio-stretch-graph](../../docs/adr/0015-web-audio-stretch-graph.md) — Play screen stretch graph
 - [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) — `@audio/beat` and `@audio/stretch-transient`
 - [0017-audio-engine-seam](../../docs/adr/0017-audio-engine-seam.md) — analysis backends sit behind `engine/`
+- [0019-one-playback-engine](../../docs/adr/0019-one-playback-engine.md) — WavePlayer and Play screen share `createPlaybackEngine`
+- [playback-engine-review](../../docs/playback-engine-review.md) — why the clocks split and what not to copy from WaveSurfer

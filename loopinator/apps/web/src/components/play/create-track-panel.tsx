@@ -111,6 +111,7 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
               progressColor="var(--primary)"
               waveHeight={144}
               src={form.audioFile}
+              audioBuffer={audioBuffer}
               onDurationChange={setDuration}
               loopRegion={{
                 inPoint: form.inPoint,
