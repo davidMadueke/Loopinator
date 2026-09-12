@@ -112,6 +112,12 @@ export function CreateTrackPanel({ onProgressChange }: CreateTrackPanelProps) {
               waveHeight={144}
               src={form.audioFile}
               audioBuffer={audioBuffer}
+              displayName={form.displayName}
+              timeSignature={form.timeSignature}
+              bpm={form.originalBpm}
+              bpmAutoDetected={form.bpmAutoDetected}
+              trackKey={form.key}
+              keyAutoDetected={form.keyAutoDetected}
               onDurationChange={setDuration}
               loopRegion={{
                 inPoint: form.inPoint,

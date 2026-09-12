@@ -29,6 +29,8 @@ import {
 import { usePlaybackEngine } from "@/lib/playback/use-playback-engine";
 import { useLoopSnap } from "@/lib/use-loop-snap";
 import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
+import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
+import type { TrackKey } from "@/lib/play-types";
 
 const LOOP_REGION_ID = "loop";
 const LOOP_REGION_ACTIVE_COLOR = "var(--loop-region)";
@@ -36,6 +38,8 @@ const LOOP_REGION_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 12%, transparent)";
 const LOOP_HANDLE_INACTIVE_COLOR =
   "color-mix(in oklch, var(--muted-foreground) 40%, transparent)";
+/** Treat the playhead as at file end so Play can disable without a 1-frame flicker. */
+const FILE_END_EPSILON_SEC = 0.01;
 /** Vertical inset so the horizontal scrollbar sits in padding instead of the canvas. */
 const WAVEFORM_PAD_Y_PX = 4;
 /** WaveSurfer's default 8 kHz peaks cannot show real zero crossings. */
@@ -146,6 +150,18 @@ export interface WavePlayerProps {
   audioBuffer?: AudioBuffer | null;
   /** Optional title shown above the waveform */
   title?: string;
+  /** Display name on the Follow Playhead row when filled */
+  displayName?: string;
+  /** Time signature on the Follow Playhead row */
+  timeSignature?: string;
+  /** Original BPM on the Follow Playhead row when filled */
+  bpm?: string;
+  /** Amber mark beside BPM when it came from detection */
+  bpmAutoDetected?: boolean;
+  /** Key on the Follow Playhead row */
+  trackKey?: TrackKey;
+  /** Amber mark beside Key when it came from detection */
+  keyAutoDetected?: boolean;
   /** Audio bar color. Accepts any CSS value including var(--*) tokens @default "var(--muted-foreground)" */
   waveColor?: string;
   /** Progress bar color. Accepts any CSS value including var(--*) tokens @default "var(--primary)" */
@@ -187,6 +203,76 @@ function formatTime(t: number): string {
   const m = Math.floor(t / 60);
   const s = Math.floor(t % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatWavePlayerKey(key: TrackKey): string {
+  if (key.center === "No Key") {
+    return "No Key";
+  }
+  return `${key.center} ${key.scale === "minor" ? "Minor" : "Major"}`;
+}
+
+function WavePlayerMeta({
+  displayName,
+  timeSignature,
+  bpm,
+  bpmAutoDetected,
+  trackKey,
+  keyAutoDetected,
+}: {
+  displayName?: string;
+  timeSignature?: string;
+  bpm?: string;
+  bpmAutoDetected?: boolean;
+  trackKey?: TrackKey;
+  keyAutoDetected?: boolean;
+}) {
+  const name = displayName?.trim() ?? "";
+  const tempo = bpm?.trim() ?? "";
+  const keyLabel = trackKey ? formatWavePlayerKey(trackKey) : "";
+  const items = [
+    timeSignature ? <span key="sig">{timeSignature}</span> : null,
+    tempo ? (
+      <span key="bpm" className="inline-flex items-center gap-1">
+        {tempo} BPM
+        {bpmAutoDetected ? <AutoDetectedIcon kind="bpm" /> : null}
+      </span>
+    ) : null,
+    keyLabel ? (
+      <span key="key" className="inline-flex items-center gap-1">
+        {keyLabel}
+        {keyAutoDetected ? <AutoDetectedIcon kind="key" /> : null}
+      </span>
+    ) : null,
+  ].filter((item) => item !== null);
+
+  if (!name && items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="min-w-0 flex w-full items-center gap-2">
+      {name ? (
+        <span className="min-w-0 max-w-4/5 flex-1 truncate text-sm font-medium text-foreground">{name}</span>
+      ) : null}
+      {items.length > 0 ? (
+        <div className="flex items-center w-full justify-center gap-1.5">
+        <span className="shrink-0 inline-flex items-center gap-1.5 tabular-nums text-xs text-muted-foreground">
+          {items.flatMap((item, index) =>
+            index === 0
+              ? [item]
+              : [
+                  <span key={`sep-${index}`} aria-hidden>
+                    ·
+                  </span>,
+                  item,
+                ],
+          )}
+        </span> 
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function useAudioSource(src: string | File): string {
@@ -392,6 +478,12 @@ export function WavePlayer({
   src,
   audioBuffer: audioBufferProp,
   title,
+  displayName,
+  timeSignature,
+  bpm,
+  bpmAutoDetected,
+  trackKey,
+  keyAutoDetected,
   waveColor,
   progressColor,
   barWidth,
@@ -440,11 +532,29 @@ export function WavePlayer({
   loopRegionRef.current = loopRegion;
   snapToPlayheadRef.current = snapToPlayhead;
 
+  /** Callers pass inline arrows. Listing them as effect deps re-fires the effect on
+   *  every parent render, and a callback that sets parent state then loops. */
+  const callbacksRef = React.useRef({
+    onPlay,
+    onPause,
+    onFinish,
+    onTimeUpdate,
+    onDurationChange,
+  });
+  callbacksRef.current = {
+    onPlay,
+    onPause,
+    onFinish,
+    onTimeUpdate,
+    onDurationChange,
+  };
+
+  const loopEnabled = Boolean(loopRegion) && loopPreviewEnabled;
   const playback = usePlaybackEngine({
     buffer: audioBuffer,
     inPoint: loopRegion?.inPoint ?? "",
     outPoint: loopRegion?.outPoint ?? "",
-    loopEnabled: Boolean(loopRegion) && loopPreviewEnabled,
+    loopEnabled,
     stretch: false,
     restartResumes: true,
   });
@@ -453,6 +563,12 @@ export function WavePlayer({
   const currentTime = playback.fileTime;
   const isPlaying = playback.mode === "playing";
   const canPlay = Boolean(audioBuffer) && durationSec > 0;
+  const isAtFileEnd =
+    !loopEnabled &&
+    !isPlaying &&
+    durationSec > 0 &&
+    currentTime >= durationSec - FILE_END_EPSILON_SEC;
+  const canTogglePlay = canPlay && !isAtFileEnd;
 
   const inSeconds = loopRegion
     ? storedValueToSeconds(loopRegion.inPoint, durationSec, "in")
@@ -477,17 +593,19 @@ export function WavePlayer({
   );
 
   const lastModeRef = React.useRef(playback.mode);
+  const fileTimeRef = React.useRef(playback.fileTime);
+  fileTimeRef.current = playback.fileTime;
 
   React.useEffect(() => {
     if (durationSec > 0 && durationSec !== duration) {
       setDuration(durationSec);
-      onDurationChange?.(durationSec);
+      callbacksRef.current.onDurationChange?.(durationSec);
     }
-  }, [duration, durationSec, onDurationChange]);
+  }, [duration, durationSec]);
 
   React.useEffect(() => {
-    onTimeUpdate?.(playback.fileTime, durationSec);
-  }, [durationSec, onTimeUpdate, playback.fileTime]);
+    callbacksRef.current.onTimeUpdate?.(playback.fileTime, durationSec);
+  }, [durationSec, playback.fileTime]);
 
   React.useEffect(() => {
     const prev = lastModeRef.current;
@@ -495,22 +613,26 @@ export function WavePlayer({
       return;
     }
     lastModeRef.current = playback.mode;
+    const { onPlay: play, onPause: pause, onFinish: finish } = callbacksRef.current;
     if (playback.mode === "playing") {
-      onPlay?.();
+      play?.();
       return;
     }
     if (playback.mode === "paused") {
-      onPause?.();
+      pause?.();
       return;
     }
     if (prev === "playing") {
-      if (durationSec > 0 && playback.fileTime >= durationSec - 0.01) {
-        onFinish?.();
+      if (
+        durationSec > 0 &&
+        fileTimeRef.current >= durationSec - FILE_END_EPSILON_SEC
+      ) {
+        finish?.();
         return;
       }
-      onPause?.();
+      pause?.();
     }
-  }, [durationSec, onFinish, onPause, onPlay, playback.fileTime, playback.mode]);
+  }, [durationSec, playback.mode]);
 
   React.useEffect(() => {
     const ws = wavesurferRef.current;
@@ -527,8 +649,11 @@ export function WavePlayer({
       void playback.pause();
       return;
     }
+    if (isAtFileEnd) {
+      return;
+    }
     void playback.play();
-  }, [playback.mode, playback.pause, playback.play]);
+  }, [isAtFileEnd, playback.mode, playback.pause, playback.play]);
 
   useSpacebarPlayPause(togglePlay, canPlay);
 
@@ -611,11 +736,11 @@ export function WavePlayer({
       }
       if (nextDuration > 0) {
         setDuration(nextDuration);
-        onDurationChange?.(nextDuration);
+        callbacksRef.current.onDurationChange?.(nextDuration);
       }
       setIsReady(true);
     },
-    [maxZoom, onDurationChange],
+    [maxZoom],
   );
 
   const autoPlayedRef = React.useRef(false);
@@ -641,8 +766,8 @@ export function WavePlayer({
     setZoom(initialZoom);
     setFitZoom(0);
     setWaveformSampleRate(0);
-    onDurationChange?.(0);
-  }, [initialZoom, onDurationChange]);
+    callbacksRef.current.onDurationChange?.(0);
+  }, [initialZoom]);
 
   React.useEffect(() => {
     const ws = wavesurferRef.current;
@@ -701,12 +826,20 @@ export function WavePlayer({
         ) : null}
 
         <div className="space-y-1">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between gap-3">
+            <WavePlayerMeta
+              displayName={displayName}
+              timeSignature={timeSignature}
+              bpm={bpm}
+              bpmAutoDetected={bpmAutoDetected}
+              trackKey={trackKey}
+              keyAutoDetected={keyAutoDetected}
+            />
             <HoverButton
               type="button"
               size="sm"
               variant={snapToPlayhead ? "default" : "ghost"}
-              className="h-8 text-xs"
+              className="ml-auto h-8 shrink-0 text-xs"
               disabled={!isReady}
               onClick={toggleSnapToPlayhead}
               aria-pressed={snapToPlayhead}
@@ -814,7 +947,7 @@ export function WavePlayer({
               size="icon"
               variant="secondary"
               className="h-9 w-9"
-              disabled={!canPlay}
+              disabled={!canTogglePlay}
               onClick={togglePlay}
               aria-keyshortcuts="Space"
               aria-label={isPlaying ? "Pause" : "Play"}
