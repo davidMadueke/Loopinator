@@ -26,18 +26,8 @@ import {
   storedValueToSeconds,
   toStoredLoopRegion,
 } from "@/lib/loop-region-time";
-import {
-  getLoopBounds,
-  isPastLoopOut,
-  shouldWrapLoop,
-  wrapLoopPlayback,
-} from "@/lib/loop-playback";
-import {
-  createLoopEdgeFade,
-  getWaveSurferGain,
-  resumeAudioContext,
-  type LoopEdgeFade,
-} from "@/lib/loop-edge-fade";
+import { usePlaybackEngine } from "@/lib/playback/use-playback-engine";
+import { useLoopSnap } from "@/lib/use-loop-snap";
 import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
 
 const LOOP_REGION_ID = "loop";
@@ -152,6 +142,8 @@ export type LoopRegionControlProps = {
 export interface WavePlayerProps {
   /** Audio source URL or validated file */
   src: string | File;
+  /** Decoded buffer from the parent. WavePlayer decodes `src` when omitted. */
+  audioBuffer?: AudioBuffer | null;
   /** Optional title shown above the waveform */
   title?: string;
   /** Audio bar color. Accepts any CSS value including var(--*) tokens @default "var(--muted-foreground)" */
@@ -398,6 +390,7 @@ function useRegionsLoopRegion(
 
 export function WavePlayer({
   src,
+  audioBuffer: audioBufferProp,
   title,
   waveColor,
   progressColor,
@@ -419,19 +412,14 @@ export function WavePlayer({
   className,
 }: WavePlayerProps) {
   const audioUrl = useAudioSource(src);
+  const decoded = useLoopSnap(audioBufferProp ? null : src);
+  const audioBuffer = audioBufferProp ?? decoded.audioBuffer;
   const wavesurferRef = React.useRef<WaveSurfer | null>(null);
-  const loopUnsubsRef = React.useRef<Array<() => void>>([]);
-  const loopPreviewRef = React.useRef(true);
   const loopRegionRef = React.useRef(loopRegion);
-  const fadeRef = React.useRef<LoopEdgeFade | null>(null);
-  const wrapGenRef = React.useRef(0);
-  const wrapPendingRef = React.useRef(false);
 
   const initialZoom = minPxPerSec ?? defaultZoom;
   const [isReady, setIsReady] = React.useState(false);
-  const [isPlaying, setIsPlaying] = React.useState(false);
   const [duration, setDuration] = React.useState(0);
-  const [currentTime, setCurrentTime] = React.useState(0);
   const [zoom, setZoom] = React.useState(initialZoom);
   const [fitZoom, setFitZoom] = React.useState(0);
   const [waveformSampleRate, setWaveformSampleRate] = React.useState(0);
@@ -449,15 +437,28 @@ export function WavePlayer({
   const effectiveMaxZoomRef = React.useRef(effectiveMaxZoom);
   effectiveMaxZoomRef.current = effectiveMaxZoom;
 
-  loopPreviewRef.current = loopPreviewEnabled;
   loopRegionRef.current = loopRegion;
   snapToPlayheadRef.current = snapToPlayhead;
 
+  const playback = usePlaybackEngine({
+    buffer: audioBuffer,
+    inPoint: loopRegion?.inPoint ?? "",
+    outPoint: loopRegion?.outPoint ?? "",
+    loopEnabled: Boolean(loopRegion) && loopPreviewEnabled,
+    stretch: false,
+    restartResumes: true,
+  });
+
+  const durationSec = audioBuffer?.duration || playback.duration || duration;
+  const currentTime = playback.fileTime;
+  const isPlaying = playback.mode === "playing";
+  const canPlay = Boolean(audioBuffer) && durationSec > 0;
+
   const inSeconds = loopRegion
-    ? storedValueToSeconds(loopRegion.inPoint, duration, "in")
+    ? storedValueToSeconds(loopRegion.inPoint, durationSec, "in")
     : 0;
   const outSeconds = loopRegion
-    ? storedValueToSeconds(loopRegion.outPoint, duration, "out")
+    ? storedValueToSeconds(loopRegion.outPoint, durationSec, "out")
     : 0;
 
   const snapLoopPoint = loopRegion?.snapLoopPoint ?? null;
@@ -466,7 +467,7 @@ export function WavePlayer({
     Boolean(loopRegion) && Boolean(audioUrl),
     wavesurferRef,
     isReady,
-    duration,
+    durationSec,
     inSeconds,
     outSeconds,
     loopPreviewEnabled,
@@ -475,186 +476,78 @@ export function WavePlayer({
     audioUrl,
   );
 
-  const runLoopWrap = React.useCallback(
-    (ws: WaveSurfer, options?: { resume?: boolean }) => {
-      const region = loopRegionRef.current;
-      if (!loopPreviewRef.current || !region || wrapPendingRef.current) {
-        return false;
-      }
-
-      const duration = ws.getDuration();
-      const bounds = getLoopBounds(region.inPoint, region.outPoint, duration);
-      if (!shouldWrapLoop(ws.getCurrentTime(), duration, bounds)) {
-        return false;
-      }
-
-      const fade = fadeRef.current;
-      const playing = ws.isPlaying();
-      const pastOut = isPastLoopOut(ws.getCurrentTime(), duration, bounds);
-
-      const commit = () => {
-        wrapPendingRef.current = false;
-        if (options?.resume && fade && !ws.isPlaying()) {
-          fade.silence();
-        }
-        const result = wrapLoopPlayback(
-          ws,
-          region.inPoint,
-          region.outPoint,
-          options,
-        );
-        if (!result) {
-          return false;
-        }
-
-        if (playing && fade && ws.isPlaying()) {
-          fade.fadeIn();
-        }
-        setCurrentTime(ws.getCurrentTime());
-        if (import.meta.env.DEV) {
-          console.log("[wave-player] loop wrap", {
-            from: result.timeBefore.toFixed(3),
-            to: result.timeAfter.toFixed(3),
-            bounds: result.bounds,
-          });
-        }
-        return true;
-      };
-
-      if (pastOut && playing && fade) {
-        const gen = ++wrapGenRef.current;
-        wrapPendingRef.current = true;
-        void fade.fadeOut().then(() => {
-          if (gen !== wrapGenRef.current || wavesurferRef.current !== ws) {
-            wrapPendingRef.current = false;
-            return;
-          }
-          commit();
-        });
-        return true;
-      }
-
-      return commit();
-    },
-    [],
-  );
-
-  const attachLoopListeners = React.useCallback(
-    (ws: WaveSurfer) => {
-      loopUnsubsRef.current.forEach((unsub) => unsub());
-      loopUnsubsRef.current = [
-        ws.on("audioprocess", () => {
-          runLoopWrap(ws);
-        }),
-        ws.on("finish", () => {
-          runLoopWrap(ws, { resume: true });
-        }),
-      ];
-    },
-    [runLoopWrap],
-  );
+  const lastModeRef = React.useRef(playback.mode);
 
   React.useEffect(() => {
-    const ws = wavesurferRef.current;
-    if (!ws || !isReady || !loopRegion) {
+    if (durationSec > 0 && durationSec !== duration) {
+      setDuration(durationSec);
+      onDurationChange?.(durationSec);
+    }
+  }, [duration, durationSec, onDurationChange]);
+
+  React.useEffect(() => {
+    onTimeUpdate?.(playback.fileTime, durationSec);
+  }, [durationSec, onTimeUpdate, playback.fileTime]);
+
+  React.useEffect(() => {
+    const prev = lastModeRef.current;
+    if (prev === playback.mode) {
       return;
     }
-
-    attachLoopListeners(ws);
-    return () => {
-      loopUnsubsRef.current.forEach((unsub) => unsub());
-      loopUnsubsRef.current = [];
-    };
-  }, [attachLoopListeners, isReady, loopRegion]);
-
-  const ensurePlaybackInLoop = React.useCallback(
-    (ws: WaveSurfer) => {
-      if (!loopPreviewEnabled || !loopRegion) {
+    lastModeRef.current = playback.mode;
+    if (playback.mode === "playing") {
+      onPlay?.();
+      return;
+    }
+    if (playback.mode === "paused") {
+      onPause?.();
+      return;
+    }
+    if (prev === "playing") {
+      if (durationSec > 0 && playback.fileTime >= durationSec - 0.01) {
+        onFinish?.();
         return;
       }
-
-      runLoopWrap(ws);
-    },
-    [loopPreviewEnabled, loopRegion, runLoopWrap],
-  );
+      onPause?.();
+    }
+  }, [durationSec, onFinish, onPause, onPlay, playback.fileTime, playback.mode]);
 
   React.useEffect(() => {
     const ws = wavesurferRef.current;
-    if (!ws || !isReady || !loopPreviewEnabled) {
+    if (!ws || !isReady) {
       return;
     }
-    runLoopWrap(ws);
-  }, [isReady, loopPreviewEnabled, runLoopWrap, inSeconds, outSeconds]);
+    if (Math.abs(ws.getCurrentTime() - playback.fileTime) > 0.008) {
+      ws.setTime(playback.fileTime);
+    }
+  }, [isReady, playback.fileTime]);
 
   const togglePlay = React.useCallback(() => {
-    const ws = wavesurferRef.current;
-    if (!ws) {
+    if (playback.mode === "playing") {
+      void playback.pause();
       return;
     }
+    void playback.play();
+  }, [playback.mode, playback.pause, playback.play]);
 
-    const fade = fadeRef.current;
-
-    if (ws.isPlaying()) {
-      wrapGenRef.current += 1;
-      wrapPendingRef.current = false;
-      if (!fade) {
-        ws.pause();
-        return;
-      }
-      void fade.fadeOut().then(() => {
-        if (wavesurferRef.current === ws && ws.isPlaying()) {
-          ws.pause();
-        }
-      });
-      return;
-    }
-
-    ensurePlaybackInLoop(ws);
-    void resumeAudioContext(getWaveSurferGain(ws.getMediaElement()));
-    void fade?.resume();
-    fade?.silence();
-    void ws.play();
-  }, [ensurePlaybackInLoop]);
-
-  useSpacebarPlayPause(togglePlay, isReady);
+  useSpacebarPlayPause(togglePlay, canPlay);
 
   const restart = React.useCallback(() => {
-    const ws = wavesurferRef.current;
-    if (!ws || !isReady) return;
-    if (!loopRegion) return;
-    const restartAt = loopPreviewEnabled
-      ? storedValueToSeconds(loopRegion?.inPoint ?? "", duration, "in")
-      : 0;
-    const fade = fadeRef.current;
-    wrapGenRef.current += 1;
-    wrapPendingRef.current = false;
-
-    const startFromIn = () => {
-      if (wavesurferRef.current !== ws) {
-        return;
-      }
-      ws.setTime(restartAt);
-      void resumeAudioContext(getWaveSurferGain(ws.getMediaElement()));
-      void fade?.resume();
-      fade?.silence();
-      void ws.play();
-    };
-
-    if (ws.isPlaying() && fade) {
-      void fade.fadeOut().then(startFromIn);
+    if (!canPlay) {
       return;
     }
-
-    startFromIn();
-  }, [duration, isReady, loopRegion, loopPreviewEnabled]);
+    void playback.restart();
+  }, [canPlay, playback.restart]);
 
   const handleSeek = React.useCallback(
     (value: number | readonly number[]) => {
       const nextValue = Array.isArray(value) ? value[0] : value;
-      if (!wavesurferRef.current || !isReady || nextValue === undefined) return;
-      wavesurferRef.current.seekTo(nextValue);
+      if (!canPlay || nextValue === undefined) {
+        return;
+      }
+      playback.seekFileTime(nextValue * durationSec);
     },
-    [isReady],
+    [canPlay, durationSec, playback.seekFileTime],
   );
 
   const applyZoom = React.useCallback(
@@ -696,8 +589,6 @@ export function WavePlayer({
   const handleReady = React.useCallback(
     (ws: WaveSurfer) => {
       wavesurferRef.current = ws;
-      const gain = getWaveSurferGain(ws.getMediaElement());
-      fadeRef.current = gain ? createLoopEdgeFade(gain) : null;
       padWaveformScroller(ws);
       setSnapViewToPlayhead(ws, snapToPlayheadRef.current);
       const nextDuration = ws.getDuration();
@@ -718,64 +609,34 @@ export function WavePlayer({
           ws.zoom(clamped);
         }
       }
-      if (autoPlay) {
-        void fadeRef.current?.resume();
-        fadeRef.current?.silence();
-        void ws.play();
+      if (nextDuration > 0) {
+        setDuration(nextDuration);
+        onDurationChange?.(nextDuration);
       }
-      setDuration(nextDuration);
-      onDurationChange?.(nextDuration);
       setIsReady(true);
     },
-    [autoPlay, maxZoom, onDurationChange],
+    [maxZoom, onDurationChange],
   );
 
-  const handlePlay = React.useCallback(() => {
-    fadeRef.current?.fadeIn();
-    setIsPlaying(true);
-    onPlay?.();
-  }, [onPlay]);
+  const autoPlayedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!autoPlay || !canPlay || autoPlayedRef.current) {
+      return;
+    }
+    autoPlayedRef.current = true;
+    void playback.play();
+  }, [autoPlay, canPlay, playback.play]);
 
-  const handlePause = React.useCallback(() => {
-    setIsPlaying(false);
-    onPause?.();
-  }, [onPause]);
-
-  const handleFinish = React.useCallback(
+  const handleSeeking = React.useCallback(
     (ws: WaveSurfer) => {
-      if (loopRegion && loopPreviewEnabled && runLoopWrap(ws, { resume: true })) {
-        return;
-      }
-
-      setIsPlaying(false);
-      onFinish?.();
+      playback.seekFileTime(ws.getCurrentTime());
     },
-    [loopPreviewEnabled, loopRegion, onFinish, runLoopWrap],
+    [playback.seekFileTime],
   );
-
-  const handleTimeupdate = React.useCallback(
-    (ws: WaveSurfer) => {
-      const time = ws.getCurrentTime();
-      setCurrentTime(time);
-      onTimeUpdate?.(time, ws.getDuration());
-    },
-    [onTimeUpdate],
-  );
-
-  const handleSeeking = React.useCallback((ws: WaveSurfer) => {
-    setCurrentTime(ws.getCurrentTime());
-  }, []);
 
   const handleDestroy = React.useCallback(() => {
-    wrapGenRef.current += 1;
-    wrapPendingRef.current = false;
-    fadeRef.current = null;
-    loopUnsubsRef.current.forEach((unsub) => unsub());
-    loopUnsubsRef.current = [];
     wavesurferRef.current = null;
     setIsReady(false);
-    setIsPlaying(false);
-    setCurrentTime(0);
     setDuration(0);
     setZoom(initialZoom);
     setFitZoom(0);
@@ -821,7 +682,7 @@ export function WavePlayer({
     return () => observer.disconnect();
   }, [duration, isReady]);
 
-  const progress = duration > 0 ? currentTime / duration : 0;
+  const progress = durationSec > 0 ? currentTime / durationSec : 0;
 
   if (!audioUrl) {
     return null;
@@ -913,11 +774,7 @@ export function WavePlayer({
               hideScrollbar={false}
               plugins={regionPlugins}
               onReady={handleReady}
-              onPlay={handlePlay}
-              onPause={handlePause}
-              onFinish={handleFinish}
-              onTimeupdate={handleTimeupdate}
-              onSeeking={handleSeeking}
+              onSeeking={loopRegion ? undefined : handleSeeking}
               onDestroy={handleDestroy}
             />
           </div>
@@ -933,11 +790,11 @@ export function WavePlayer({
             min={0}
             max={1}
             step={0.001}
-            disabled={!isReady}
+            disabled={!canPlay}
             onValueChange={handleSeek}
           />
           <span className="text-[11px] tabular-nums text-muted-foreground w-10 shrink-0">
-            {formatTime(duration)}
+            {formatTime(durationSec)}
           </span>
         </div>
 
@@ -947,7 +804,7 @@ export function WavePlayer({
               size="icon"
               variant="ghost"
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              disabled={!isReady}
+              disabled={!canPlay}
               onClick={restart}
               aria-label="Restart"
             >
@@ -957,7 +814,7 @@ export function WavePlayer({
               size="icon"
               variant="secondary"
               className="h-9 w-9"
-              disabled={!isReady}
+              disabled={!canPlay}
               onClick={togglePlay}
               aria-keyshortcuts="Space"
               aria-label={isPlaying ? "Pause" : "Play"}

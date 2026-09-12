@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { clampTargetBpm, type PlaybackState } from "@/lib/play-types";
+import { usePlaybackEngine } from "@/lib/playback/use-playback-engine";
 
 type UsePlaybackOptions = {
   originalBpm: number;
@@ -8,118 +9,51 @@ type UsePlaybackOptions = {
 };
 
 export function usePlayback({ originalBpm, initialTargetBpm }: UsePlaybackOptions) {
-  const [state, setState] = useState<PlaybackState>({
-    mode: "stopped",
-    playhead: 0,
-    targetBpm: initialTargetBpm,
-    hasLocalOverride: false,
+  const [targetBpm, setTargetBpm] = useState(initialTargetBpm);
+  const [hasLocalOverride, setHasLocalOverride] = useState(false);
+
+  const playback = usePlaybackEngine({
+    originalBpm,
+    targetBpm,
+    stretch: true,
+    restartResumes: false,
+    loopEnabled: true,
   });
 
-  const rafRef = useRef<number | null>(null);
-  const lastTickRef = useRef<number | null>(null);
-
-  const stopLoop = useCallback(() => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    lastTickRef.current = null;
-  }, []);
-
   useEffect(() => {
-    setState((current) => ({
-      ...current,
-      targetBpm: initialTargetBpm,
-      playhead: 0,
-      mode: "stopped",
-      hasLocalOverride: false,
-    }));
-    stopLoop();
-  }, [initialTargetBpm, stopLoop]);
-
-  useEffect(() => {
-    if (state.mode !== "playing") {
-      stopLoop();
-      return;
-    }
-
-    const tick = (timestamp: number) => {
-      if (lastTickRef.current === null) {
-        lastTickRef.current = timestamp;
-      }
-
-      const elapsedMs = timestamp - lastTickRef.current;
-      lastTickRef.current = timestamp;
-      const cycleMs = (60_000 / state.targetBpm) * 4;
-
-      setState((current) => ({
-        ...current,
-        playhead: (current.playhead + elapsedMs / cycleMs) % 1,
-      }));
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return stopLoop;
-  }, [state.mode, state.targetBpm, stopLoop]);
+    setTargetBpm(initialTargetBpm);
+    setHasLocalOverride(false);
+    void playback.restart();
+  }, [initialTargetBpm, playback.restart]);
 
   const adjustTargetBpm = useCallback(
     (delta: number) => {
-      setState((current) => ({
-        ...current,
-        targetBpm: clampTargetBpm(originalBpm, current.targetBpm + delta),
-        hasLocalOverride: true,
-      }));
+      setTargetBpm((current) => clampTargetBpm(originalBpm, current + delta));
+      setHasLocalOverride(true);
     },
     [originalBpm],
   );
 
   const resetDevice = useCallback(() => {
-    stopLoop();
-    setState({
-      mode: "stopped",
-      playhead: 0,
-      targetBpm: initialTargetBpm,
-      hasLocalOverride: false,
-    });
-  }, [initialTargetBpm, stopLoop]);
+    setTargetBpm(initialTargetBpm);
+    setHasLocalOverride(false);
+    void playback.restart();
+  }, [initialTargetBpm, playback.restart]);
 
-  const play = useCallback(() => {
-    setState((current) => {
-      if (current.mode === "stopped" || current.mode === "paused") {
-        return { ...current, mode: "playing" };
-      }
-      return current;
-    });
-  }, []);
-
-  const pause = useCallback(() => {
-    setState((current) => {
-      if (current.mode !== "playing") {
-        return current;
-      }
-      stopLoop();
-      return { ...current, mode: "paused" };
-    });
-  }, [stopLoop]);
-
-  const restart = useCallback(() => {
-    stopLoop();
-    setState((current) => ({
-      ...current,
-      mode: "stopped",
-      playhead: 0,
-    }));
-  }, [stopLoop]);
+  const state: PlaybackState = {
+    mode: playback.mode,
+    playhead: playback.playhead,
+    targetBpm,
+    hasLocalOverride,
+  };
 
   return {
     state,
     adjustTargetBpm,
     resetDevice,
-    play,
-    pause,
-    restart,
+    play: playback.play,
+    pause: playback.pause,
+    restart: playback.restart,
   };
 }
 
