@@ -67,10 +67,18 @@ export function LoopPreviewDevTest() {
     [isPlaying, loopIn, loopOut],
   );
 
+  /** Read inside the interval instead of as deps, or the 100 ms timer is torn
+   *  down and rebuilt on every playhead tick and never fires. */
+  const pollRef = React.useRef({ currentTime, duration, inPoint, outPoint });
+  pollRef.current = { currentTime, duration, inPoint, outPoint };
+
   React.useEffect(() => {
     const id = window.setInterval(() => {
-      const time = currentTime;
-      const bounds = duration > 0 ? getLoopBounds(inPoint, outPoint, duration) : null;
+      const { currentTime: time, duration: total } = pollRef.current;
+      const bounds =
+        total > 0
+          ? getLoopBounds(pollRef.current.inPoint, pollRef.current.outPoint, total)
+          : null;
 
       if (bounds && time < lastTimeRef.current - 0.5 && lastTimeRef.current >= bounds.out - 0.1) {
         wrapCountRef.current += 1;
@@ -83,7 +91,7 @@ export function LoopPreviewDevTest() {
     }, LOG_INTERVAL_MS);
 
     return () => window.clearInterval(id);
-  }, [appendLog, currentTime, duration, inPoint, outPoint]);
+  }, [appendLog]);
 
   const audioSrc = usePublicSample && !audioFile ? DEV_LOOP_SAMPLE_URL : audioFile;
 

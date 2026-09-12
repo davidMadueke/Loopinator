@@ -35,4 +35,5 @@ export type PlaybackEngine = {
   getSnapshot: () => PlaybackSnapshot;
   subscribe: (listener: (snapshot: PlaybackSnapshot) => void) => () => void;
   dispose: () => void;
+  isDisposed: () => boolean;
 };
