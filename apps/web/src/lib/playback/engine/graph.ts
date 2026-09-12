@@ -207,6 +207,13 @@ export function createPlaybackEngine(): PlaybackEngine {
 
     const gen = ++commandGen;
     relocateIfNeeded();
+    if (
+      !params.loopEnabled &&
+      params.duration > 0 &&
+      fileTime >= params.duration
+    ) {
+      return;
+    }
     const ctx = ensureContext();
     clockKind = "context";
     reanchor();
@@ -291,6 +298,7 @@ export function createPlaybackEngine(): PlaybackEngine {
     if (params.restartResumes) {
       const ctx = ensureContext();
       clockKind = "context";
+      reanchor();
       if (ctx.state === "suspended") {
         await ctx.resume();
         if (gen !== commandGen || disposed) {
@@ -353,9 +361,12 @@ export function createPlaybackEngine(): PlaybackEngine {
       params.bounds,
       params.loopEnabled,
     );
-    if (wasPlaying) {
+    if (wasPlaying && next) {
       startAudio();
       reanchor();
+    } else if (wasPlaying) {
+      mode = fileTime > 0 ? "paused" : "stopped";
+      stopRaf();
     }
     emit();
   }
@@ -431,6 +442,9 @@ export function createPlaybackEngine(): PlaybackEngine {
         transportGain = null;
         edgeGain = null;
       }
+    },
+    isDisposed() {
+      return disposed;
     },
   };
 }

@@ -29,7 +29,7 @@ export type UsePlaybackEngineInput = {
 
 export function usePlaybackEngine(input: UsePlaybackEngineInput) {
   const engineRef = useRef<PlaybackEngine | null>(null);
-  if (engineRef.current === null) {
+  if (engineRef.current === null || engineRef.current.isDisposed()) {
     engineRef.current = createPlaybackEngine();
   }
   const engine = engineRef.current;
@@ -60,10 +60,12 @@ export function usePlaybackEngine(input: UsePlaybackEngineInput) {
     return engine.subscribe(setSnapshot);
   }, [engine]);
 
+  /** Dispose on unmount only. Do not null the ref here: subscribe() setStates, and a
+   *  null ref would allocate another engine, change `[engine]`, and loop. Strict Mode
+   *  still disposes; the render-time `isDisposed()` check above allocates the next one. */
   useEffect(() => {
     return () => {
       engine.dispose();
-      engineRef.current = null;
     };
   }, [engine]);
 
