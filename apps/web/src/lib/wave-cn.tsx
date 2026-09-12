@@ -221,30 +221,6 @@ const WavesurferPlayer = memo(
       </div>
     );
   },
-  (prev, next) => {
-    // Only remount when structural audio options change — ignore handlers and className
-    const STRUCTURAL_KEYS = [
-      "url",
-      "height",
-      "barWidth",
-      "barGap",
-      "barRadius",
-      "minPxPerSec",
-      "cursorWidth",
-      "dragToSeek",
-      "fillParent",
-      "hideScrollbar",
-      "autoScroll",
-      "autoCenter",
-      "sampleRate",
-      "waveColor",
-      "progressColor",
-    ];
-    return STRUCTURAL_KEYS.every(
-      (k) =>
-        prev[k as keyof WavesurferProps] === next[k as keyof WavesurferProps],
-    );
-  },
 );
 
 export default WavesurferPlayer;

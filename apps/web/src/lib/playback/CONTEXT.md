@@ -23,7 +23,7 @@ WavePlayer used to wrap on `audioprocess` (~16 ms) and fade with `setTimeout`. T
 | Sunday stretch | Ratio from `timeStretchEngine`. Clock runs. Audio stays silent until the worklet is wired |
 | No buffer | Silent clock still walks file time so the Playhead circle moves |
 | Play screen stand-in region | 4 beats at Original BPM, In 0, Out that length, until a Track carries a real Loop region |
-| WavePlayer cursor | Engine `fileTime` drives `ws.setTime`. Seeking on the waveform does not write back while a Loop region is on |
+| WavePlayer cursor | Engine `fileTime` drives `ws.setTime`. Waveform click/drag writes back via `interaction`, not media `seeking` |
 | WavePlayer Restart | `restartResumes: true`. Seek In and play |
 | Play screen Restart | `restartResumes: false`. Seek In and stay stopped |
 | Do not | Drive audio from WaveSurfer. Do not `createMediaElementSource` on WaveSurfer's element |
