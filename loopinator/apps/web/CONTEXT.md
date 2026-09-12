@@ -308,6 +308,7 @@ Loop region editing lives inside the audio upload success panel, not as a separa
 | Time fields | Drag horizontally to scrub; click (no drag) to type m:ss or m:ss.sss. Shift tightens the scrub |
 | WavePlayer scope | Opt-in via `loopRegion` prop; library preview and other uses unchanged |
 | Preview loop | Local **Loop preview** toggle on WavePlayer controls (right-aligned); default ON; not saved with upload |
+| Loop edge fade | Fixed 4 ms on WavePlayer Play, Pause, Restart, and Out-point wrap. Always on, no control. Not Seam crossfade |
 | Region shade | Primary tint when loop preview ON; muted tint when OFF (markers stay draggable either way) |
 | Replace / Remove | Panel `onFileChange` resets every Create Track field to the empty defaults, then detection fills Original BPM and Key from the new file |
 | Markers | Wavesurfer Regions plugin, on the waveform canvas, so they scroll with long audio. `LoopRegionField` still scrubs, types, snaps, and swaps |

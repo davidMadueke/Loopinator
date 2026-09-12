@@ -19,4 +19,9 @@ describe("loop-playback", () => {
     const bounds = getLoopBounds("0:10", "0:13", 120);
     expect(shouldWrapLoop(5, 120, bounds)).toBe(true);
   });
+
+  it("does not wrap when seek lands a millisecond short of in", () => {
+    const bounds = getLoopBounds("0:10", "0:13", 120);
+    expect(shouldWrapLoop(9.999, 120, bounds)).toBe(false);
+  });
 });

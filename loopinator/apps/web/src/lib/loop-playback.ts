@@ -4,6 +4,9 @@ import { storedValueToSeconds } from "@/lib/loop-region-time";
 /** One timer tick (~16 ms) — detect out-point before the playhead overshoots. */
 export const LOOP_WRAP_EPSILON_SEC = 0.02;
 
+/** Seek often lands a hair before In-point. Don't treat that as outside the region. */
+export const LOOP_IN_SEEK_SLOP_SEC = 0.002;
+
 export type LoopBounds = {
   in: number;
   out: number;
@@ -20,7 +23,7 @@ export function getLoopBounds(
   };
 }
 
-export function shouldWrapLoop(
+export function isPastLoopOut(
   time: number,
   duration: number,
   bounds: LoopBounds,
@@ -31,14 +34,26 @@ export function shouldWrapLoop(
 
   const nearFileEnd = time >= duration - LOOP_WRAP_EPSILON_SEC;
   const outIsFileEnd = bounds.out >= duration - LOOP_WRAP_EPSILON_SEC;
-  const pastOut =
-    time >= bounds.out - LOOP_WRAP_EPSILON_SEC || (nearFileEnd && outIsFileEnd);
+  return (
+    time >= bounds.out - LOOP_WRAP_EPSILON_SEC || (nearFileEnd && outIsFileEnd)
+  );
+}
 
-  if (!pastOut && time >= bounds.in) {
+export function shouldWrapLoop(
+  time: number,
+  duration: number,
+  bounds: LoopBounds,
+): boolean {
+  if (duration <= 0) {
     return false;
   }
 
-  return pastOut || time < bounds.in;
+  const pastOut = isPastLoopOut(time, duration, bounds);
+  if (!pastOut && time >= bounds.in - LOOP_IN_SEEK_SLOP_SEC) {
+    return false;
+  }
+
+  return pastOut || time < bounds.in - LOOP_IN_SEEK_SLOP_SEC;
 }
 
 export type WrapLoopResult = {

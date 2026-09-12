@@ -12,7 +12,7 @@ Loop quality depends on three separable problems. DAWs and online loop tools usu
 | Phase / waveform mismatch | Flam, whoosh, or “wrong beat” feel at the wrap | **Cross-correlation** micro-adjustment (±20–50 ms) |
 | Musical misalignment | Loop length is not whole bars or beats | **Beat grid** or **transient** snap |
 
-A fourth layer — **seam crossfade** (5–50 ms at the wrap, separate from Transport fade) — masks whatever mismatch remains after snapping. That belongs in playback/render, not in this folder.
+A fourth layer, **Loop edge fade** (fixed 4 ms at In-point and Out-point, also on Play, Pause, and Restart), kills clicks on WavePlayer preview. It is not **Seam crossfade** (overlapping wrap, 5–50 ms, still later) and not **Transport fade**. Playback/render owns both fades, not this folder.
 
 Loop points are always stored in **source file time**. Time-stretch (Target BPM vs Original BPM) does not move them; the stretch engine runs against file coordinates.
 
@@ -29,6 +29,8 @@ Loop points are always stored in **source file time**. Time-stretch (Target BPM 
 | In/Out order | In-point stays at or before Out-point; crossing swaps the two values. Equal is allowed |
 | Mono mix | All channels averaged before zero-cross search |
 | Crossing pick | Nearest to target time; tie-break on lower amplitude at the crossing |
+| Loop edge fade | 4 ms linear ramps on WaveSurfer's Web Audio GainNode (`backend: WebAudio`). Play, Pause, Restart, and Out-point wrap. Relocate to In-point is a hard seek |
+| Do not | Route the HTML `<audio>` element through `createMediaElementSource`. That second graph froze the playhead |
 | BPM / Key detection | Browser **Web Worker** after the same full-rate decode. UI talks to `audioAnalysisEngine`, never `@audio/*`. [0017-audio-engine-seam](../../../../docs/adr/0017-audio-engine-seam.md) |
 | BPM library | `@audio/beat` `detect()` behind `engine/bpm.ts`. Always writes the guess as **Auto-detected BPM** |
 | What clears Auto-detected BPM | Typing, **Tap tempo**, or **Half/double** (×2 / ÷2) |
@@ -72,7 +74,8 @@ loop-analysis/
 ../use-loop-snap.ts    ← React hook: decode src, expose snapLoopPoint()
 ../loop-region-time.ts ← parse, format, clamp, commitLoopPointSeconds()
 ../loop-region-time.test.ts
-../loop-playback.ts    ← preview wrap (hard seek today; seam crossfade later)
+../loop-playback.ts    ← preview wrap (hard seek; Out-point wrap takes Loop edge fade first)
+../loop-edge-fade.ts   ← Loop edge fade ramps on WaveSurfer's Web Audio GainNode
 ```
 
 ### Consumers
@@ -83,7 +86,7 @@ loop-analysis/
 | `use-track-analysis.ts` | Sends that buffer to the Worker; returns BPM and Key results |
 | `create-track-panel.tsx` | Owns Auto-detected: detection writes Auto-detected BPM / Key only |
 | `audio-upload-field.tsx` | Receives `snapLoopPoint`; passes snap into WavePlayer and LoopRegionField |
-| `wave-player.tsx` | Regions plugin: live times on `region-update`, zero-cross snap on `region-updated` |
+| `wave-player.tsx` | Regions plugin: live times on `region-update`, zero-cross snap on `region-updated`. Loop edge fade on the Web Audio GainNode |
 | `loop-region-field.tsx` | Snap on blur or scrub release via `commitLoopPointSeconds`; drag the field to scrub |
 
 WavePlayer opt-in: `loopRegion` prop. Library preview and other uses stay unchanged when `snapLoopPoint` is omitted.
@@ -132,7 +135,7 @@ decode (full-rate AudioBuffer, main thread)
 | Phase micro-align | Cross-correlate Out against In after zero-cross snap |
 | Auto loop on upload | Default In/Out from bar guess + scoring |
 | Loop compatibility meter | UI feedback after both points set |
-| Seam crossfade in preview | Playback concern; pairs with snap but not implemented here |
+| Seam crossfade in preview | Overlapping wrap, still later. Loop edge fade already ships as sequential 4 ms in/out |
 
 Suggested snap order when beat grid ships:
 
@@ -150,6 +153,8 @@ Suggested snap modes for UI: Off | Beat | Zero | Beat + Zero (default for worshi
 | `LOOP_EDGE_SNAP_SEC` | 0.05 s | `loop-region-time.ts` |
 | `LOOP_MIN_GAP_SEC` | 0.05 s | `loop-region-time.ts` (Regions plugin minLength only) |
 | `LOOP_WRAP_EPSILON_SEC` | 0.02 s | `loop-playback.ts` |
+| `LOOP_IN_SEEK_SLOP_SEC` | 0.002 s | `loop-playback.ts` |
+| `LOOP_EDGE_FADE_SEC` | 0.004 s | `loop-edge-fade.ts` |
 | `KEY_MIN_CONFIDENCE` | 0.75 Pearson r | `engine/key.ts` |
 | `KEY_MIN_CONFIDENCE_GAP` | 0.08 | `engine/key.ts` |
 | `TAP_RESET_MS` | 2000 ms | `tap-tempo.ts` |
@@ -159,18 +164,22 @@ Suggested snap modes for UI: Off | Beat | Zero | Beat + Zero (default for worshi
 
 `loop-region-time.test.ts` — time parse/format round-trip, zero-crossing snap on synthetic buffers.
 
+`loop-edge-fade.test.ts` — 4 ms Loop edge fade envelope at In-point, Out-point, and short regions.
+
+`loop-playback.test.ts` — wrap at Out-point, wrap before In-point, 2 ms seek slop at In-point.
+
 `apply-detection.test.ts`, `tap-tempo.test.ts`, `engine/key.test.ts`, `engine/bpm.test.ts` — detection write rules, TAP math, Key confidence, `@audio/beat` on a click track.
 
 Run from `apps/web`:
 
 ```bash
-bun test ./src/lib/loop-region-time.test.ts ./src/lib/loop-playback.test.ts ./src/lib/loop-analysis
+bun test ./src/lib/loop-region-time.test.ts ./src/lib/loop-playback.test.ts ./src/lib/loop-edge-fade.test.ts ./src/lib/loop-analysis
 ```
 
 ## Related
 
 - [../../../CONTEXT.md](../../../CONTEXT.md) — Create Track loop region editor UI
-- [../../../../CONTEXT.md](../../../../CONTEXT.md) — Loop region, Original BPM, Auto-detected BPM, Key, Auto-detected Key, No Key, Time-stretch
+- [../../../../CONTEXT.md](../../../../CONTEXT.md) — Loop region, Loop edge fade, Transport fade, Seam crossfade, Original BPM, Auto-detected BPM, Key, Auto-detected Key, No Key, Time-stretch
 - [../../../../docs/adr/0004-pitch-preserving-stretch.md](../../../../docs/adr/0004-pitch-preserving-stretch.md) — pitch-preserving stretch, Key stays metadata, No Key has no key-change UI
 - [../../../../docs/adr/0010-save-unconfirmed-bpm.md](../../../../docs/adr/0010-save-unconfirmed-bpm.md) — beat snap must degrade when BPM is Auto-detected
 - [../../../../docs/adr/0015-web-audio-stretch-graph.md](../../../../docs/adr/0015-web-audio-stretch-graph.md) — Play screen Web Audio stretch graph
