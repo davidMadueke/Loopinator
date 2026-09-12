@@ -26,7 +26,18 @@ import {
   storedValueToSeconds,
   toStoredLoopRegion,
 } from "@/lib/loop-region-time";
-import { wrapLoopPlayback } from "@/lib/loop-playback";
+import {
+  getLoopBounds,
+  isPastLoopOut,
+  shouldWrapLoop,
+  wrapLoopPlayback,
+} from "@/lib/loop-playback";
+import {
+  createLoopEdgeFade,
+  getWaveSurferGain,
+  resumeAudioContext,
+  type LoopEdgeFade,
+} from "@/lib/loop-edge-fade";
 import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
 
 const LOOP_REGION_ID = "loop";
@@ -412,6 +423,9 @@ export function WavePlayer({
   const loopUnsubsRef = React.useRef<Array<() => void>>([]);
   const loopPreviewRef = React.useRef(true);
   const loopRegionRef = React.useRef(loopRegion);
+  const fadeRef = React.useRef<LoopEdgeFade | null>(null);
+  const wrapGenRef = React.useRef(0);
+  const wrapPendingRef = React.useRef(false);
 
   const initialZoom = minPxPerSec ?? defaultZoom;
   const [isReady, setIsReady] = React.useState(false);
@@ -464,12 +478,38 @@ export function WavePlayer({
   const runLoopWrap = React.useCallback(
     (ws: WaveSurfer, options?: { resume?: boolean }) => {
       const region = loopRegionRef.current;
-      if (!loopPreviewRef.current || !region) {
+      if (!loopPreviewRef.current || !region || wrapPendingRef.current) {
         return false;
       }
 
-      const result = wrapLoopPlayback(ws, region.inPoint, region.outPoint, options);
-      if (result) {
+      const duration = ws.getDuration();
+      const bounds = getLoopBounds(region.inPoint, region.outPoint, duration);
+      if (!shouldWrapLoop(ws.getCurrentTime(), duration, bounds)) {
+        return false;
+      }
+
+      const fade = fadeRef.current;
+      const playing = ws.isPlaying();
+      const pastOut = isPastLoopOut(ws.getCurrentTime(), duration, bounds);
+
+      const commit = () => {
+        wrapPendingRef.current = false;
+        if (options?.resume && fade && !ws.isPlaying()) {
+          fade.silence();
+        }
+        const result = wrapLoopPlayback(
+          ws,
+          region.inPoint,
+          region.outPoint,
+          options,
+        );
+        if (!result) {
+          return false;
+        }
+
+        if (playing && fade && ws.isPlaying()) {
+          fade.fadeIn();
+        }
         setCurrentTime(ws.getCurrentTime());
         if (import.meta.env.DEV) {
           console.log("[wave-player] loop wrap", {
@@ -479,9 +519,22 @@ export function WavePlayer({
           });
         }
         return true;
+      };
+
+      if (pastOut && playing && fade) {
+        const gen = ++wrapGenRef.current;
+        wrapPendingRef.current = true;
+        void fade.fadeOut().then(() => {
+          if (gen !== wrapGenRef.current || wavesurferRef.current !== ws) {
+            wrapPendingRef.current = false;
+            return;
+          }
+          commit();
+        });
+        return true;
       }
 
-      return false;
+      return commit();
     },
     [],
   );
@@ -539,23 +592,60 @@ export function WavePlayer({
       return;
     }
 
-    if (!ws.isPlaying()) {
-      ensurePlaybackInLoop(ws);
+    const fade = fadeRef.current;
+
+    if (ws.isPlaying()) {
+      wrapGenRef.current += 1;
+      wrapPendingRef.current = false;
+      if (!fade) {
+        ws.pause();
+        return;
+      }
+      void fade.fadeOut().then(() => {
+        if (wavesurferRef.current === ws && ws.isPlaying()) {
+          ws.pause();
+        }
+      });
+      return;
     }
 
-    void ws.playPause();
+    ensurePlaybackInLoop(ws);
+    void resumeAudioContext(getWaveSurferGain(ws.getMediaElement()));
+    void fade?.resume();
+    fade?.silence();
+    void ws.play();
   }, [ensurePlaybackInLoop]);
 
   useSpacebarPlayPause(togglePlay, isReady);
 
   const restart = React.useCallback(() => {
-    if (!wavesurferRef.current || !isReady) return;
+    const ws = wavesurferRef.current;
+    if (!ws || !isReady) return;
     if (!loopRegion) return;
     const restartAt = loopPreviewEnabled
       ? storedValueToSeconds(loopRegion?.inPoint ?? "", duration, "in")
       : 0;
-    wavesurferRef.current.setTime(restartAt);
-    wavesurferRef.current.play();
+    const fade = fadeRef.current;
+    wrapGenRef.current += 1;
+    wrapPendingRef.current = false;
+
+    const startFromIn = () => {
+      if (wavesurferRef.current !== ws) {
+        return;
+      }
+      ws.setTime(restartAt);
+      void resumeAudioContext(getWaveSurferGain(ws.getMediaElement()));
+      void fade?.resume();
+      fade?.silence();
+      void ws.play();
+    };
+
+    if (ws.isPlaying() && fade) {
+      void fade.fadeOut().then(startFromIn);
+      return;
+    }
+
+    startFromIn();
   }, [duration, isReady, loopRegion, loopPreviewEnabled]);
 
   const handleSeek = React.useCallback(
@@ -606,6 +696,8 @@ export function WavePlayer({
   const handleReady = React.useCallback(
     (ws: WaveSurfer) => {
       wavesurferRef.current = ws;
+      const gain = getWaveSurferGain(ws.getMediaElement());
+      fadeRef.current = gain ? createLoopEdgeFade(gain) : null;
       padWaveformScroller(ws);
       setSnapViewToPlayhead(ws, snapToPlayheadRef.current);
       const nextDuration = ws.getDuration();
@@ -626,7 +718,11 @@ export function WavePlayer({
           ws.zoom(clamped);
         }
       }
-      if (autoPlay) ws.play();
+      if (autoPlay) {
+        void fadeRef.current?.resume();
+        fadeRef.current?.silence();
+        void ws.play();
+      }
       setDuration(nextDuration);
       onDurationChange?.(nextDuration);
       setIsReady(true);
@@ -635,6 +731,7 @@ export function WavePlayer({
   );
 
   const handlePlay = React.useCallback(() => {
+    fadeRef.current?.fadeIn();
     setIsPlaying(true);
     onPlay?.();
   }, [onPlay]);
@@ -670,6 +767,9 @@ export function WavePlayer({
   }, []);
 
   const handleDestroy = React.useCallback(() => {
+    wrapGenRef.current += 1;
+    wrapPendingRef.current = false;
+    fadeRef.current = null;
     loopUnsubsRef.current.forEach((unsub) => unsub());
     loopUnsubsRef.current = [];
     wavesurferRef.current = null;
