@@ -1,0 +1,43 @@
+---
+description: On Windows, prefix every terminal command with wsl so it runs in Linux, not PowerShell
+alwaysApply: true
+---
+
+# Windows: run commands through WSL
+
+When the host OS is Windows (`win32`, PowerShell, or cmd), do not run Shell commands natively. Prefix every command with `wsl` so it executes in the default WSL distro.
+
+## Required pattern
+
+```bash
+# ❌ BAD — PowerShell / cmd
+git status
+npm test
+ls src
+
+# ✅ GOOD — WSL first
+wsl git status
+wsl npm test
+wsl ls src
+```
+
+For anything with quotes, pipes, `&&`, or a heredoc, wrap the Linux command:
+
+```bash
+wsl bash -lc "cd /mnt/c/Users/David/Documents/PROJECTS && git status"
+```
+
+## Paths
+
+Convert Windows paths before they reach WSL:
+
+- `C:\Users\David\foo` → `/mnt/c/Users/David/foo`
+- Drive letter becomes `/mnt/<letter>/` (lowercase)
+
+If the Shell tool `working_directory` is a Windows path, still prefix the command with `wsl`. Prefer a Linux cwd inside `wsl bash -lc "cd /mnt/c/... && ..."` when the command depends on cwd.
+
+## Do not
+
+- Run `git`, `npm`, `node`, `python`, `ls`, or similar directly in PowerShell
+- Use PowerShell syntax (`Get-ChildItem`, `Select-Object`, `$env:FOO`)
+- Skip `wsl` because a command "looks simple"
