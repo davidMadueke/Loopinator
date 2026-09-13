@@ -169,7 +169,7 @@ Leaving a part-filled **Create New Track** or **Create New Setlist** form asks f
 |---|---|
 | Guarded exits | **Back to Library**, **Close library**, **Account**, and **reload** (F5 / Ctrl+R / Cmd+R / browser refresh) |
 | Leave the page | Refresh, a typed URL, and tab close cancel the leave and open the same dialog. Some browsers also show their own leave-site prompt first |
-| In progress | Any field touched: `hasCreateTrackProgress` / `hasCreateSetlistProgress` |
+| In progress | Create Track: any field touched. Create Setlist: Setlist name, an extra slot, a picked Track, or a Slot label other than Track 1 |
 | Nothing entered | Leaves immediately, no dialog |
 | Keep editing | Dialog closes; form, Library view, panel visibility, and route all unchanged |
 | Discard | Clears the form **and** its parent: Back to Library returns the panel to browse, Close library closes the panel, Account goes to the dashboard, reload reloads the page |
@@ -366,20 +366,32 @@ apps/web/src/
 
 ## Create Setlist, slot list
 
-Domain: [../../CONTEXT.md](../../CONTEXT.md). This is the first pass. Edit expand (Target BPM, Key, Time signature) and Slot Track picker Filters are not built yet.
+Domain: [../../CONTEXT.md](../../CONTEXT.md). First pass is the slot list. You cannot fake that later. Edit expand and Slot Track picker Filters wait.
+
+The form lives in the Setlists tab after Create New. One Empty slot labelled Track 1. Pick a Track, name the Setlist, and Create Setlist enables. Add another Empty slot and it disables again.
 
 | Decision | Choice |
 |---|---|
 | Start | One Empty slot labelled Track 1 |
-| Progress | Setlist name, an extra slot, a picked Track, or a Slot label other than Track 1 |
+| Progress | Setlist name, an extra slot, a picked Track, or a Slot label other than Track 1. The empty initial form is not progress |
 | Create enablement | Name is non-empty, at least one slot, every slot has a Track |
-| Persist | Create Setlist enables when valid. Click does not write yet |
+| Persist | Create Setlist enables when valid. Click does not write |
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
-| Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature. Replacing resets those three. Slot label sticks |
-| Duplicate below | Filled slots only. New Slot label is the stem plus the next free #n |
+| Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |
+| Duplicate below | Filled slots only. New Slot label is the stem plus the next free #n. Track 1 copies to Track 1 #2 |
 | Edit | Shown on every row. Disabled this pass, empty or filled |
 | Remove | Any slot except the last remaining one |
 | Add slot | Appends an Empty slot labelled Track N from the insert position |
+| Move up / down | Swaps with the adjacent slot. Slot labels stay on the slot. First cannot move up; last cannot move down |
+| Discard | Same guard as Create Track. See Library create above |
+
+### Leftover
+
+| Next | Notes |
+|---|---|
+| Edit expand | Target BPM, Key, Time signature on a filled slot. Three-band Target BPM is [0018-three-band-target-bpm](../../docs/adr/0018-three-band-target-bpm.md) |
+| Slot Track picker Filters | Glossary already says the picker lists the Library with Filters. Dropdown only for now |
+| Create Setlist write | Same payload as Save Setlist. Button enablement is already the domain rule |
 
 ### Create Setlist file layout
 
@@ -450,6 +462,8 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 ## Related ADRs
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
+- [0008-setlist-slot-copies](../../docs/adr/0008-setlist-slot-copies.md) — slot copies Target BPM, Key, Time signature. Track name stays on the Track
+- [0018-three-band-target-bpm](../../docs/adr/0018-three-band-target-bpm.md) — legal Target BPM on Setlist edit, leftover for Edit expand
 - [0004-pitch-preserving-stretch](../../docs/adr/0004-pitch-preserving-stretch.md) — Time-stretch, Key stays metadata, No Key has no key-change UI
 - [0010-save-unconfirmed-bpm](../../docs/adr/0010-save-unconfirmed-bpm.md) — Auto-detected BPM still saves
 - [0012-library-scroll-stack](../../docs/adr/0012-library-scroll-stack.md) — Library panel above Playback frame
