@@ -77,6 +77,8 @@ apps/web/src/components/play/
   advanced-options-panel.tsx ← Reset this device, Save for everyone
   library-tracks-tab.tsx    ← Tracks by BPM band; filter toolbar + chips
   library-setlists-tab.tsx  ← Setlist rows, Create new, Edit
+  create-setlist-panel.tsx  ← name, slot list, Create enablement
+  create-setlist/           ← Slot row, Slot Track picker
 
 apps/web/src/components/reui/
   filters/                  ← ReUI Filters package (CLI-owned)
@@ -165,8 +167,8 @@ Leaving a part-filled **Create New Track** or **Create New Setlist** form asks f
 
 | Decision | Choice |
 |---|---|
-| Guarded exits | **Back to Library**, **Close library**, **Account**, and **reload** (F5 / Ctrl+R / Cmd+R) |
-| Browser chrome | Refresh button, typed URL, and tab close cannot wait for the dialog. Those use the browser leave-site prompt |
+| Guarded exits | **Back to Library**, **Close library**, **Account**, and **reload** (F5 / Ctrl+R / Cmd+R / browser refresh) |
+| Leave the page | Refresh, a typed URL, and tab close cancel the leave and open the same dialog. Some browsers also show their own leave-site prompt first |
 | In progress | Any field touched: `hasCreateTrackProgress` / `hasCreateSetlistProgress` |
 | Nothing entered | Leaves immediately, no dialog |
 | Keep editing | Dialog closes; form, Library view, panel visibility, and route all unchanged |
@@ -360,6 +362,35 @@ apps/web/src/
     original-bpm-field.tsx           ← Original BPM, TAP, Half/double, Auto-detected icon
     key-field.tsx                    ← Key; Auto-detected icon when detection fills it
   components/play/create-track-panel.tsx ← form state; sticky WavePlayer; LoopRegionField; detection
+```
+
+## Create Setlist, slot list
+
+Domain: [../../CONTEXT.md](../../CONTEXT.md). This is the first pass. Edit expand (Target BPM, Key, Time signature) and Slot Track picker Filters are not built yet.
+
+| Decision | Choice |
+|---|---|
+| Start | One Empty slot labelled Track 1 |
+| Progress | Setlist name, an extra slot, a picked Track, or a Slot label other than Track 1 |
+| Create enablement | Name is non-empty, at least one slot, every slot has a Track |
+| Persist | Create Setlist enables when valid. Click does not write yet |
+| Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
+| Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature. Replacing resets those three. Slot label sticks |
+| Duplicate below | Filled slots only. New Slot label is the stem plus the next free #n |
+| Edit | Shown on every row. Disabled this pass, empty or filled |
+| Remove | Any slot except the last remaining one |
+| Add slot | Appends an Empty slot labelled Track N from the insert position |
+
+### Create Setlist file layout
+
+```
+apps/web/src/
+  lib/slot-label.ts                    ← Track N defaults, duplicate #n
+  components/play/create-form-state.ts ← CreateSetlistFormState + slot ops
+  components/play/create-setlist-panel.tsx
+  components/play/create-setlist/
+    slot-row.tsx
+    slot-track-picker.tsx
 ```
 
 ## Library Filters

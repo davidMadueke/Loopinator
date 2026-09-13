@@ -124,7 +124,7 @@ export function PlayScreen(props: PlayScreenProps) {
       }
 
       event.preventDefault();
-      event.returnValue = "";
+      requestDiscard("reload");
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
