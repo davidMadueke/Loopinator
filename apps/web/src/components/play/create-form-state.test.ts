@@ -16,7 +16,9 @@ import {
   removeSlot,
   reorderSlots,
   resetCreateTrackForm,
+  updateSlotKey,
   updateSlotLabel,
+  updateSlotTargetBpm,
 } from "./create-form-state";
 
 describe("resetCreateTrackForm", () => {
@@ -104,6 +106,29 @@ describe("assignSlotTrack", () => {
     expect(slot?.trackId).toBe(secondTrack.id);
     expect(slot?.targetBpm).toBe(secondTrack.originalBpm);
     expect(slot?.timeSignature).toBe(secondTrack.timeSignature);
+  });
+});
+
+describe("updateSlotTargetBpm", () => {
+  it("writes Target BPM and clears Auto-detected BPM", () => {
+    const filled = assignSlotTrack(INITIAL_CREATE_SETLIST_FORM, INITIAL_CREATE_SETLIST_SLOT_ID, firstTrack);
+    const next = updateSlotTargetBpm(filled, INITIAL_CREATE_SETLIST_SLOT_ID, 128);
+    const slot = next.slots[0];
+
+    expect(slot?.targetBpm).toBe(128);
+    expect(slot?.bpmAutoDetected).toBe(false);
+    expect(slot?.slotLabel).toBe("Track 1");
+  });
+});
+
+describe("updateSlotKey", () => {
+  it("writes Key and clears Auto-detected Key", () => {
+    const filled = assignSlotTrack(INITIAL_CREATE_SETLIST_FORM, INITIAL_CREATE_SETLIST_SLOT_ID, firstTrack);
+    const next = updateSlotKey(filled, INITIAL_CREATE_SETLIST_SLOT_ID, { center: "A", scale: "minor" });
+    const slot = next.slots[0];
+
+    expect(slot?.key).toEqual({ center: "A", scale: "minor" });
+    expect(slot?.keyAutoDetected).toBe(false);
   });
 });
 

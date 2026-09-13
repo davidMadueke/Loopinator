@@ -379,6 +379,7 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Persist | Create Setlist enables when valid. Click does not write |
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
 | Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |
+| Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. A full-height vertical separator then stacks Target BPM, Key, and Advanced Edit. Advanced Edit is disabled this pass |
 | Duplicate below | Filled slots only. New Slot label is the stem plus the next free #n. Track 1 copies to Track 1 #2 |
 | Edit | Shown on every row. Disabled this pass, empty or filled |
 | Remove | Any slot except the last remaining one |
@@ -390,7 +391,7 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 
 | Next | Notes |
 |---|---|
-| Edit expand | Target BPM, Key, Time signature on a filled slot. Three-band Target BPM is [0018-three-band-target-bpm](../../docs/adr/0018-three-band-target-bpm.md) |
+| Time signature | Still not on the slot row. Target BPM and Key stack beside the Track name, after the separator |
 | Slot Track picker Filters | Glossary already says the picker lists the Library with Filters. Dropdown only for now |
 | Create Setlist write | Same payload as Save Setlist. Button enablement is already the domain rule |
 
@@ -404,6 +405,8 @@ apps/web/src/
   components/play/create-setlist/
     slot-row.tsx
     slot-track-picker.tsx
+    slot-tempo.tsx
+    slot-key.tsx
   components/reui/sortable.tsx         ← ReUI Sortable (CLI)
 ```
 
@@ -465,7 +468,7 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 
 - [0002-public-play-auth-writes](../../docs/adr/0002-public-play-auth-writes.md) — hamburger and public Play routes
 - [0008-setlist-slot-copies](../../docs/adr/0008-setlist-slot-copies.md) — slot copies Target BPM, Key, Time signature. Track name stays on the Track
-- [0018-three-band-target-bpm](../../docs/adr/0018-three-band-target-bpm.md) — legal Target BPM on Setlist edit, leftover for Edit expand
+- [0018-three-band-target-bpm](../../docs/adr/0018-three-band-target-bpm.md) — legal Target BPM on a filled Create Setlist slot
 - [0004-pitch-preserving-stretch](../../docs/adr/0004-pitch-preserving-stretch.md) — Time-stretch, Key stays metadata, No Key has no key-change UI
 - [0010-save-unconfirmed-bpm](../../docs/adr/0010-save-unconfirmed-bpm.md) — Auto-detected BPM still saves
 - [0012-library-scroll-stack](../../docs/adr/0012-library-scroll-stack.md) — Library panel above Playback frame

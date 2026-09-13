@@ -135,6 +135,32 @@ export function updateSlotLabel(
   };
 }
 
+export function updateSlotTargetBpm(
+  form: CreateSetlistFormState,
+  slotId: string,
+  targetBpm: number,
+): CreateSetlistFormState {
+  return {
+    ...form,
+    slots: form.slots.map((slot) =>
+      slot.id === slotId ? { ...slot, targetBpm, bpmAutoDetected: false } : slot,
+    ),
+  };
+}
+
+export function updateSlotKey(
+  form: CreateSetlistFormState,
+  slotId: string,
+  key: TrackKey,
+): CreateSetlistFormState {
+  return {
+    ...form,
+    slots: form.slots.map((slot) =>
+      slot.id === slotId ? { ...slot, key, keyAutoDetected: false } : slot,
+    ),
+  };
+}
+
 export function assignSlotTrack(
   form: CreateSetlistFormState,
   slotId: string,
