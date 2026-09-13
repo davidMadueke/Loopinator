@@ -60,8 +60,8 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
         </p>
       </div>
 
-      <div className="flex flex-col gap-5 pb-4">
-        <div className="sticky top-0 z-20 flex flex-col gap-2 bg-background pb-2">
+      <div className="flex flex-col gap-3 pb-4">
+        <div className="sticky top-0 z-20 flex flex-col gap-2 bg-background pb-0.5">
           <div className="space-y-2">
             <Label htmlFor="setlist-name">Setlist name</Label>
             <Input
@@ -72,7 +72,7 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
             />
           </div>
 
-          <div>
+          <div className="pt-2">
             <Button
               type="button"
               variant="ghost"
