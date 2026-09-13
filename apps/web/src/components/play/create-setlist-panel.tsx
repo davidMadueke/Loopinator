@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@loopinator/ui/components/button";
 import { Input } from "@loopinator/ui/components/input";
 import { Label } from "@loopinator/ui/components/label";
+import { cn } from "@loopinator/ui/lib/utils";
+import { PlusIcon } from "lucide-react";
 
+import { Sortable } from "@/components/reui/sortable";
 import { DEMO_TRACKS } from "@/lib/mock-data";
 import type { Track } from "@/lib/play-types";
 
@@ -16,16 +19,20 @@ import {
   moveSlotDown,
   moveSlotUp,
   removeSlot,
+  reorderSlots,
   updateSlotLabel,
   type CreateSetlistFormState,
+  type CreateSetlistSlotState,
 } from "./create-form-state";
 import { SlotRow } from "./create-setlist/slot-row";
-import { PlusIcon } from "lucide-react";
-import { cn } from "@loopinator/ui/lib/utils";
 
 type CreateSetlistPanelProps = {
   onProgressChange: (hasProgress: boolean) => void;
 };
+
+function slotId(slot: CreateSetlistSlotState) {
+  return slot.id;
+}
 
 export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps) {
   const [form, setForm] = useState<CreateSetlistFormState>(INITIAL_CREATE_SETLIST_FORM);
@@ -37,6 +44,10 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
 
   const handleAssignTrack = useCallback((slotId: string, track: Track) => {
     setForm((current) => assignSlotTrack(current, slotId, track));
+  }, []);
+
+  const handleSlotsChange = useCallback((slots: CreateSetlistSlotState[]) => {
+    setForm((current) => reorderSlots(current, slots));
   }, []);
 
   return (
@@ -59,18 +70,27 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
         </div>
 
         <div className="space-y-3">
-        <Button
+          <Button
             type="button"
             variant="ghost"
             size="icon-sm"
             aria-label="Add slot"
-            className={cn("dark:hover:bg-primary dark:hover:text-primary-foreground", "hover:bg-primary hover:text-primary-foreground")}
+            className={cn(
+              "dark:hover:bg-primary dark:hover:text-primary-foreground",
+              "hover:bg-primary hover:text-primary-foreground",
+            )}
             onClick={() => setForm((current) => addEmptySlot(current))}
           >
             <PlusIcon className="w-4 h-4" />
           </Button>
-          <ul className="flex flex-col gap-3">
-            {form.slots.map((slot) => {
+          <Sortable
+            value={form.slots}
+            onValueChange={handleSlotsChange}
+            getItemValue={slotId}
+            strategy="vertical"
+            className="flex flex-col gap-3"
+          >
+            {form.slots.map((slot, arrayIndex) => {
               const track = slot.trackId
                 ? DEMO_TRACKS.find((item) => item.id === slot.trackId)
                 : undefined;
@@ -78,6 +98,8 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
               return (
                 <SlotRow
                   key={slot.id}
+                  arrayIndex={arrayIndex}
+                  totalSlots={form.slots.length}
                   slot={slot}
                   track={track}
                   tracks={DEMO_TRACKS}
@@ -96,9 +118,7 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
                 />
               );
             })}
-          </ul>
-
-          
+          </Sortable>
         </div>
 
         <div className="flex justify-end">

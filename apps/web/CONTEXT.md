@@ -42,7 +42,7 @@ Wireframe layout with these domain overrides:
 
 ### ReUI (apps/web)
 
-Registry `@reui` → `https://reui.io/r/{style}/{name}.json` in both `apps/web` and `packages/ui` `components.json`. Play Library Filters owns a copy of the ReUI Filters + Cascader sources under `apps/web/src/components/reui/`. Patterns drawn from free blocks `@reui/c-filters-6` (slider editors) and `@reui/c-filters-8` (toggle-group editors).
+Registry `@reui` → `https://reui.io/r/{style}/{name}.json` in both `apps/web` and `packages/ui` `components.json`. Play Library Filters owns a copy of the ReUI Filters + Cascader sources under `apps/web/src/components/reui/`. Patterns drawn from free blocks `@reui/c-filters-6` (slider editors) and `@reui/c-filters-8` (toggle-group editors). Create Setlist slot list uses ReUI Sortable (`@reui/sortable`, from block `@reui/c-sortable-1`) under the same `reui/` folder.
 
 ### Defer
 
@@ -83,6 +83,7 @@ apps/web/src/components/play/
 apps/web/src/components/reui/
   filters/                  ← ReUI Filters package (CLI-owned)
   cascader/                 ← Cascader dependency of Filters
+  sortable.tsx              ← ReUI Sortable (CLI-owned); Create Setlist slot list
 ```
 
 ## Component mapping
@@ -382,7 +383,7 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Edit | Shown on every row. Disabled this pass, empty or filled |
 | Remove | Any slot except the last remaining one |
 | Add slot | Appends an Empty slot labelled Track N from the insert position |
-| Move up / down | Swaps with the adjacent slot. Slot labels stay on the slot. First cannot move up; last cannot move down |
+| Reorder | Drag the grip handle, or tap Move up / down around the slot number. Slot labels stay on the slot. First cannot move up; last cannot move down |
 | Discard | Same guard as Create Track. See Library create above |
 
 ### Leftover
@@ -403,6 +404,7 @@ apps/web/src/
   components/play/create-setlist/
     slot-row.tsx
     slot-track-picker.tsx
+  components/reui/sortable.tsx         ← ReUI Sortable (CLI)
 ```
 
 ## Library Filters

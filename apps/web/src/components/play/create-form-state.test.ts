@@ -14,6 +14,7 @@ import {
   moveSlotDown,
   moveSlotUp,
   removeSlot,
+  reorderSlots,
   resetCreateTrackForm,
   updateSlotLabel,
 } from "./create-form-state";
@@ -163,5 +164,20 @@ describe("moveSlotDown", () => {
   it("does nothing on the last slot", () => {
     const two = addEmptySlot(INITIAL_CREATE_SETLIST_FORM, "draft-slot-2");
     expect(moveSlotDown(two, "draft-slot-2")).toEqual(two);
+  });
+});
+
+describe("reorderSlots", () => {
+  it("writes the new order and keeps Slot labels on the slots", () => {
+    const two = addEmptySlot(INITIAL_CREATE_SETLIST_FORM, "draft-slot-2");
+    const next = reorderSlots(two, [two.slots[1]!, two.slots[0]!]);
+
+    expect(next.slots.map((slot) => slot.id)).toEqual(["draft-slot-2", INITIAL_CREATE_SETLIST_SLOT_ID]);
+    expect(next.slots.map((slot) => slot.slotLabel)).toEqual(["Track 2", "Track 1"]);
+  });
+
+  it("rejects a list that does not match the current slots", () => {
+    const two = addEmptySlot(INITIAL_CREATE_SETLIST_FORM, "draft-slot-2");
+    expect(reorderSlots(two, [two.slots[0]!])).toEqual(two);
   });
 });

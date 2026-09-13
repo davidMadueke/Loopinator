@@ -197,6 +197,22 @@ export function moveSlotDown(form: CreateSetlistFormState, slotId: string): Crea
   );
 }
 
+export function reorderSlots(
+  form: CreateSetlistFormState,
+  slots: CreateSetlistSlotState[],
+): CreateSetlistFormState {
+  if (slots.length !== form.slots.length) {
+    return form;
+  }
+
+  const currentIds = new Set(form.slots.map((slot) => slot.id));
+  if (slots.some((slot) => !currentIds.has(slot.id))) {
+    return form;
+  }
+
+  return { ...form, slots };
+}
+
 export function duplicateSlotBelow(
   form: CreateSetlistFormState,
   slotId: string,
