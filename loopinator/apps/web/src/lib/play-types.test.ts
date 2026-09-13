@@ -5,10 +5,15 @@ import {
   MAX_ORIGINAL_BPM,
   MIN_ORIGINAL_BPM,
   clampOriginalBpm,
+  clampTargetBpmInBand,
   commitOriginalBpmInput,
+  commitTargetBpmInput,
+  resolveTargetBpmBand,
   sanitizeOriginalBpmDraft,
   scaleOriginalBpm,
+  scaleTargetBpm,
   stepOriginalBpm,
+  stepTargetBpm,
 } from "@/lib/play-types";
 
 describe("clampOriginalBpm", () => {
@@ -91,5 +96,27 @@ describe("scaleOriginalBpm", () => {
     expect(scaleOriginalBpm(String(MIN_ORIGINAL_BPM), 0.5)).toBe(
       String(MIN_ORIGINAL_BPM),
     );
+  });
+});
+
+describe("three-band Target BPM", () => {
+  it("resolves half, original, and double bands around Original BPM", () => {
+    expect(resolveTargetBpmBand(120, 60)).toBe("half");
+    expect(resolveTargetBpmBand(120, 120)).toBe("original");
+    expect(resolveTargetBpmBand(120, 240)).toBe("double");
+  });
+
+  it("keeps typing and the stepper inside the current band", () => {
+    expect(stepTargetBpm(120, 120, 30)).toBe(144);
+    expect(stepTargetBpm(120, 144, 1)).toBe(144);
+    expect(stepTargetBpm(120, 240, 50)).toBe(288);
+    expect(commitTargetBpmInput(120, 120, "80")).toBe(96);
+  });
+
+  it("lets Half/double enter another band", () => {
+    expect(scaleTargetBpm(120, 120, 2)).toBe(240);
+    expect(scaleTargetBpm(120, 120, 0.5)).toBe(60);
+    expect(scaleTargetBpm(120, 240, 0.5)).toBe(120);
+    expect(clampTargetBpmInBand(120, 60, "half")).toBe(60);
   });
 });

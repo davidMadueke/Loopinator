@@ -120,6 +120,85 @@ export function clampTargetBpm(originalBpm: number, targetBpm: number) {
   return Math.min(max, Math.max(min, targetBpm));
 }
 
+export type TargetBpmBand = "half" | "original" | "double";
+
+const TARGET_BPM_BAND_FACTOR: Record<TargetBpmBand, number> = {
+  half: 0.5,
+  original: 1,
+  double: 2,
+};
+
+const TARGET_BPM_BANDS: TargetBpmBand[] = ["half", "original", "double"];
+
+/** ±20% around half, original, and double Original BPM. ADR-0018. */
+export const TARGET_BPM_BAND_MARGIN = 0.2;
+
+export function targetBpmBandBounds(originalBpm: number, band: TargetBpmBand) {
+  const center = originalBpm * TARGET_BPM_BAND_FACTOR[band];
+  return {
+    min: center * (1 - TARGET_BPM_BAND_MARGIN),
+    max: center * (1 + TARGET_BPM_BAND_MARGIN),
+  };
+}
+
+export function resolveTargetBpmBand(originalBpm: number, targetBpm: number): TargetBpmBand {
+  for (const band of TARGET_BPM_BANDS) {
+    const { min, max } = targetBpmBandBounds(originalBpm, band);
+    if (targetBpm >= min && targetBpm <= max) {
+      return band;
+    }
+  }
+
+  let nearest: TargetBpmBand = "original";
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const band of TARGET_BPM_BANDS) {
+    const center = originalBpm * TARGET_BPM_BAND_FACTOR[band];
+    const distance = Math.abs(targetBpm - center);
+    if (distance < nearestDistance) {
+      nearest = band;
+      nearestDistance = distance;
+    }
+  }
+  return nearest;
+}
+
+export function clampTargetBpmInBand(
+  originalBpm: number,
+  targetBpm: number,
+  band: TargetBpmBand = resolveTargetBpmBand(originalBpm, targetBpm),
+) {
+  const { min, max } = targetBpmBandBounds(originalBpm, band);
+  return Math.round(Math.min(max, Math.max(min, targetBpm)));
+}
+
+export function stepTargetBpm(originalBpm: number, targetBpm: number, delta: number) {
+  const band = resolveTargetBpmBand(originalBpm, targetBpm);
+  return clampTargetBpmInBand(originalBpm, targetBpm + delta, band);
+}
+
+/** ×2 or ÷2. May leave the current band, then clamps into the destination. */
+export function scaleTargetBpm(originalBpm: number, targetBpm: number, factor: 2 | 0.5) {
+  const currentBand = resolveTargetBpmBand(originalBpm, targetBpm);
+  const destination: TargetBpmBand =
+    factor === 2
+      ? currentBand === "half"
+        ? "original"
+        : "double"
+      : currentBand === "double"
+        ? "original"
+        : "half";
+  return clampTargetBpmInBand(originalBpm, targetBpm * factor, destination);
+}
+
+export function commitTargetBpmInput(originalBpm: number, current: number, raw: string) {
+  const parsed = Number(raw.trim());
+  const band = resolveTargetBpmBand(originalBpm, current);
+  if (!Number.isFinite(parsed)) {
+    return clampTargetBpmInBand(originalBpm, current, band);
+  }
+  return clampTargetBpmInBand(originalBpm, parsed, band);
+}
+
 /** Inclusive Original BPM bounds. Change these to retune Create Track validation. */
 export const MIN_ORIGINAL_BPM = 30;
 export const MAX_ORIGINAL_BPM = 999;
