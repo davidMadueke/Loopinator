@@ -22,9 +22,10 @@ Loop points are always stored in **source file time**. Time-stretch (Target BPM 
 |---|---|
 | Decode for analysis | Full sample rate via `AudioContext.decodeAudioData`. WavePlayer also decodes the waveform at 44.1 kHz so zoom can reach per-sample zero crossings |
 | Snap mode | Zero crossing only, ±50 ms search (`DEFAULT_ZERO_CROSS_SEARCH_MS`) |
-| When snap runs | Marker **drag release**, field **scrub release**, and loop time **text blur** — not on every pointer move |
+| When snap runs | Marker **drag release**, field **scrub release**, and loop time **text blur** — not on every pointer move or keystroke |
 | Before decode finishes | Drag and text edit work; snap is skipped until `snapLoopPoint` is available |
 | Time storage | `m:ss` or `m:ss.sss` strings (e.g. `1:05.125`); sample-accurate after snap |
+| Time input | seconds, `m:ss`, or `m:ss.sss`. A valid parse updates the waveform immediately; snap waits for blur |
 | Edge auto | Within ~50 ms of file start/end → stored as empty string (**Auto**) |
 | In/Out order | In-point stays at or before Out-point; crossing swaps the two values. Equal is allowed |
 | Mono mix | All channels averaged before zero-cross search |

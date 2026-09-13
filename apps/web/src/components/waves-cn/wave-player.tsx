@@ -251,17 +251,17 @@ function WavePlayerMeta({
   }
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2">
+    <div className="flex min-w-0  items-center gap-2">
       {name ? (
         <span
-          className="max-w-[40%] flex-1 truncate text-sm font-medium text-foreground"
+          className="max-w-[67%] flex-1 truncate text-sm font-medium text-foreground"
           title={name}
         >
           {name}
         </span>
       ) : null}
       {items.length > 0 ? (
-        <span className="inline-flex shrink-0 items-center gap-1.5 tabular-nums text-xs text-muted-foreground">
+        <span className={cn("inline-flex", /* "shrink-0", */ "items-start gap-1.5", "tabular-nums text-xs text-muted-foreground")}>
           {items.flatMap((item, index) =>
             index === 0
               ? [item]
@@ -357,22 +357,12 @@ function useRegionsLoopRegion(
   loopPreviewEnabled: boolean,
   loopRegion: LoopRegionControlProps | undefined,
   snapLoopPoint: ((seconds: number) => number) | null,
-  pluginKey: string,
+  waveformEpoch: number,
 ) {
-  const plugin = React.useMemo(() => {
-    if (!enabled) {
-      return null;
-    }
-    return RegionsPlugin.create();
-  }, [enabled, pluginKey]);
-
-  const plugins = React.useMemo(
-    () => (plugin ? [plugin] : undefined),
-    [plugin],
-  );
-
+  const pluginRef = React.useRef<RegionsPlugin | null>(null);
   const regionRef = React.useRef<Region | null>(null);
   const draggingRef = React.useRef(false);
+  const lastEmittedRef = React.useRef({ in: inSeconds, out: outSeconds });
   const snapLoopPointRef = React.useRef(snapLoopPoint);
   const loopRegionRef = React.useRef(loopRegion);
   const durationRef = React.useRef(duration);
@@ -380,10 +370,6 @@ function useRegionsLoopRegion(
   snapLoopPointRef.current = snapLoopPoint;
   loopRegionRef.current = loopRegion;
   durationRef.current = duration;
-
-  React.useEffect(() => {
-    regionRef.current = null;
-  }, [plugin]);
 
   const emitFromRegion = React.useCallback(
     (region: Region, side: "start" | "end" | undefined, snap: boolean) => {
@@ -404,6 +390,10 @@ function useRegionsLoopRegion(
           snapLoopPoint: snapFn,
         },
       );
+      lastEmittedRef.current = {
+        in: ordered.inSeconds,
+        out: ordered.outSeconds,
+      };
       const stored = toStoredLoopRegion(
         ordered.inSeconds,
         ordered.outSeconds,
@@ -417,37 +407,86 @@ function useRegionsLoopRegion(
 
   React.useEffect(() => {
     const wavesurfer = wavesurferRef.current;
-    if (!enabled || !plugin || !wavesurfer || !isReady || duration <= 0) {
+    if (!enabled || !wavesurfer || !isReady) {
       return;
     }
 
-    if (draggingRef.current) {
+    let plugin = pluginRef.current;
+    if (!plugin || !wavesurfer.getActivePlugins().includes(plugin)) {
+      plugin = RegionsPlugin.create();
+      wavesurfer.registerPlugin(plugin);
+      pluginRef.current = plugin;
+      regionRef.current = null;
+
+      const onUpdate = (region: Region, side?: "start" | "end") => {
+        draggingRef.current = true;
+        emitFromRegion(region, side, false);
+      };
+      const onUpdated = (region: Region, side?: "start" | "end") => {
+        emitFromRegion(region, side, true);
+        draggingRef.current = false;
+      };
+      plugin.on("region-update", onUpdate);
+      plugin.on("region-updated", onUpdated);
+    }
+
+    const total = wavesurfer.getDuration() || duration;
+    if (total <= 0) {
       return;
     }
+
+    const echoesDrag =
+      draggingRef.current &&
+      Math.abs(lastEmittedRef.current.in - inSeconds) <= 1e-4 &&
+      Math.abs(lastEmittedRef.current.out - outSeconds) <= 1e-4;
+    if (echoesDrag) {
+      return;
+    }
+    draggingRef.current = false;
 
     const regionColor = loopPreviewEnabled
       ? LOOP_REGION_ACTIVE_COLOR
       : LOOP_REGION_INACTIVE_COLOR;
 
+    const regionOptions = {
+      id: LOOP_REGION_ID,
+      start: inSeconds,
+      end: outSeconds,
+      drag: false,
+      resize: true,
+      resizeStart: true,
+      resizeEnd: true,
+      color: regionColor,
+      minLength: LOOP_MIN_GAP_SEC,
+    };
+
     let region = regionRef.current;
+    const timesMatch =
+      region &&
+      !region.isRemoved &&
+      Math.abs(region.start - inSeconds) <= 1e-4 &&
+      Math.abs(region.end - outSeconds) <= 1e-4;
+
     if (!region || region.isRemoved) {
       plugin.clearRegions();
-      region = plugin.addRegion({
-        id: LOOP_REGION_ID,
-        start: inSeconds,
-        end: outSeconds,
-        drag: false,
-        resize: true,
-        resizeStart: true,
-        resizeEnd: true,
-        color: regionColor,
-        minLength: LOOP_MIN_GAP_SEC,
-      });
+      region = plugin.addRegion(regionOptions);
       regionRef.current = region;
-    } else {
+    } else if (!timesMatch) {
       region.setOptions({
         start: inSeconds,
         end: outSeconds,
+        color: regionColor,
+      });
+      if (
+        Math.abs(region.start - inSeconds) > 1e-4 ||
+        Math.abs(region.end - outSeconds) > 1e-4
+      ) {
+        plugin.clearRegions();
+        region = plugin.addRegion(regionOptions);
+        regionRef.current = region;
+      }
+    } else {
+      region.setOptions({
         color: regionColor,
       });
     }
@@ -455,39 +494,24 @@ function useRegionsLoopRegion(
     paintLoopRegionHandles(region, loopPreviewEnabled);
   }, [
     enabled,
-    plugin,
     wavesurferRef,
     isReady,
     duration,
     inSeconds,
     outSeconds,
     loopPreviewEnabled,
+    waveformEpoch,
+    emitFromRegion,
   ]);
 
   React.useEffect(() => {
-    if (!enabled || !plugin) {
-      return;
-    }
-
-    const onUpdate = (region: Region, side?: "start" | "end") => {
-      draggingRef.current = true;
-      emitFromRegion(region, side, false);
-    };
-
-    const onUpdated = (region: Region, side?: "start" | "end") => {
-      emitFromRegion(region, side, true);
-      draggingRef.current = false;
-    };
-
-    plugin.on("region-update", onUpdate);
-    plugin.on("region-updated", onUpdated);
     return () => {
-      plugin.un("region-update", onUpdate);
-      plugin.un("region-updated", onUpdated);
+      pluginRef.current = null;
+      regionRef.current = null;
     };
-  }, [enabled, plugin, emitFromRegion]);
+  }, [waveformEpoch]);
 
-  return { plugins, isHandleDraggingRef: draggingRef };
+  return { isHandleDraggingRef: draggingRef };
 }
 
 export function WavePlayer({
@@ -533,6 +557,7 @@ export function WavePlayer({
   const [waveformSampleRate, setWaveformSampleRate] = React.useState(0);
   const [loopPreviewEnabled, setLoopPreviewEnabled] = React.useState(true);
   const [snapToPlayhead, setSnapToPlayhead] = React.useState(true);
+  const [waveformEpoch, setWaveformEpoch] = React.useState(0);
   const snapToPlayheadRef = React.useRef(snapToPlayhead);
   const zoomRef = React.useRef(zoom);
   zoomRef.current = zoom;
@@ -575,7 +600,7 @@ export function WavePlayer({
     restartResumes: true,
   });
 
-  const durationSec = audioBuffer?.duration || playback.duration || duration;
+  const durationSec = audioBuffer?.duration || duration || playback.duration;
   const currentTime = playback.fileTime;
   const isPlaying = playback.mode === "playing";
   const canPlay = Boolean(audioBuffer) && durationSec > 0;
@@ -595,7 +620,7 @@ export function WavePlayer({
 
   const snapLoopPoint = loopRegion?.snapLoopPoint ?? null;
 
-  const { plugins: regionPlugins, isHandleDraggingRef } = useRegionsLoopRegion(
+  const { isHandleDraggingRef } = useRegionsLoopRegion(
     Boolean(loopRegion) && Boolean(audioUrl),
     wavesurferRef,
     isReady,
@@ -605,7 +630,7 @@ export function WavePlayer({
     loopPreviewEnabled,
     loopRegion,
     snapLoopPoint,
-    audioUrl,
+    waveformEpoch,
   );
 
   const lastModeRef = React.useRef(playback.mode);
@@ -729,7 +754,6 @@ export function WavePlayer({
 
   const seekFileTimeRef = React.useRef(playback.seekFileTime);
   seekFileTimeRef.current = playback.seekFileTime;
-  const [waveformEpoch, setWaveformEpoch] = React.useState(0);
 
   const handleReady = React.useCallback(
     (ws: WaveSurfer) => {
@@ -962,7 +986,6 @@ export function WavePlayer({
               fillParent
               dragToSeek
               hideScrollbar={false}
-              plugins={regionPlugins}
               onReady={handleReady}
               onDestroy={handleDestroy}
             />

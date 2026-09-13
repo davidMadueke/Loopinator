@@ -27,6 +27,15 @@ describe("loop-region-time", () => {
     expect(parseLoopTimeInput("0:03.5")).toBe(3.5);
   });
 
+  it("parses a bare seconds value", () => {
+    expect(parseLoopTimeInput("10")).toBe(10);
+    expect(parseLoopTimeInput("10.5")).toBe(10.5);
+  });
+
+  it("keeps a parsed time when duration is not known yet", () => {
+    expect(storedValueToSeconds("0:05", 0, "in")).toBe(5);
+  });
+
   it("round-trips stored values with millisecond precision", () => {
     const stored = timeToStoredValue(12.347, 120, "in");
     expect(stored).toBe("0:12.347");
