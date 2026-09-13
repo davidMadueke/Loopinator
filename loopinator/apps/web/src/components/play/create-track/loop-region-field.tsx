@@ -45,6 +45,42 @@ function emitLoopRegion(
   onOutPointChange(stored.outPoint);
 }
 
+function emitParsedLoopPoint(
+  parsed: number | "auto",
+  otherSeconds: number,
+  duration: number,
+  edge: "in" | "out",
+  snapLoopPoint: ((seconds: number) => number) | null | undefined,
+  snap: boolean,
+  onInPointChange: (value: string) => void,
+  onOutPointChange: (value: string) => void,
+) {
+  if (parsed === "auto") {
+    if (edge === "in") {
+      onInPointChange("");
+    } else {
+      onOutPointChange("");
+    }
+    return;
+  }
+
+  emitLoopRegion(
+    commitLoopPointSeconds(
+      Math.min(Math.max(0, parsed), duration),
+      otherSeconds,
+      duration,
+      edge,
+      {
+        snap: snap && Boolean(snapLoopPoint),
+        snapLoopPoint,
+      },
+    ),
+    duration,
+    onInPointChange,
+    onOutPointChange,
+  );
+}
+
 type LoopPointInputProps = {
   id: string;
   label: string;
@@ -104,29 +140,16 @@ function LoopPointInput({
       return;
     }
 
-    if (parsed === "auto") {
-      if (edge === "in") {
-        onInPointChange("");
-      } else {
-        onOutPointChange("");
-      }
-    } else {
-      emitLoopRegion(
-        commitLoopPointSeconds(
-          Math.min(Math.max(0, parsed), duration),
-          otherSeconds,
-          duration,
-          edge,
-          {
-            snap: Boolean(snapLoopPoint),
-            snapLoopPoint,
-          },
-        ),
-        duration,
-        onInPointChange,
-        onOutPointChange,
-      );
-    }
+    emitParsedLoopPoint(
+      parsed,
+      otherSeconds,
+      duration,
+      edge,
+      snapLoopPoint,
+      true,
+      onInPointChange,
+      onOutPointChange,
+    );
 
     setDraft(null);
   };
@@ -229,7 +252,24 @@ function LoopPointInput({
           isFocused ? "cursor-text" : "cursor-ew-resize select-none",
         )}
         onFocus={handleFocus}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={(event) => {
+          const next = event.target.value;
+          setDraft(next);
+          const parsed = parseLoopTimeInput(next);
+          if (parsed === null || duration <= 0) {
+            return;
+          }
+          emitParsedLoopPoint(
+            parsed,
+            otherSeconds,
+            duration,
+            edge,
+            snapLoopPoint,
+            false,
+            onInPointChange,
+            onOutPointChange,
+          );
+        }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         onPointerDown={handlePointerDown}
@@ -259,10 +299,11 @@ export function LoopRegionField({
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">Loop region</legend>
       <p className="text-xs text-muted-foreground">
-        Drag the markers on the waveform, drag a time field, or type m:ss or
-        m:ss.sss. If In-point would land after Out-point, the two values swap.
-        Auto means the file start (in) or end (out). Markers snap to the
-        nearest zero crossing when you release a drag or leave a text field.
+        Drag the markers on the waveform, drag a time field, or type seconds,
+        m:ss, or m:ss.sss. If In-point would land after Out-point, the two
+        values swap. Auto means the file start (in) or end (out). Markers snap
+        to the nearest zero crossing when you release a drag or leave a text
+        field.
       </p>
       <div className="grid grid-cols-2 gap-3">
         <LoopPointInput

@@ -7,6 +7,7 @@ export const LOOP_MIN_GAP_SEC = 0.05;
 export const LOOP_AUTO_LABEL = "Auto";
 
 const LOOP_TIME_PATTERN = /^(\d+):(\d{1,2})(?:\.(\d{1,3}))?$/;
+const LOOP_SECONDS_PATTERN = /^\d+(?:\.\d{1,3})?$/;
 
 export function isAutoPoint(value: string): boolean {
   return value.trim() === "";
@@ -36,24 +37,28 @@ export function parseLoopTimeInput(value: string): number | "auto" | null {
   }
 
   const match = trimmed.match(LOOP_TIME_PATTERN);
-  if (!match) {
-    return null;
+  if (match) {
+    const minutes = Number.parseInt(match[1] ?? "0", 10);
+    const seconds = Number.parseInt(match[2] ?? "0", 10);
+    if (seconds >= 60) {
+      return null;
+    }
+
+    const fractionRaw = match[3];
+    let fractionSeconds = 0;
+    if (fractionRaw) {
+      const scale = 10 ** fractionRaw.length;
+      fractionSeconds = Number.parseInt(fractionRaw, 10) / scale;
+    }
+
+    return minutes * 60 + seconds + fractionSeconds;
   }
 
-  const minutes = Number.parseInt(match[1] ?? "0", 10);
-  const seconds = Number.parseInt(match[2] ?? "0", 10);
-  if (seconds >= 60) {
-    return null;
+  if (LOOP_SECONDS_PATTERN.test(trimmed)) {
+    return Number.parseFloat(trimmed);
   }
 
-  const fractionRaw = match[3];
-  let fractionSeconds = 0;
-  if (fractionRaw) {
-    const scale = 10 ** fractionRaw.length;
-    fractionSeconds = Number.parseInt(fractionRaw, 10) / scale;
-  }
-
-  return minutes * 60 + seconds + fractionSeconds;
+  return null;
 }
 
 export function storedValueToSeconds(
@@ -68,6 +73,10 @@ export function storedValueToSeconds(
   const parsed = parseLoopTimeInput(value);
   if (parsed === null || parsed === "auto") {
     return edge === "in" ? 0 : duration;
+  }
+
+  if (duration <= 0) {
+    return Math.max(0, parsed);
   }
 
   return Math.min(Math.max(0, parsed), duration);
