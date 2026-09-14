@@ -246,7 +246,7 @@ export function duplicateSlotBelow(
 ): CreateSetlistFormState {
   const index = form.slots.findIndex((slot) => slot.id === slotId);
   const source = form.slots[index];
-  if (!source || !isSlotFilled(source)) {
+  if (!source) {
     return form;
   }
 

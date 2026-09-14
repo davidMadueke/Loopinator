@@ -380,7 +380,7 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
 | Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |
 | Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. A full-height vertical separator then stacks Target BPM, Key, and Advanced Edit. Advanced Edit is disabled this pass |
-| Duplicate below | Filled slots only. New Slot label is the stem plus the next free #n. Track 1 copies to Track 1 #2 |
+| Duplicate below | Empty or filled. New Slot label is the stem plus the next free #n. Track 1 copies to Track 1 #2 |
 | Edit | Shown on every row. Disabled this pass, empty or filled |
 | Remove | Any slot except the last remaining one |
 | Add slot | Appends an Empty slot labelled Track N from the insert position |
