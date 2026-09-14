@@ -25,7 +25,8 @@ import {
 import { getFilterField } from "@/components/reui/filters/filters-lib";
 import { getFilterOperator, operatorTakesValue } from "@/components/reui/filters/filters-operators";
 
-const CHIP_SEGMENT_CLASS = "bg-background px-1.5 text-xs dark:bg-input/30";
+const CHIP_SEGMENT_CLASS =
+  "bg-background px-1.5 text-xs whitespace-nowrap dark:bg-input/30";
 
 type SlotChoiceChipProps = {
   slotId: string;
@@ -143,7 +144,7 @@ function LockedChoiceChipView({
       data-rule-id={rule.id}
       data-index={0}
       tabIndex={isTabStop ? 0 : -1}
-      className="h-6"
+      className="h-6 w-max shrink-0"
       onFocusCapture={() => {
         if (!focused) focusStore.set({ id: rule.id, segment: null, autoOpen: false });
       }}
@@ -157,7 +158,7 @@ function LockedChoiceChipView({
         )}
       >
         {field.icon}
-        <span className="flex items-center">{pathLabel}</span>
+        <span className="flex items-center whitespace-nowrap">{pathLabel}</span>
       </ButtonGroupText>
 
       <ButtonGroupText className={cn("cursor-default text-muted-foreground", CHIP_SEGMENT_CLASS)}>
