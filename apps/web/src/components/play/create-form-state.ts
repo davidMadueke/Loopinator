@@ -189,7 +189,7 @@ export function assignSlotTrack(
         targetBpm: track.originalBpm,
         bpmAutoDetected: track.bpmAutoDetected,
         key: keyFromTrack(track),
-        keyAutoDetected: false,
+        keyAutoDetected: track.keyAutoDetected,
         timeSignature: track.timeSignature,
       };
     }),

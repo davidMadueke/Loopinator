@@ -92,6 +92,25 @@ describe("assignSlotTrack", () => {
     expect(slot?.key).toEqual({ center: firstTrack.key, scale: firstTrack.keyMode });
     expect(slot?.timeSignature).toBe(firstTrack.timeSignature);
     expect(slot?.slotLabel).toBe("Track 1");
+    expect(slot?.keyAutoDetected).toBe(firstTrack.keyAutoDetected);
+    expect(slot?.bpmAutoDetected).toBe(firstTrack.bpmAutoDetected);
+  });
+
+  it("inherits Auto-detected Key from the Track", () => {
+    const detectedKeyTrack = DEMO_TRACKS.find((track) => track.keyAutoDetected);
+    if (!detectedKeyTrack) {
+      throw new Error("DEMO_TRACKS needs a Track with Auto-detected Key");
+    }
+
+    const next = assignSlotTrack(
+      INITIAL_CREATE_SETLIST_FORM,
+      INITIAL_CREATE_SETLIST_SLOT_ID,
+      detectedKeyTrack,
+    );
+    const slot = next.slots[0];
+
+    expect(slot?.keyAutoDetected).toBe(true);
+    expect(slot?.key).toEqual({ center: detectedKeyTrack.key, scale: detectedKeyTrack.keyMode });
   });
 
   it("resets copies when the Track is replaced and keeps the Slot label", () => {
@@ -107,6 +126,7 @@ describe("assignSlotTrack", () => {
     expect(slot?.trackId).toBe(secondTrack.id);
     expect(slot?.targetBpm).toBe(secondTrack.originalBpm);
     expect(slot?.timeSignature).toBe(secondTrack.timeSignature);
+    expect(slot?.keyAutoDetected).toBe(secondTrack.keyAutoDetected);
   });
 });
 
