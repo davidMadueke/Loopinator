@@ -95,10 +95,9 @@ export function SlotRow({
           </div>
         </div>
         <div
-          data-slot="slot-track-picker"
-          className="flex w-64 min-w-0 flex-col items-stretch justify-center"
+          data-slot="slot-label"
+          className="flex w-64 shrink-0 flex-col items-stretch justify-center"
         >
-          <div aria-hidden className="h-8 shrink-0" />
           <Textarea
             id={labelId}
             aria-label="Slot label"
@@ -115,25 +114,26 @@ export function SlotRow({
               "shadow-none focus-visible:border-transparent focus-visible:ring-0",
             )}
           />
-          <SlotTrackPicker
-            slotId={slot.id}
-            track={track}
-            tracks={tracks}
-            onAssign={onAssignTrack}
-          />
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-3 self-stretch">
-          {track && slot.targetBpm !== null ? (
-            <>
-              <div className="self-stretch">
-                <Separator orientation="vertical" className="h-full" />
-              </div>
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-3 self-stretch">
+          <div className="self-stretch">
+            <Separator orientation="vertical" className="h-full" />
+          </div>
 
-              <div
-                data-slot="slot-row-tempo"
-                className="flex w-fit shrink-0 items-center justify-end gap-3"
-              >
+          <div
+            data-slot="slot-row-tempo"
+            className="flex min-w-0 max-w-full flex-col items-stretch justify-center"
+          >
+            <SlotTrackPicker
+              slotId={slot.id}
+              track={track}
+              tracks={tracks}
+              onAssign={onAssignTrack}
+            />
+
+            {track && slot.targetBpm !== null ? (
+              <div className="flex w-fit shrink-0 items-center justify-end gap-3 self-end">
                 <SlotTempo
                   slotId={slot.id}
                   targetBpm={slot.targetBpm}
@@ -156,8 +156,8 @@ export function SlotRow({
                   />
                 </div>
               </div>
-            </>
-          ) : null}
+            ) : null}
+          </div>
         </div>
 
         <div className="self-stretch">
