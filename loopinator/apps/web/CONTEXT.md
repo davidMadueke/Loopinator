@@ -78,7 +78,7 @@ apps/web/src/components/play/
   library-tracks-tab.tsx    ← Tracks by BPM band; filter toolbar + chips
   library-setlists-tab.tsx  ← Setlist rows, Create new, Edit
   create-setlist-panel.tsx  ← name, slot list, Create enablement
-  create-setlist/           ← Slot row, Slot Track picker
+  create-setlist/           ← Slot row, Slot Track picker, locked Key / Time signature chips
 
 apps/web/src/components/reui/
   filters/                  ← ReUI Filters package (CLI-owned)
@@ -379,7 +379,8 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Persist | Create Setlist enables when valid. Click does not write |
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
 | Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |
-| Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. After a full-height vertical separator: Target BPM, Time signature, and Key on one horizontal line. Key centre stacks over Key scale; No Key stays a single control. Duplicate below and Remove are always-visible stacked icon buttons on the right, not a kebab and not HoverButtons |
+| Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. The label + Slot Track picker column is a fixed `w-64`. After a full-height vertical separator: Target BPM stays the stepper it is. Time signature and Key stack beside it as compact Library Filter chips, Time signature above Key, in a fixed `w-72` tempo column. Duplicate below and Remove are always-visible stacked icon buttons on the right, not a kebab and not HoverButtons |
+| Time signature / Key chips | Same chip as Library Filters: field + **is** + value. The value opens the ToggleGroup popover. **is** is display only, no operator popover. Choice operator is only **is**. Compact `h-6` / `text-xs`. No Add Filter, no Clear, no kebab, no remove. Clearing a toggle does not empty the slot copy |
 | Duplicate below | Empty or filled. New Slot label is the stem plus the next free #n. Track 1 copies to Track 1 #2 |
 | Remove | Any slot except the last remaining one |
 | Add slot | Appends an Empty slot labelled Track N from the insert position |
@@ -406,6 +407,8 @@ apps/web/src/
     slot-tempo.tsx
     slot-time-signature.tsx
     slot-key.tsx
+    slot-choice-chip.tsx               ← locked Filter chip (is only, no kebab)
+  lib/play-filter-choice.ts            ← Key / Time signature filter values, including slot **is** mapping
   components/reui/sortable.tsx         ← ReUI Sortable (CLI)
 ```
 
@@ -428,7 +431,7 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 | Tempo chip | Mini track + range text; not a bare number |
 | Time signature | Multi toggle group over `TIME_SIGNATURES` from `play-types` |
 | Key | Multi toggle group over `KEY_CENTERS` wrapping in the popover, with an exclusive Major/Minor toggle beside it. Scale is disabled when only No Key is selected; neither scale means any. Chip value shows centers then scale, in `text-primary` |
-| Choice operators | Key and Time signature default to **is**, **is not**, **is one of**, **is none of**. Override with `keyOperators` / `timeSignatureOperators` on `Filters` |
+| Choice operators | Key and Time signature default to **is**, **is not**, **is one of**, **is none of**. Override with `keyOperators` / `timeSignatureOperators` on `Filters`. Create Setlist slot chips lock both to **is** |
 | Chip label wash | Tempo `bg-primary/20`, Time signature `bg-primary/40`, Key `bg-primary/60` |
 | Add control | Default `HoverButton`: icon expands to **Add Filter**. Open matches the Route breadcrumb (`text-primary-on-muted`). Custom `trigger` skips this |
 | Custom trigger API | Optional `trigger` prop on `FiltersTrigger` |
@@ -443,7 +446,8 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 
 ```
 apps/web/src/
-  components/play/filters.tsx          ← schema, editors, Filters provider, FiltersTrigger, FiltersChips
+  components/play/filters.tsx          ← schema, editors, Filters provider, FiltersTrigger, FiltersChips; slot Key / Time signature fields
+  lib/play-filter-choice.ts            ← Key token parse/serialize shared by Library Filters and slot chips
   components/play/library-tracks-tab.tsx ← Filters wraps the tab; Trigger + Expand/Collapse; Chips under that row
   components/play/library-panel.tsx    ← Tabs + Create New; no filter chrome
   components/reui/filters/*            ← ReUI Filters (CLI)

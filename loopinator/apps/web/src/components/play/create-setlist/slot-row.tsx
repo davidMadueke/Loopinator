@@ -92,14 +92,17 @@ export function SlotRow({
             <ArrowDownIcon aria-hidden="true" />
           </Button>
         </div>
-        <div className="inline-flex min-w-0 max-w-80 flex-col items-stretch justify-center">
+        <div
+          data-slot="slot-track-picker"
+          className="flex w-64 shrink-0 flex-col items-stretch justify-center"
+        >
           <Input
             id={labelId}
             aria-label="Slot label"
             value={slot.slotLabel}
             onChange={(event) => onSlotLabelChange(event.target.value)}
             className={cn(
-              "h-8 w-auto min-w-0 field-sizing-content border-0 bg-transparent px-2 py-0 text-xl font-medium md:text-lg",
+              "h-8 w-auto min-w-0 max-w-full field-sizing-content border-0 bg-transparent px-2 py-0 text-xl font-medium md:text-lg",
               "shadow-none focus-visible:border-transparent focus-visible:ring-0",
             )}
           />
@@ -118,7 +121,10 @@ export function SlotRow({
                 <Separator orientation="vertical" className="h-full" />
               </div>
 
-              <div className="flex min-w-0 shrink-0 items-center justify-center gap-1">
+              <div
+                data-slot="slot-row-tempo"
+                className="flex w-72 shrink-0 items-center justify-center gap-3"
+              >
                 <SlotTempo
                   slotId={slot.id}
                   targetBpm={slot.targetBpm}
@@ -126,18 +132,20 @@ export function SlotRow({
                   autoDetected={slot.bpmAutoDetected}
                   onChange={onTargetBpmChange}
                 />
-                <SlotTimeSignature
-                  slotId={slot.id}
-                  value={slot.timeSignature}
-                  onChange={onTimeSignatureChange}
-                />
-                <SlotKey
-                  slotId={slot.id}
-                  value={slot.key}
-                  track={track}
-                  autoDetected={slot.keyAutoDetected}
-                  onChange={onKeyChange}
-                />
+                <div className="flex min-w-0 flex-col items-stretch justify-center gap-0.5">
+                  <SlotTimeSignature
+                    slotId={slot.id}
+                    value={slot.timeSignature}
+                    onChange={onTimeSignatureChange}
+                  />
+                  <SlotKey
+                    slotId={slot.id}
+                    value={slot.key}
+                    track={track}
+                    autoDetected={slot.keyAutoDetected}
+                    onChange={onKeyChange}
+                  />
+                </div>
               </div>
             </>
           ) : null}

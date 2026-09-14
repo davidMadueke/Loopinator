@@ -30,7 +30,7 @@ export function SlotTrackPicker({ slotId, track, tracks, onAssign }: SlotTrackPi
             id={triggerId}
             variant="ghost"
             className={cn(
-              "flex h-8 min-w-0 max-w-70 shrink justify-start px-2 text-medium text-primary",
+              "flex h-8 min-w-0 w-full shrink justify-start px-2 text-medium text-primary",
               "hover:text-primary-on-muted aria-expanded:text-primary-on-muted",
               !track && "text-muted-foreground hover:text-muted-foreground",
             )}
