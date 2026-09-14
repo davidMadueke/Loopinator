@@ -161,6 +161,17 @@ export function updateSlotKey(
   };
 }
 
+export function updateSlotTimeSignature(
+  form: CreateSetlistFormState,
+  slotId: string,
+  timeSignature: TimeSignature,
+): CreateSetlistFormState {
+  return {
+    ...form,
+    slots: form.slots.map((slot) => (slot.id === slotId ? { ...slot, timeSignature } : slot)),
+  };
+}
+
 export function assignSlotTrack(
   form: CreateSetlistFormState,
   slotId: string,

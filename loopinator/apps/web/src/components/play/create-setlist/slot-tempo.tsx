@@ -46,8 +46,8 @@ export function SlotTempo({
   const showAutoDetected = autoDetected && targetBpm === originalBpm;
 
   return (
-    <div className="flex shrink-0 flex-col items-center gap-1">
-      <div className="flex items-center gap-0.5">
+    <div className="flex w-fit min-w-0 flex-col items-center gap-1">
+      <div className="flex w-fit min-w-0 items-center justify-center gap-0.5">
         <Button
           type="button"
           variant="ghost"
@@ -58,14 +58,15 @@ export function SlotTempo({
           <MinusIcon aria-hidden="true" />
         </Button>
 
-        <div className="flex-col flex items-center gap-0.1">
+        <div className="flex min-w-0 flex-col items-center">
         <Input
           id={inputId}
           type="number"
           inputMode="numeric"
+          size={3}
           aria-label="Target BPM"
           className={cn(
-            "h-fit w-full items-center justify-center border-0 bg-transparent px-0 py-0 text-center text-sm tabular-nums md:text-sm",
+            "h-fit w-[3ch] min-w-0 items-center justify-center border-0 bg-transparent px-0 py-0 text-center text-lg tabular-nums md:text-sm",
             "[appearance:textfield] shadow-none focus-visible:border-transparent focus-visible:ring-0",
             "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
           )}

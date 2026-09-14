@@ -32,56 +32,68 @@ export function SlotKey({ slotId, value, track, autoDetected, onChange }: SlotKe
   const scaleDisabled = value.center === "No Key";
   const showAutoDetected = autoDetected && keysMatch(value, track);
 
-  return (
-    <div className="flex shrink-0 w-full justify-center items-center gap-0.5">
-      <Select
-        value={value.center}
-        onValueChange={(center) =>
-          onChange({
-            center: center as KeyCenter,
-            scale: center === "No Key" ? "major" : value.scale,
-          })
-        }
+  const centerSelect = (
+    <Select
+      value={value.center}
+      onValueChange={(center) =>
+        onChange({
+          center: center as KeyCenter,
+          scale: center === "No Key" ? "major" : value.scale,
+        })
+      }
+    >
+      <SelectTrigger
+        id={`slot-key-center-${slotId}`}
+        size="sm"
+        aria-label="Key"
+        className="h-fit border-transparent bg-transparent px-0.5 shadow-none"
       >
-        <SelectTrigger
-          id={`slot-key-center-${slotId}`}
-          size="sm"
-          aria-label="Key"
-          className="h-8 border-transparent bg-transparent px-0.5 shadow-none"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {KEY_CENTERS.map((center) => (
-            <SelectItem key={center} value={center}>
-              {center}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {scaleDisabled ? null : (
-        <Select
-          value={value.scale}
-          onValueChange={(scale) => onChange({ ...value, scale: scale as KeyScale })}
-        >
-          <SelectTrigger
-            id={`slot-key-scale-${slotId}`}
-            size="sm"
-            aria-label="Key scale"
-            className="h-8 border-transparent bg-transparent px-0.5 shadow-none"
-          >
-            <SelectValue>
-              {value.scale === "minor" ? "Minor" : "Major"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {KEY_SCALES.map((scale) => (
-              <SelectItem key={scale} value={scale}>
-                {scale === "major" ? "Major" : "Minor"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {KEY_CENTERS.map((center) => (
+          <SelectItem key={center} value={center}>
+            {center}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const scaleSelect = (
+    <Select
+      value={value.scale}
+      onValueChange={(scale) => onChange({ ...value, scale: scale as KeyScale })}
+    >
+      <SelectTrigger
+        id={`slot-key-scale-${slotId}`}
+        size="sm"
+        aria-label="Key scale"
+        className="h-fit py-0.5 border-transparent bg-transparent px-0.5 shadow-none"
+      >
+        <SelectValue className="text-xs">
+          {value.scale === "minor" ? "Minor" : "Major"}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {KEY_SCALES.map((scale) => (
+          <SelectItem key={scale} value={scale}>
+            {scale === "major" ? "Major" : "Minor"}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  return (
+    <div className="flex w-fit shrink-0 items-center justify-center gap-0">
+      {scaleDisabled ? (
+        centerSelect
+      ) : (
+        <div className="flex flex-col items-center gap-0">
+          {centerSelect}
+          {scaleSelect}
+        </div>
       )}
       {showAutoDetected ? <AutoDetectedIcon kind="key" /> : null}
     </div>

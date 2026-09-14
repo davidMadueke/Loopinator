@@ -19,6 +19,7 @@ import {
   updateSlotKey,
   updateSlotLabel,
   updateSlotTargetBpm,
+  updateSlotTimeSignature,
 } from "./create-form-state";
 
 describe("resetCreateTrackForm", () => {
@@ -129,6 +130,17 @@ describe("updateSlotKey", () => {
 
     expect(slot?.key).toEqual({ center: "A", scale: "minor" });
     expect(slot?.keyAutoDetected).toBe(false);
+  });
+});
+
+describe("updateSlotTimeSignature", () => {
+  it("writes Time signature and keeps Target BPM", () => {
+    const filled = assignSlotTrack(INITIAL_CREATE_SETLIST_FORM, INITIAL_CREATE_SETLIST_SLOT_ID, firstTrack);
+    const next = updateSlotTimeSignature(filled, INITIAL_CREATE_SETLIST_SLOT_ID, "6/8");
+    const slot = next.slots[0];
+
+    expect(slot?.timeSignature).toBe("6/8");
+    expect(slot?.targetBpm).toBe(firstTrack.originalBpm);
   });
 });
 
