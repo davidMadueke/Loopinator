@@ -46,13 +46,14 @@ export function SlotTempo({
   const showAutoDetected = autoDetected && targetBpm === originalBpm;
 
   return (
-    <div className="flex w-fit min-w-0 flex-col items-center gap-1">
+    <div className={cn("flex w-fit min-w-0 flex-col items-center gap-1", "bg-card p-1 border border-border rounded-md")}>
       <div className="flex w-fit min-w-0 items-center justify-center gap-0.5">
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
           aria-label="Decrease Target BPM"
+          className="text-primary font-medium hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
           {...bind(-1)}
         >
           <MinusIcon aria-hidden="true" />
@@ -66,7 +67,7 @@ export function SlotTempo({
           size={3}
           aria-label="Target BPM"
           className={cn(
-            "h-fit w-[3ch] min-w-0 items-center justify-center border-0 bg-transparent px-0 py-0 text-center text-lg tabular-nums md:text-sm",
+            "h-fit w-[3ch] min-w-0 items-center justify-center border-0 bg-transparent px-0 py-0 text-center text-xl font-medium tabular-nums md:text-sm",
             "[appearance:textfield] shadow-none focus-visible:border-transparent focus-visible:ring-0",
             "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
           )}
@@ -106,6 +107,7 @@ export function SlotTempo({
           variant="ghost"
           size="icon-xs"
           aria-label="Increase Target BPM"
+          className="text-primary font-medium hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
           {...bind(1)}
         >
           <PlusIcon aria-hidden="true" />
