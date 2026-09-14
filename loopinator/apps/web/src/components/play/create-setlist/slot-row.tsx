@@ -123,7 +123,7 @@ export function SlotRow({
 
           <div
             data-slot="slot-row-tempo"
-            className="flex min-w-0 max-w-full flex-col items-stretch justify-center"
+            className="flex max-w-full flex-col items-stretch justify-center"
           >
             <SlotTrackPicker
               slotId={slot.id}
@@ -133,7 +133,7 @@ export function SlotRow({
             />
 
             {track && slot.targetBpm !== null ? (
-              <div className="flex w-fit shrink-0 items-center justify-end gap-3 self-end">
+              <div className="flex w-max items-center justify-end gap-3 self-end">
                 <SlotTempo
                   slotId={slot.id}
                   targetBpm={slot.targetBpm}
@@ -141,7 +141,7 @@ export function SlotRow({
                   autoDetected={slot.bpmAutoDetected}
                   onChange={onTargetBpmChange}
                 />
-                <div className="flex w-fit flex-col items-stretch justify-center gap-0.5">
+                <div className="flex w-max shrink-0 flex-col items-stretch justify-center gap-0.5">
                   <SlotTimeSignature
                     slotId={slot.id}
                     value={slot.timeSignature}
