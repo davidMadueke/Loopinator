@@ -52,7 +52,7 @@ _Avoid_: Playlist, service, Sunday, AllTracks
 One Track on one Setlist. It can hold its own Loop region, Target BPM, Transport fade, Key, and Time signature. Track name stays on the Track. The Track name line picks or replaces the Track. Replacing it resets Target BPM, Key, and Time signature to the new Track; Slot label sticks. Removing the Track from the Setlist destroys those copies, so adding it back starts from the Track default.
 
 **Empty slot**:
-A Setlist slot with no Track yet. It exists only while creating or editing a Setlist. The Editor assigns a Track from the Track name line, which reads Pick a Track while empty. Duplicate below and Edit are disabled. Create Setlist stays disabled until every slot has a Track.
+A Setlist slot with no Track yet. It exists only while creating or editing a Setlist. The Editor assigns a Track from the Track name line, which reads Pick a Track while empty. Duplicate below copies the Empty slot into the slot below. Edit is disabled. Create Setlist stays disabled until every slot has a Track.
 _Avoid_: Placeholder row, unassigned slot
 
 **Library**:
@@ -164,7 +164,7 @@ The row in the Playback frame showing where playback came from and moving betwee
 _Avoid_: Context bar, read-only row, editable Select
 
 **Slot label**:
-The Editor-renameable name of a Setlist slot. It defaults to "Track N" from the slot's position at insert. The text sticks when the slot is reordered or when a Track is later picked. Duplicate below of a filled slot copies the slot and sets the new Slot label to that label's stem plus the next free #n in the Setlist. Opening becomes Opening #2. A second copy of Opening becomes Opening #3 if #2 is taken. Editors may then rename into a collision. The Route breadcrumb and the Create Setlist row both show it. It is not the Track name.
+The Editor-renameable name of a Setlist slot. It defaults to "Track N" from the slot's position at insert. The text sticks when the slot is reordered or when a Track is later picked. Duplicate below copies the slot, empty or filled, and sets the new Slot label to that label's stem plus the next free #n in the Setlist. Opening becomes Opening #2. A second copy of Opening becomes Opening #3 if #2 is taken. Editors may then rename into a collision. The Route breadcrumb and the Create Setlist row both show it. It is not the Track name.
 _Avoid_: Track name, slot number alone, slot name
 
 **Slot navigator**:

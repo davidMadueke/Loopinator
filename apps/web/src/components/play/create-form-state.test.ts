@@ -143,10 +143,19 @@ describe("duplicateSlotBelow", () => {
     expect(next.slots[1]?.slotLabel).toBe("Track 1 #2");
   });
 
-  it("does nothing on an Empty slot", () => {
-    expect(duplicateSlotBelow(INITIAL_CREATE_SETLIST_FORM, INITIAL_CREATE_SETLIST_SLOT_ID)).toEqual(
+  it("copies an Empty slot and numbers the new Slot label", () => {
+    const next = duplicateSlotBelow(
       INITIAL_CREATE_SETLIST_FORM,
+      INITIAL_CREATE_SETLIST_SLOT_ID,
+      "draft-slot-copy",
     );
+    const copy = next.slots[1];
+
+    expect(next.slots).toHaveLength(2);
+    expect(copy?.id).toBe("draft-slot-copy");
+    expect(copy?.trackId).toBeNull();
+    expect(copy?.slotLabel).toBe("Track 1 #2");
+    expect(copy?.targetBpm).toBeNull();
   });
 });
 
