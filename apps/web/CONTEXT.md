@@ -367,7 +367,7 @@ apps/web/src/
 
 ## Create Setlist, slot list
 
-Domain: [../../CONTEXT.md](../../CONTEXT.md). First pass is the slot list. You cannot fake that later. Edit expand and Slot Track picker Filters wait.
+Domain: [../../CONTEXT.md](../../CONTEXT.md). First pass is the slot list. You cannot fake that later. Slot Track picker Filters wait.
 
 The form lives in the Setlists tab after Create New. One Empty slot labelled Track 1. Pick a Track, name the Setlist, and Create Setlist enables. Add another Empty slot and it disables again.
 
@@ -379,9 +379,8 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Persist | Create Setlist enables when valid. Click does not write |
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
 | Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |
-| Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. A full-height vertical separator then stacks Target BPM, Key, and Advanced Edit. Advanced Edit is disabled this pass |
+| Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. After a full-height vertical separator: Target BPM, Time signature, and Key on one horizontal line. Key centre stacks over Key scale; No Key stays a single control. Duplicate below and Remove are always-visible stacked icon buttons on the right, not a kebab and not HoverButtons |
 | Duplicate below | Empty or filled. New Slot label is the stem plus the next free #n. Track 1 copies to Track 1 #2 |
-| Edit | Shown on every row. Disabled this pass, empty or filled |
 | Remove | Any slot except the last remaining one |
 | Add slot | Appends an Empty slot labelled Track N from the insert position |
 | Reorder | Drag the grip handle, or tap Move up / down around the slot number. Slot labels stay on the slot. First cannot move up; last cannot move down |
@@ -391,7 +390,6 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 
 | Next | Notes |
 |---|---|
-| Time signature | Still not on the slot row. Target BPM and Key stack beside the Track name, after the separator |
 | Slot Track picker Filters | Glossary already says the picker lists the Library with Filters. Dropdown only for now |
 | Create Setlist write | Same payload as Save Setlist. Button enablement is already the domain rule |
 
@@ -406,6 +404,7 @@ apps/web/src/
     slot-row.tsx
     slot-track-picker.tsx
     slot-tempo.tsx
+    slot-time-signature.tsx
     slot-key.tsx
   components/reui/sortable.tsx         ← ReUI Sortable (CLI)
 ```

@@ -1,10 +1,5 @@
 import { Button } from "@loopinator/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@loopinator/ui/components/dropdown-menu";
+import { ButtonGroup } from "@loopinator/ui/components/button-group";
 import { Input } from "@loopinator/ui/components/input";
 import { Label } from "@loopinator/ui/components/label";
 import { Separator } from "@loopinator/ui/components/separator";
@@ -13,18 +8,17 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CopyIcon,
-  EllipsisVerticalIcon,
   GripVerticalIcon,
-  PencilIcon,
   TrashIcon,
 } from "lucide-react";
 
 import { SortableItem, SortableItemHandle } from "@/components/reui/sortable";
-import type { Track, TrackKey } from "@/lib/play-types";
+import type { TimeSignature, Track, TrackKey } from "@/lib/play-types";
 
 import type { CreateSetlistSlotState } from "../create-form-state";
 import { SlotKey } from "./slot-key";
 import { SlotTempo } from "./slot-tempo";
+import { SlotTimeSignature } from "./slot-time-signature";
 import { SlotTrackPicker } from "./slot-track-picker";
 
 type SlotRowProps = {
@@ -38,9 +32,9 @@ type SlotRowProps = {
   onAssignTrack: (track: Track) => void;
   onTargetBpmChange: (targetBpm: number) => void;
   onKeyChange: (key: TrackKey) => void;
+  onTimeSignatureChange: (timeSignature: TimeSignature) => void;
   onDuplicateBelow: () => void;
   onRemove: () => void;
-  onAdvancedEdit: () => void;
   onMoveUpOneSlot: () => void;
   onMoveDownOneSlot: () => void;
 };
@@ -56,9 +50,9 @@ export function SlotRow({
   onAssignTrack,
   onTargetBpmChange,
   onKeyChange,
+  onTimeSignatureChange,
   onDuplicateBelow,
   onRemove,
-  onAdvancedEdit,
   onMoveUpOneSlot,
   onMoveDownOneSlot,
 }: SlotRowProps) {
@@ -118,19 +112,24 @@ export function SlotRow({
         </div>
 
         <div className="ml-auto flex items-stretch gap-3">
-          <div className="self-stretch">
-            <Separator orientation="vertical" className="h-full" />
-          </div>
+          {track && slot.targetBpm !== null ? (
+            <>
+              <div className="self-stretch">
+                <Separator orientation="vertical" className="h-full" />
+              </div>
 
-          <div className="flex w-34 shrink-0 flex-col items-center justify-center gap-1">
-            {track && slot.targetBpm !== null ? (
-              <>
+              <div className="flex min-w-0 shrink-0 items-center justify-center gap-1">
                 <SlotTempo
                   slotId={slot.id}
                   targetBpm={slot.targetBpm}
                   originalBpm={track.originalBpm}
                   autoDetected={slot.bpmAutoDetected}
                   onChange={onTargetBpmChange}
+                />
+                <SlotTimeSignature
+                  slotId={slot.id}
+                  value={slot.timeSignature}
+                  onChange={onTimeSignatureChange}
                 />
                 <SlotKey
                   slotId={slot.id}
@@ -139,41 +138,36 @@ export function SlotRow({
                   autoDetected={slot.keyAutoDetected}
                   onChange={onKeyChange}
                 />
-              </>
-            ) : null}
-          </div>
+              </div>
+            </>
+          ) : null}
 
           <div className="self-stretch">
             <Separator orientation="vertical" className="h-full" />
           </div>
 
-          <div className="flex h-full w-29 shrink-0 items-center justify-center self-center">
-            <Button type="button" variant="ghost" size="xs" disabled onClick={onAdvancedEdit}>
-              <PencilIcon aria-hidden="true" />
-              Advanced Edit
-            </Button>
-          </div>
-
-          <div className="self-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="outline" size="icon-sm">
-                  <EllipsisVerticalIcon className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={onDuplicateBelow}>
-                  <CopyIcon aria-hidden="true" />
-                  <span className="min-w-0 truncate">Duplicate Below</span>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem variant="destructive" onClick={onRemove} disabled={!canRemove}>
-                  <TrashIcon aria-hidden="true" />
-                  <span className="min-w-0 truncate">Remove</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex items-center self-center">
+            <ButtonGroup orientation="vertical">
+              <Button
+                type="button"
+                variant="default"
+                size="icon-sm"
+                aria-label="Duplicate below"
+                onClick={onDuplicateBelow}
+              >
+                <CopyIcon aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon-sm"
+                aria-label="Remove"
+                disabled={!canRemove}
+                onClick={onRemove}
+              >
+                <TrashIcon aria-hidden="true" />
+              </Button>
+            </ButtonGroup>
           </div>
         </div>
       </div>

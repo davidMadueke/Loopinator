@@ -23,6 +23,7 @@ import {
   updateSlotKey,
   updateSlotLabel,
   updateSlotTargetBpm,
+  updateSlotTimeSignature,
   type CreateSetlistFormState,
   type CreateSetlistSlotState,
 } from "./create-form-state";
@@ -120,11 +121,13 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
                 onKeyChange={(key) =>
                   setForm((current) => updateSlotKey(current, slot.id, key))
                 }
+                onTimeSignatureChange={(timeSignature) =>
+                  setForm((current) => updateSlotTimeSignature(current, slot.id, timeSignature))
+                }
                 onDuplicateBelow={() =>
                   setForm((current) => duplicateSlotBelow(current, slot.id))
                 }
                 onRemove={() => setForm((current) => removeSlot(current, slot.id))}
-                onAdvancedEdit={() => {}}
                 onMoveUpOneSlot={() => setForm((current) => moveSlotUp(current, slot.id))}
                 onMoveDownOneSlot={() => setForm((current) => moveSlotDown(current, slot.id))}
               />
