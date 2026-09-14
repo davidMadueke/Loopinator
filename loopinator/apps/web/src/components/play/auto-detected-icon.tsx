@@ -12,6 +12,8 @@ type AutoDetectedKind = "bpm" | "key";
 
 type AutoDetectedIconProps = {
   kind: AutoDetectedKind;
+  /** Sit inside another button instead of rendering one. */
+  embedded?: boolean;
 };
 
 const COPY: Record<
@@ -29,7 +31,7 @@ const COPY: Record<
 };
 
 /** Amber mark for an Original BPM or Key that came from detection. */
-export function AutoDetectedIcon({ kind }: AutoDetectedIconProps) {
+export function AutoDetectedIcon({ kind, embedded = false }: AutoDetectedIconProps) {
   const { label, description } = COPY[kind];
 
   return (
@@ -37,13 +39,23 @@ export function AutoDetectedIcon({ kind }: AutoDetectedIconProps) {
       <Tooltip>
         <TooltipTrigger
           render={
-            <button
-              type="button"
-              aria-label={label}
-              className="inline-flex cursor-help items-center"
-            >
-              <AlertTriangleIcon className="size-3 text-amber-500" />
-            </button>
+            embedded ? (
+              <span
+                role="img"
+                aria-label={label}
+                className="inline-flex shrink-0 cursor-help items-center"
+              >
+                <AlertTriangleIcon className="size-3 text-amber-500" />
+              </span>
+            ) : (
+              <button
+                type="button"
+                aria-label={label}
+                className="inline-flex cursor-help items-center"
+              >
+                <AlertTriangleIcon className="size-3 text-amber-500" />
+              </button>
+            )
           }
         />
         <TooltipContent side="top">{description}</TooltipContent>

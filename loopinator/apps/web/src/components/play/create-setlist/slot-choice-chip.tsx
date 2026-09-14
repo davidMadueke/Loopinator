@@ -2,6 +2,8 @@ import { useCallback, useMemo } from "react";
 import { ButtonGroup, ButtonGroupText } from "@loopinator/ui/components/button-group";
 import { cn } from "@loopinator/ui/lib/utils";
 
+import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
+
 import {
   createFilterQuery,
   createFilterRule,
@@ -32,6 +34,7 @@ type SlotChoiceChipProps = {
   value: unknown;
   isComplete: (value: unknown) => boolean;
   onCommit: (value: unknown) => void;
+  autoDetected?: boolean;
 };
 
 export function SlotChoiceChip({
@@ -41,6 +44,7 @@ export function SlotChoiceChip({
   value,
   isComplete,
   onCommit,
+  autoDetected = false,
 }: SlotChoiceChipProps) {
   const ruleId = `${slotId}-${fieldId}`;
   const query = useMemo(
@@ -83,19 +87,25 @@ export function SlotChoiceChip({
       onBeforeQueryChange={handleBeforeChange}
       onQueryChange={handleQueryChange}
     >
-      <LockedChoiceChip />
+      <LockedChoiceChip autoDetected={autoDetected} />
     </FilterBar>
   );
 }
 
-function LockedChoiceChip() {
+function LockedChoiceChip({ autoDetected }: { autoDetected: boolean }) {
   const { query } = useFilterState();
   const rule = flattenFilterRules(query)[0];
   if (!rule) return null;
-  return <LockedChoiceChipView rule={rule} />;
+  return <LockedChoiceChipView autoDetected={autoDetected} rule={rule} />;
 }
 
-function LockedChoiceChipView({ rule }: { rule: FilterRule }) {
+function LockedChoiceChipView({
+  autoDetected,
+  rule,
+}: {
+  autoDetected: boolean;
+  rule: FilterRule;
+}) {
   const actions = useFilterActions();
   const focusStore = useFilterFocusStore();
   const focused = useFilterChipFocused(rule.id);
@@ -162,11 +172,18 @@ function LockedChoiceChipView({ rule }: { rule: FilterRule }) {
           trigger={
             <ButtonGroupText
               render={<button type="button" />}
-              aria-label={locked ? valueFullText : valueText}
+              aria-label={
+                autoDetected
+                  ? `${locked ? valueFullText : valueText}, Auto-detected Key`
+                  : locked
+                    ? valueFullText
+                    : valueText
+              }
               title={valueFullText === valueText ? undefined : valueFullText}
               className={cn(
                 "hover:bg-accent cursor-default",
                 CHIP_SEGMENT_CLASS,
+                autoDetected && "gap-1",
                 valueEmpty && "text-muted-foreground",
               )}
               onPointerDown={() =>
@@ -174,6 +191,7 @@ function LockedChoiceChipView({ rule }: { rule: FilterRule }) {
               }
             >
               {valueLabel}
+              {autoDetected ? <AutoDetectedIcon embedded kind="key" /> : null}
             </ButtonGroupText>
           }
         />
