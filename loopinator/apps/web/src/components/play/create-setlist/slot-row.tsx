@@ -1,8 +1,8 @@
 import { Button } from "@loopinator/ui/components/button";
 import { ButtonGroup } from "@loopinator/ui/components/button-group";
-import { Input } from "@loopinator/ui/components/input";
 import { Label } from "@loopinator/ui/components/label";
 import { Separator } from "@loopinator/ui/components/separator";
+import { Textarea } from "@loopinator/ui/components/textarea";
 import { cn } from "@loopinator/ui/lib/utils";
 import {
   ArrowDownIcon,
@@ -60,49 +60,58 @@ export function SlotRow({
 
   return (
     <SortableItem value={slot.id}>
-      <div className="flex items-stretch gap-3 border border-border bg-background px-3 py-3">
-        <SortableItemHandle
-          render={<button type="button" aria-label={`Reorder ${slot.slotLabel || `slot ${arrayIndex + 1}`}`} />}
-          className="inline-flex size-4 shrink-0 self-center items-center justify-center p-0 leading-none text-muted-foreground hover:text-foreground"
-        >
-          <GripVerticalIcon className="size-4" />
-        </SortableItemHandle>
-        <div className="flex w-fit flex-col items-center gap-0.5 self-center">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            disabled={arrayIndex === 0}
-            aria-label="Move up one slot"
-            onClick={onMoveUpOneSlot}
+      <div className="flex w-full min-w-0 items-stretch gap-3 border border-border bg-background px-3 py-3">
+        <div className="flex items-center gap-3 self-center">
+          <SortableItemHandle
+            render={<button type="button" aria-label={`Reorder ${slot.slotLabel || `slot ${arrayIndex + 1}`}`} />}
+            className="inline-flex size-4 shrink-0 items-center justify-center p-0 leading-none text-muted-foreground hover:text-foreground"
           >
-            <ArrowUpIcon aria-hidden="true" />
-          </Button>
-          <div className="flex items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary">
-            <Label htmlFor={labelId}>{arrayIndex + 1}</Label>
+            <GripVerticalIcon className="size-4" />
+          </SortableItemHandle>
+          <div className="flex w-fit flex-col items-center gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              disabled={arrayIndex === 0}
+              aria-label="Move up one slot"
+              onClick={onMoveUpOneSlot}
+            >
+              <ArrowUpIcon aria-hidden="true" />
+            </Button>
+            <div className="flex items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary">
+              <Label htmlFor={labelId}>{arrayIndex + 1}</Label>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              disabled={arrayIndex === totalSlots - 1}
+              aria-label="Move down one slot"
+              onClick={onMoveDownOneSlot}
+            >
+              <ArrowDownIcon aria-hidden="true" />
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            disabled={arrayIndex === totalSlots - 1}
-            aria-label="Move down one slot"
-            onClick={onMoveDownOneSlot}
-          >
-            <ArrowDownIcon aria-hidden="true" />
-          </Button>
         </div>
         <div
           data-slot="slot-track-picker"
-          className="flex w-64 shrink-0 flex-col items-stretch justify-center"
+          className="flex w-64 min-w-0 flex-col items-stretch justify-center"
         >
-          <Input
+          <div aria-hidden className="h-8 shrink-0" />
+          <Textarea
             id={labelId}
             aria-label="Slot label"
+            rows={1}
             value={slot.slotLabel}
-            onChange={(event) => onSlotLabelChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+              }
+            }}
+            onChange={(event) => onSlotLabelChange(event.target.value.replace(/\n/g, " "))}
             className={cn(
-              "h-8 w-auto min-w-0 max-w-full field-sizing-content border-0 bg-transparent px-2 py-0 text-xl font-medium md:text-lg",
+              "min-h-8 w-full resize-none overflow-hidden wrap-break-word field-sizing-content border-0 bg-transparent px-2 py-0 leading-8 text-xl font-medium md:text-lg",
               "shadow-none focus-visible:border-transparent focus-visible:ring-0",
             )}
           />
@@ -114,7 +123,7 @@ export function SlotRow({
           />
         </div>
 
-        <div className="ml-auto flex items-stretch gap-3">
+        <div className="flex flex-1 items-center justify-end gap-3 self-stretch">
           {track && slot.targetBpm !== null ? (
             <>
               <div className="self-stretch">
@@ -123,7 +132,7 @@ export function SlotRow({
 
               <div
                 data-slot="slot-row-tempo"
-                className="flex w-72 shrink-0 items-center justify-center gap-3"
+                className="flex w-fit shrink-0 items-center justify-end gap-3"
               >
                 <SlotTempo
                   slotId={slot.id}
@@ -132,7 +141,7 @@ export function SlotRow({
                   autoDetected={slot.bpmAutoDetected}
                   onChange={onTargetBpmChange}
                 />
-                <div className="flex min-w-0 flex-col items-stretch justify-center gap-0.5">
+                <div className="flex w-fit flex-col items-stretch justify-center gap-0.5">
                   <SlotTimeSignature
                     slotId={slot.id}
                     value={slot.timeSignature}
@@ -149,34 +158,34 @@ export function SlotRow({
               </div>
             </>
           ) : null}
+        </div>
 
-          <div className="self-stretch">
-            <Separator orientation="vertical" className="h-full" />
-          </div>
+        <div className="self-stretch">
+          <Separator orientation="vertical" className="h-full" />
+        </div>
 
-          <div className="flex items-center self-center">
-            <ButtonGroup orientation="vertical">
-              <Button
-                type="button"
-                variant="default"
-                size="icon-sm"
-                aria-label="Duplicate below"
-                onClick={onDuplicateBelow}
-              >
-                <CopyIcon aria-hidden="true" />
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon-sm"
-                aria-label="Remove"
-                disabled={!canRemove}
-                onClick={onRemove}
-              >
-                <TrashIcon aria-hidden="true" />
-              </Button>
-            </ButtonGroup>
-          </div>
+        <div className="flex shrink-0 items-center self-center">
+          <ButtonGroup orientation="vertical">
+            <Button
+              type="button"
+              variant="default"
+              size="icon-sm"
+              aria-label="Duplicate below"
+              onClick={onDuplicateBelow}
+            >
+              <CopyIcon aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon-sm"
+              aria-label="Remove"
+              disabled={!canRemove}
+              onClick={onRemove}
+            >
+              <TrashIcon aria-hidden="true" />
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
     </SortableItem>
