@@ -7,7 +7,9 @@ import {
   isValidElement,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react"
@@ -29,6 +31,7 @@ import {
   MeasuringStrategy,
   MouseSensor,
   TouchSensor,
+  useDndContext,
   useSensor,
   useSensors,
   type DraggableSyntheticListeners,
@@ -69,8 +72,58 @@ const SortableInternalContext = createContext<{
   modifiers: undefined,
 })
 
-const animateLayoutChanges: AnimateLayoutChanges = (args) =>
-  defaultAnimateLayoutChanges({ ...args, wasDragging: true })
+/**
+ * Drag-overlay lists force `wasDragging` so siblings still animate after drop.
+ * That path also compares against `previous.newIndex`, which dnd-kit only
+ * updates during a drag. Button moves (move up / move down) never set it, so a
+ * slot returning to the index it mounted at skips the layout animation.
+ *
+ * Idle index changes therefore opt in directly. Drag / post-drop still use the
+ * default so overlay settling is unchanged.
+ */
+const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+  const { isSorting, wasDragging } = args
+
+  if (isSorting || wasDragging) {
+    return defaultAnimateLayoutChanges(args)
+  }
+
+  return true
+}
+
+function sameIdOrder(a: UniqueIdentifier[], b: UniqueIdentifier[]) {
+  if (a === b) {
+    return true
+  }
+  if (a.length !== b.length) {
+    return false
+  }
+  return a.every((id, index) => id === b[index])
+}
+
+/**
+ * SortableContext only remeasures droppables while a drag is active. After a
+ * programmatic reorder the cached rects stay at the old positions, so the next
+ * button move either does not FLIP or starts from the wrong y. Remeasure after
+ * paint so the current animation can still read the previous rects.
+ */
+function RemeasureOnIdleReorder({ itemIds }: { itemIds: UniqueIdentifier[] }) {
+  const { measureDroppableContainers } = useDndContext()
+  const previousIdsRef = useRef(itemIds)
+
+  useEffect(() => {
+    const previousIds = previousIdsRef.current
+    previousIdsRef.current = itemIds
+
+    if (sameIdOrder(previousIds, itemIds)) {
+      return
+    }
+
+    measureDroppableContainers(itemIds)
+  }, [itemIds, measureDroppableContainers])
+
+  return null
+}
 
 const dropAnimationConfig: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
@@ -281,6 +334,7 @@ function Sortable<T>({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
+        <RemeasureOnIdleReorder itemIds={itemIds} />
         <SortableContext
           items={itemIds}
           strategy={STRATEGY_MAP[strategy] ?? verticalListSortingStrategy}
