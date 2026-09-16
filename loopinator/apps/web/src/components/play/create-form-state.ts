@@ -51,6 +51,7 @@ export function hasCreateTrackProgress(form: CreateTrackFormState) {
 
 export type CreateSetlistSlotState = {
   id: string;
+  isSelected: boolean;
   trackId: string | null;
   slotLabel: string;
   targetBpm: number | null;
@@ -70,6 +71,7 @@ export const INITIAL_CREATE_SETLIST_SLOT_ID = "draft-slot-1";
 export function createEmptySlot(insertIndex: number, id?: string): CreateSetlistSlotState {
   return {
     id: id ?? crypto.randomUUID(),
+    isSelected: false,
     trackId: null,
     slotLabel: defaultSlotLabel(insertIndex),
     targetBpm: null,
@@ -122,6 +124,19 @@ export function removeSlot(form: CreateSetlistFormState, slotId: string): Create
     ...form,
     slots: form.slots.filter((slot) => slot.id !== slotId),
   };
+}
+
+export function selectSlot(state: boolean, form: CreateSetlistFormState, slotId: string): CreateSetlistFormState {
+  if (form.slots.length <= 1) {
+    return form;
+  }
+  return state ? {
+    ...form,
+    slots: form.slots.map((slot) => (slot.id === slotId ? { ...slot, isSelected: true } : slot ))
+  } : {
+    ...form,
+    slots: form.slots.map((slot) => (slot.id === slotId ? { ...slot, isSelected: false } : slot ))
+  }
 }
 
 export function updateSlotLabel(
