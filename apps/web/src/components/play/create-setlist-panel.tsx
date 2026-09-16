@@ -20,6 +20,7 @@ import {
   moveSlotUp,
   removeSlot,
   reorderSlots,
+  selectSlot,
   updateSlotKey,
   updateSlotLabel,
   updateSlotTargetBpm,
@@ -130,6 +131,7 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
                 onRemove={() => setForm((current) => removeSlot(current, slot.id))}
                 onMoveUpOneSlot={() => setForm((current) => moveSlotUp(current, slot.id))}
                 onMoveDownOneSlot={() => setForm((current) => moveSlotDown(current, slot.id))}
+                onSelectSlot={(state: boolean) => setForm((current) => selectSlot(state,current, slot.id))}
               />
             );
           })}

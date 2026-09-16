@@ -20,6 +20,7 @@ import { SlotKey } from "./slot-key";
 import { SlotTempo } from "./slot-tempo";
 import { SlotTimeSignature } from "./slot-time-signature";
 import { SlotTrackPicker } from "./slot-track-picker";
+import { Toggle } from "@loopinator/ui/components/toggle";
 
 type SlotRowProps = {
   slot: CreateSetlistSlotState;
@@ -37,6 +38,7 @@ type SlotRowProps = {
   onRemove: () => void;
   onMoveUpOneSlot: () => void;
   onMoveDownOneSlot: () => void;
+  onSelectSlot: (state: boolean) => void;
 };
 
 export function SlotRow({
@@ -55,6 +57,7 @@ export function SlotRow({
   onRemove,
   onMoveUpOneSlot,
   onMoveDownOneSlot,
+  onSelectSlot,
 }: SlotRowProps) {
   const labelId = `slot-label-${slot.id}`;
 
@@ -79,9 +82,22 @@ export function SlotRow({
             >
               <ArrowUpIcon aria-hidden="true" />
             </Button>
-            <div className="flex items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary">
-              <Label htmlFor={labelId}>{arrayIndex + 1}</Label>
-            </div>
+            {/* <div className="flex items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary">
+              <Button >
+                <Label htmlFor={labelId}>{arrayIndex + 1}</Label>
+              </Button>
+            </div> */}
+            <Toggle
+            className={cn(
+              "items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary",
+              "hover:bg-primary hover:text-primary-foreground",
+              "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary",
+              "aria-pressed:bg-primary/50 aria-pressed:text-foreground",
+            )}
+            onPressedChange={onSelectSlot}
+          >
+            {arrayIndex + 1}
+          </Toggle>
             <Button
               type="button"
               variant="ghost"
