@@ -49,9 +49,10 @@ function trackCountLabel(count: number) {
 
 type LibraryTracksTabProps = {
   activeTrackId?: string;
+  onSelectTrack?: (track: Track) => void;
 };
 
-export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
+export function LibraryTracksTab({ activeTrackId, onSelectTrack }: LibraryTracksTabProps) {
   const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
   const tracks = useMemo(() => getLibraryTracks(fixturesEnabled), [fixturesEnabled]);
   const bands = useMemo(() => groupTracksByBand(tracks), [tracks]);
@@ -129,6 +130,7 @@ export function LibraryTracksTab({ activeTrackId }: LibraryTracksTabProps) {
                           onPreviewToggle={() =>
                             setPreviewingId((current) => (current === track.id ? null : track.id))
                           }
+                          onSelectTrack={onSelectTrack}
                         />
                       ))}
                     </ul>
@@ -158,11 +160,13 @@ function TrackRow({
   isCurrent,
   isPreviewing,
   onPreviewToggle,
+  onSelectTrack,
 }: {
   track: Track;
   isCurrent: boolean;
   isPreviewing: boolean;
   onPreviewToggle: () => void;
+  onSelectTrack?: (track: Track) => void;
 }) {
   return (
     <li
@@ -180,6 +184,15 @@ function TrackRow({
           >
             {track.displayName}
           </span>
+        ) : onSelectTrack ? (
+          <button
+            type="button"
+            className="block w-full truncate text-left text-sm font-medium hover:underline"
+            title={track.displayName}
+            onClick={() => onSelectTrack(track)}
+          >
+            {track.displayName}
+          </button>
         ) : (
           <Link
             to="/t/$id"

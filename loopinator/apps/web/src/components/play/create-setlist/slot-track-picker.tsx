@@ -4,6 +4,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@loopinator/ui/components/dropdown-menu";
 import { cn } from "@loopinator/ui/lib/utils";
@@ -16,9 +17,16 @@ type SlotTrackPickerProps = {
   track: Track | undefined;
   tracks: Track[];
   onAssign: (track: Track) => void;
+  onOpenFullLibrary: () => void;
 };
 
-export function SlotTrackPicker({ slotId, track, tracks, onAssign }: SlotTrackPickerProps) {
+export function SlotTrackPicker({
+  slotId,
+  track,
+  tracks,
+  onAssign,
+  onOpenFullLibrary,
+}: SlotTrackPickerProps) {
   const label = track?.displayName ?? "Pick a Track";
   const triggerId = `slot-track-${slotId}`;
 
@@ -70,6 +78,10 @@ export function SlotTrackPicker({ slotId, track, tracks, onAssign }: SlotTrackPi
                 );
               })}
             </DropdownMenuGroup>
+          </div>
+          <div className="bg-popover">
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onOpenFullLibrary}>Open full Library</DropdownMenuItem>
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
