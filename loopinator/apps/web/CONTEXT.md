@@ -378,7 +378,7 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Create enablement | Name is non-empty, at least one slot, every slot has a Track |
 | Persist | Create Setlist enables when valid. Click does not write |
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty. Footer is Open full Library, same as the Route breadcrumb Track picker |
-| Open full Library | Expands a Slot library under that slot row. Assigning a Track from a name click leaves it open. Several slots may stay expanded |
+| Open full Library | Expands a Slot library under that slot row. Assigning a Track from a name click leaves it open. Opening another slot's library closes the first. If previous open library is in create track tab and user opens library panel for another, create track progress is lost without warning|
 | Slot library | Sibling under the existing slot chrome, which is now the row header. Grip / Move up / Move down still move header and panel together as one SortableItem. Close library collapses it |
 | Slot library Create Track | Create New / Track hover opens `SlotCreateTrackPanel` inside that expander. Back to Library and Close library prompt with a local DiscardProgressDialog when the form is dirty. Does not touch `library-create-store` |
 | Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |

@@ -40,6 +40,7 @@ function slotId(slot: CreateSetlistSlotState) {
 
 export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps) {
   const [form, setForm] = useState<CreateSetlistFormState>(INITIAL_CREATE_SETLIST_FORM);
+  const [openLibrarySlotId, setOpenLibrarySlotId] = useState<string | null>(null);
   const canCreate = canCreateSetlist(form);
 
   useEffect(() => {
@@ -128,10 +129,16 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
                 onDuplicateBelow={() =>
                   setForm((current) => duplicateSlotBelow(current, slot.id))
                 }
-                onRemove={() => setForm((current) => removeSlot(current, slot.id))}
+                onRemove={() => {
+                  setForm((current) => removeSlot(current, slot.id));
+                  setOpenLibrarySlotId((current) => (current === slot.id ? null : current));
+                }}
                 onMoveUpOneSlot={() => setForm((current) => moveSlotUp(current, slot.id))}
                 onMoveDownOneSlot={() => setForm((current) => moveSlotDown(current, slot.id))}
                 onSelectSlot={(state: boolean) => setForm((current) => selectSlot(state,current, slot.id))}
+                libraryOpen={openLibrarySlotId === slot.id}
+                onOpenLibrary={() => setOpenLibrarySlotId(slot.id)}
+                onCloseLibrary={() => setOpenLibrarySlotId(null)}
               />
             );
           })}
