@@ -94,16 +94,18 @@ export function SlotRow({
               </Button>
             </div> */}
             <Toggle
-            className={cn(
-              "items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary",
-              "hover:bg-primary hover:text-primary-foreground",
-              "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary",
-              "aria-pressed:bg-primary/50 aria-pressed:text-foreground",
-            )}
-            onPressedChange={onSelectSlot}
-          >
-            {arrayIndex + 1}
-          </Toggle>
+              pressed={slot.isSelected}
+              aria-label={`Select slot ${arrayIndex + 1}`}
+              className={cn(
+                "items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary",
+                "hover:bg-primary hover:text-primary-foreground",
+                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary",
+                "aria-pressed:bg-primary/50 aria-pressed:text-foreground",
+              )}
+              onPressedChange={onSelectSlot}
+            >
+              {arrayIndex + 1}
+            </Toggle>
             <Button
               type="button"
               variant="ghost"
