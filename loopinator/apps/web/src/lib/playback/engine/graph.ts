@@ -289,6 +289,10 @@ export function createPlaybackEngine(): PlaybackEngine {
     }
 
     stopSource();
+    stopRaf();
+    /** `currentFileTime()` follows the old play clock while mode is still
+     *  "playing", so `reanchor()` would restore that time over the reset. */
+    mode = "stopped";
     fileTime = params.loopEnabled ? params.bounds.in : 0;
     if (transportGain) {
       transportGain.gain.cancelScheduledValues(transportGain.context.currentTime);
@@ -317,9 +321,6 @@ export function createPlaybackEngine(): PlaybackEngine {
       mode = "playing";
       reanchor();
       startRaf();
-    } else {
-      mode = "stopped";
-      stopRaf();
     }
 
     emit();
