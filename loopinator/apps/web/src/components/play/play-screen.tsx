@@ -92,10 +92,7 @@ export function PlayScreen(props: PlayScreenProps) {
   };
 
   const handleAccountNavigate = () => {
-    const result = requestDiscard("leave-account");
-    if (result === "proceeded") {
-      void navigate({ to: "/dashboard" });
-    }
+    void navigate({ to: "/dashboard" });
   };
 
   const handleDiscardDialogOpenChange = (open: boolean) => {
