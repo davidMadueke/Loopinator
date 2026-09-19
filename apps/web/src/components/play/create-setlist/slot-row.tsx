@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@loopinator/ui/components/button";
 import { ButtonGroup } from "@loopinator/ui/components/button-group";
 import { Separator } from "@loopinator/ui/components/separator";
@@ -40,6 +39,9 @@ type SlotRowProps = {
   onMoveUpOneSlot: () => void;
   onMoveDownOneSlot: () => void;
   onSelectSlot: (state: boolean) => void;
+  libraryOpen: boolean;
+  onOpenLibrary: () => void;
+  onCloseLibrary: () => void;
 };
 
 export function SlotRow({
@@ -59,9 +61,11 @@ export function SlotRow({
   onMoveUpOneSlot,
   onMoveDownOneSlot,
   onSelectSlot,
+  libraryOpen,
+  onOpenLibrary,
+  onCloseLibrary,
 }: SlotRowProps) {
   const labelId = `slot-label-${slot.id}`;
-  const [libraryOpen, setLibraryOpen] = useState(false);
 
   return (
     <SortableItem value={slot.id} className="flex flex-col gap-0">
@@ -148,7 +152,7 @@ export function SlotRow({
               track={track}
               tracks={tracks}
               onAssign={onAssignTrack}
-              onOpenFullLibrary={() => setLibraryOpen(true)}
+              onOpenFullLibrary={onOpenLibrary}
             />
 
             {track && slot.targetBpm !== null ? (
@@ -212,7 +216,7 @@ export function SlotRow({
         <SlotLibraryPanel
           activeTrackId={track?.id}
           onAssign={onAssignTrack}
-          onClose={() => setLibraryOpen(false)}
+          onClose={onCloseLibrary}
         />
       ) : null}
     </SortableItem>

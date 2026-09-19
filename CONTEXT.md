@@ -188,7 +188,7 @@ The picker on a Setlist slot's Track name line. The dropdown lists Tracks. Open 
 _Avoid_: Track picker, Slot picker
 
 **Slot library**:
-The Tracks tab opened under one Setlist slot. Clicking a Track name assigns that Track to the slot. The panel stays open until the Editor closes it. Several slots may keep theirs open at once.
+The Tracks tab opened under one Setlist slot. Clicking a Track name assigns that Track to the slot. The panel stays open until the Editor closes it. Only one slot can show its Slot library at a time.
 _Avoid_: Library panel, nested library modal, Track picker
 
 **Create Setlist**:
