@@ -16,6 +16,7 @@ import { SortableItem, SortableItemHandle } from "@/components/reui/sortable";
 import type { TimeSignature, Track, TrackKey } from "@/lib/play-types";
 
 import type { CreateSetlistSlotState } from "../create-form-state";
+import { SLOT_SELECT_TOGGLE_CLASS } from "./slot-select-toggle-class";
 import { SlotKey } from "./slot-key";
 import { SlotLibraryPanel } from "./slot-library-panel";
 import { SlotTempo } from "./slot-tempo";
@@ -96,12 +97,7 @@ export function SlotRow({
             <Toggle
               pressed={slot.isSelected}
               aria-label={`Select slot ${arrayIndex + 1}`}
-              className={cn(
-                "items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary",
-                "hover:bg-primary hover:text-primary-foreground",
-                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary",
-                "aria-pressed:bg-primary/50 aria-pressed:text-foreground",
-              )}
+              className={SLOT_SELECT_TOGGLE_CLASS}
               onPressedChange={onSelectSlot}
             >
               {arrayIndex + 1}
