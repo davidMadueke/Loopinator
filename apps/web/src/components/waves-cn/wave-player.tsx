@@ -45,7 +45,10 @@ const WAVEFORM_PAD_Y_PX = 4;
 /** WaveSurfer's default 8 kHz peaks cannot show real zero crossings. */
 const WAVEFORM_DECODE_SAMPLE_RATE = 44100;
 /** At max zoom, each decoded sample is this many pixels wide. */
-const ZERO_CROSS_PX_PER_SAMPLE = 8;
+const ZERO_CROSS_PX_PER_SAMPLE = 2;
+/** Zoom in/out buttons and one mouse-wheel notch (deltaY ≈ 100). */
+const ZOOM_STEP_FACTOR = 1.5;
+const WHEEL_ZOOM_NOTCH = 100;
 
 function getWaveformScroller(ws: WaveSurfer) {
   return ws.getWrapper().parentElement;
@@ -74,6 +77,32 @@ function getFitZoomPxPerSec(ws: WaveSurfer): number {
 
 function clampZoom(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+/** Zoom then restore scroll so `clientX` still sits on the same audio time.
+ *  WaveSurfer's `zoom()` keeps the playhead still, which is the wrong anchor. */
+function zoomAroundClientX(ws: WaveSurfer, minPxPerSec: number, clientX: number) {
+  const scroller = getWaveformScroller(ws);
+  const duration = ws.getDuration();
+  if (!scroller || duration <= 0) {
+    ws.zoom(minPxPerSec);
+    return;
+  }
+
+  const originX = clientX - scroller.getBoundingClientRect().left;
+  const oldPxPerSec = scroller.scrollWidth / duration;
+  const pointerTime =
+    oldPxPerSec > 0 ? (scroller.scrollLeft + originX) / oldPxPerSec : 0;
+
+  ws.zoom(minPxPerSec);
+
+  const newPxPerSec = scroller.scrollWidth / duration;
+  if (newPxPerSec * duration <= scroller.clientWidth) {
+    scroller.scrollLeft = 0;
+    return;
+  }
+
+  scroller.scrollLeft = pointerTime * newPxPerSec - originX;
 }
 
 function maxZoomForSampleRate(sampleRate: number, fallback: number) {
@@ -717,11 +746,22 @@ export function WavePlayer({
   );
 
   const applyZoom = React.useCallback(
-    (next: number) => {
+    (next: number, originClientX?: number) => {
       const clamped = clampZoom(next, effectiveMinZoom, effectiveMaxZoom);
+      const ws = wavesurferRef.current;
+      if (clamped === zoomRef.current) {
+        return;
+      }
       zoomRef.current = clamped;
       setZoom(clamped);
-      wavesurferRef.current?.zoom(clamped);
+      if (!ws) {
+        return;
+      }
+      if (originClientX === undefined) {
+        ws.zoom(clamped);
+        return;
+      }
+      zoomAroundClientX(ws, clamped, originClientX);
     },
     [effectiveMinZoom, effectiveMaxZoom],
   );
@@ -736,11 +776,11 @@ export function WavePlayer({
   );
 
   const zoomIn = React.useCallback(() => {
-    applyZoom(zoom * 1.5);
+    applyZoom(zoom * ZOOM_STEP_FACTOR);
   }, [applyZoom, zoom]);
 
   const zoomOut = React.useCallback(() => {
-    applyZoom(zoom / 1.5);
+    applyZoom(zoom / ZOOM_STEP_FACTOR);
   }, [applyZoom, zoom]);
 
   const toggleSnapToPlayhead = React.useCallback(() => {
@@ -839,6 +879,50 @@ export function WavePlayer({
       unsubDrag();
     };
   }, [isHandleDraggingRef, isReady, waveformEpoch]);
+
+  React.useEffect(() => {
+    const ws = wavesurferRef.current;
+    if (!ws || !isReady) {
+      return;
+    }
+    const scroller = getWaveformScroller(ws);
+    if (!scroller) {
+      return;
+    }
+
+    let pendingDeltaY = 0;
+    let pendingClientX = 0;
+    let frame = 0;
+
+    const flushZoom = () => {
+      frame = 0;
+      const deltaY = pendingDeltaY;
+      pendingDeltaY = 0;
+      applyZoom(
+        zoomRef.current *
+          Math.pow(ZOOM_STEP_FACTOR, -deltaY / WHEEL_ZOOM_NOTCH),
+        pendingClientX,
+      );
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) {
+        return;
+      }
+      event.preventDefault();
+      pendingDeltaY += event.deltaY;
+      pendingClientX = event.clientX;
+      if (frame === 0) {
+        frame = requestAnimationFrame(flushZoom);
+      }
+    };
+
+    scroller.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    return () => {
+      cancelAnimationFrame(frame);
+      scroller.removeEventListener("wheel", onWheel, { capture: true });
+    };
+  }, [applyZoom, isReady, waveformEpoch]);
 
   const handleDestroy = React.useCallback(() => {
     wavesurferRef.current = null;
