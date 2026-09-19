@@ -126,17 +126,35 @@ export function removeSlot(form: CreateSetlistFormState, slotId: string): Create
   };
 }
 
-export function selectSlot(state: boolean, form: CreateSetlistFormState, slotId: string): CreateSetlistFormState {
-  if (form.slots.length <= 1) {
+export function selectSlot(
+  state: boolean,
+  form: CreateSetlistFormState,
+  slotId: string,
+): CreateSetlistFormState {
+  return {
+    ...form,
+    slots: form.slots.map((slot) =>
+      slot.id === slotId ? { ...slot, isSelected: state } : slot,
+    ),
+  };
+}
+
+export function selectAllSlots(selected: boolean, form: CreateSetlistFormState): CreateSetlistFormState {
+  return {
+    ...form,
+    slots: form.slots.map((slot) => ({ ...slot, isSelected: selected })),
+  };
+}
+
+export function removeSelectedSlots(form: CreateSetlistFormState): CreateSetlistFormState {
+  const remaining = form.slots.filter((slot) => !slot.isSelected);
+  if (remaining.length === form.slots.length) {
     return form;
   }
-  return state ? {
-    ...form,
-    slots: form.slots.map((slot) => (slot.id === slotId ? { ...slot, isSelected: true } : slot ))
-  } : {
-    ...form,
-    slots: form.slots.map((slot) => (slot.id === slotId ? { ...slot, isSelected: false } : slot ))
+  if (remaining.length === 0) {
+    return { ...form, slots: [createEmptySlot(0)] };
   }
+  return { ...form, slots: remaining };
 }
 
 export function updateSlotLabel(

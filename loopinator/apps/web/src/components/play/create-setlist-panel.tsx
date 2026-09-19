@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@loopinator/ui/components/button";
 import { Input } from "@loopinator/ui/components/input";
 import { Label } from "@loopinator/ui/components/label";
+import { Toggle } from "@loopinator/ui/components/toggle";
 import { cn } from "@loopinator/ui/lib/utils";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 
 import { Sortable } from "@/components/reui/sortable";
 import { DEMO_TRACKS } from "@/lib/mock-data";
@@ -18,8 +19,10 @@ import {
   INITIAL_CREATE_SETLIST_FORM,
   moveSlotDown,
   moveSlotUp,
+  removeSelectedSlots,
   removeSlot,
   reorderSlots,
+  selectAllSlots,
   selectSlot,
   updateSlotKey,
   updateSlotLabel,
@@ -42,6 +45,8 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
   const [form, setForm] = useState<CreateSetlistFormState>(INITIAL_CREATE_SETLIST_FORM);
   const [openLibrarySlotId, setOpenLibrarySlotId] = useState<string | null>(null);
   const canCreate = canCreateSetlist(form);
+  const selectedCount = form.slots.filter((slot) => slot.isSelected).length;
+  const allSelected = form.slots.length > 0 && selectedCount === form.slots.length;
 
   useEffect(() => {
     onProgressChange(hasCreateSetlistProgress(form));
@@ -63,7 +68,7 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 pb-4">
+      <div className="flex flex-col gap-2 pb-4">
         <div className="sticky top-0 z-20 flex flex-col gap-2 bg-background pb-0.5">
           <div className="space-y-2">
             <Label htmlFor="setlist-name">Setlist name</Label>
@@ -75,11 +80,12 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
             />
           </div>
 
-          <div className="pt-2">
+          <div className="py-2 flex border border-border px-2">
+            <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               aria-label="Add slot"
               className={cn(
                 "dark:hover:bg-primary dark:hover:text-primary-foreground",
@@ -89,6 +95,49 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
             >
               <PlusIcon className="w-4 h-4" />
             </Button>
+            </div>
+
+            <div className="flex w-full items-center justify-end gap-2">
+              <div className="flex items-center gap-2 border border-border bg-card px-2 py-1">
+                <span className="text-sm font-medium text-foreground">Selected:</span>
+                
+                <Toggle
+              pressed={allSelected}
+              size="sm"
+              aria-label="Select all slots"
+              className={cn(
+                "items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary",
+                "hover:bg-primary hover:text-primary-foreground",
+                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary",
+                "aria-pressed:bg-primary/50 aria-pressed:text-foreground",
+              )}
+              onPressedChange={(pressed) =>
+                setForm((current) => selectAllSlots(pressed, current))
+              }
+            >
+              ALL
+            </Toggle>
+
+                {((form.slots.filter((slot) => slot.isSelected)).length > 0) ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon-sm"
+                    aria-label={`Delete ${selectedCount} selected slot${selectedCount === 1 ? "" : "s"}`}
+                    onClick={() => {
+                      const next = removeSelectedSlots(form);
+                      setForm(next);
+                      setOpenLibrarySlotId((openId) =>
+                        openId && next.slots.some((slot) => slot.id === openId) ? openId : null,
+                      );
+                    }}
+                    disabled={(form.slots.filter((slot) => slot.isSelected)).length < 1}
+                  >
+                    <TrashIcon aria-hidden="true" />
+                  </Button>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
 
