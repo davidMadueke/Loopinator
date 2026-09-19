@@ -75,10 +75,10 @@ apps/web/src/components/play/
   library-panel.tsx         ← Tabs: Tracks | Setlists
   filters.tsx               ← Library Filters provider, trigger, chip row
   advanced-options-panel.tsx ← Reset this device, Save for everyone
-  library-tracks-tab.tsx    ← Tracks by BPM band; filter toolbar + chips
+  library-tracks-tab.tsx    ← Tracks by BPM band; name is a Link, or onSelectTrack assigns
   library-setlists-tab.tsx  ← Setlist rows, Create new, Edit
   create-setlist-panel.tsx  ← name, slot list, Create enablement
-  create-setlist/           ← Slot row, Slot Track picker, locked Key / Time signature chips
+  create-setlist/           ← Slot row header, Slot Track picker, Slot library, locked chips
 
 apps/web/src/components/reui/
   filters/                  ← ReUI Filters package (CLI-owned)
@@ -367,7 +367,7 @@ apps/web/src/
 
 ## Create Setlist, slot list
 
-Domain: [../../CONTEXT.md](../../CONTEXT.md). First pass is the slot list. You cannot fake that later. Slot Track picker Filters wait.
+Domain: [../../CONTEXT.md](../../CONTEXT.md). First pass is the slot list. You cannot fake that later. Open full Library shows the Tracks tab with Filters under that slot.
 
 The form lives in the Setlists tab after Create New. One Empty slot labelled Track 1. Pick a Track, name the Setlist, and Create Setlist enables. Add another Empty slot and it disables again.
 
@@ -377,7 +377,10 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Progress | Setlist name, an extra slot, a picked Track, or a Slot label other than Track 1. The empty initial form is not progress |
 | Create enablement | Name is non-empty, at least one slot, every slot has a Track |
 | Persist | Create Setlist enables when valid. Click does not write |
-| Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty |
+| Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty. Footer is Open full Library, same as the Route breadcrumb Track picker |
+| Open full Library | Expands a Slot library under that slot row. Assigning a Track from a name click leaves it open. Several slots may stay expanded |
+| Slot library | Sibling under the existing slot chrome, which is now the row header. Grip / Move up / Move down still move header and panel together as one SortableItem. Close library collapses it |
+| Slot library Create Track | Create New / Track hover opens `SlotCreateTrackPanel` inside that expander. Back to Library and Close library prompt with a local DiscardProgressDialog when the form is dirty. Does not touch `library-create-store` |
 | Pick / replace | Assigning a Track copies Target BPM, Key, and Time signature onto the slot. Replacing resets those three. Slot label sticks |
 | Slot row | Slot label is a header-sized invisible input. Track name sits under it, left-aligned with the label. The label + Slot Track picker column is a fixed `w-64`. After a full-height vertical separator: Target BPM stays the stepper it is. Time signature and Key stack beside it as compact Library Filter chips, Time signature above Key, in a fixed `w-72` tempo column. Duplicate below and Remove are always-visible stacked icon buttons on the right, not a kebab and not HoverButtons |
 | Time signature / Key chips | Same chip as Library Filters: field + **is** + value. The value opens the ToggleGroup popover. **is** is display only, no operator popover. Choice operator is only **is**. Compact `h-6` / `text-xs`. No Add Filter, no Clear, no kebab, no remove. Clearing a toggle does not empty the slot copy |
@@ -391,8 +394,8 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 
 | Next | Notes |
 |---|---|
-| Slot Track picker Filters | Glossary already says the picker lists the Library with Filters. Dropdown only for now |
 | Create Setlist write | Same payload as Save Setlist. Button enablement is already the domain rule |
+| Slot Create Track upload | Upload Track stays disabled. A new Track does not yet land in the Slot library or assign to the slot |
 
 ### Create Setlist file layout
 
@@ -402,8 +405,10 @@ apps/web/src/
   components/play/create-form-state.ts ← CreateSetlistFormState + slot ops
   components/play/create-setlist-panel.tsx
   components/play/create-setlist/
-    slot-row.tsx
+    slot-row.tsx                       ← header chrome + optional Slot library sibling
     slot-track-picker.tsx
+    slot-library-panel.tsx             ← browse / create toggle, close, local discard
+    slot-create-track-panel.tsx        ← Create Track fields; no library-create-store
     slot-tempo.tsx
     slot-time-signature.tsx
     slot-key.tsx

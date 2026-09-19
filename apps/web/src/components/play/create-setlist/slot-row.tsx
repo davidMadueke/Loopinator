@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Button } from "@loopinator/ui/components/button";
 import { ButtonGroup } from "@loopinator/ui/components/button-group";
-import { Label } from "@loopinator/ui/components/label";
 import { Separator } from "@loopinator/ui/components/separator";
 import { Textarea } from "@loopinator/ui/components/textarea";
+import { Toggle } from "@loopinator/ui/components/toggle";
 import { cn } from "@loopinator/ui/lib/utils";
 import {
   ArrowDownIcon,
@@ -17,10 +18,10 @@ import type { TimeSignature, Track, TrackKey } from "@/lib/play-types";
 
 import type { CreateSetlistSlotState } from "../create-form-state";
 import { SlotKey } from "./slot-key";
+import { SlotLibraryPanel } from "./slot-library-panel";
 import { SlotTempo } from "./slot-tempo";
 import { SlotTimeSignature } from "./slot-time-signature";
 import { SlotTrackPicker } from "./slot-track-picker";
-import { Toggle } from "@loopinator/ui/components/toggle";
 
 type SlotRowProps = {
   slot: CreateSetlistSlotState;
@@ -60,9 +61,10 @@ export function SlotRow({
   onSelectSlot,
 }: SlotRowProps) {
   const labelId = `slot-label-${slot.id}`;
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   return (
-    <SortableItem value={slot.id}>
+    <SortableItem value={slot.id} className="flex flex-col gap-0">
       <div className="flex w-full min-w-0 items-stretch gap-3 border border-border bg-background px-3 py-3">
         <div className="flex items-center gap-3 self-center">
           <SortableItemHandle
@@ -146,6 +148,7 @@ export function SlotRow({
               track={track}
               tracks={tracks}
               onAssign={onAssignTrack}
+              onOpenFullLibrary={() => setLibraryOpen(true)}
             />
 
             {track && slot.targetBpm !== null ? (
@@ -204,6 +207,14 @@ export function SlotRow({
           </ButtonGroup>
         </div>
       </div>
+
+      {libraryOpen ? (
+        <SlotLibraryPanel
+          activeTrackId={track?.id}
+          onAssign={onAssignTrack}
+          onClose={() => setLibraryOpen(false)}
+        />
+      ) : null}
     </SortableItem>
   );
 }

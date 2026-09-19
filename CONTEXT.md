@@ -184,8 +184,12 @@ The dropdown on the Track name in the Route breadcrumb on `/t/{id}`, listing the
 _Avoid_: Library dropdown, Slot picker, Slot Track picker
 
 **Slot Track picker**:
-The picker on a Setlist slot's Track name line. It lists the Library with Filters. It is not the breadcrumb Track picker.
+The picker on a Setlist slot's Track name line. The dropdown lists Tracks. Open full Library expands the Slot library under that row. It is not the breadcrumb Track picker.
 _Avoid_: Track picker, Slot picker
+
+**Slot library**:
+The Tracks tab opened under one Setlist slot. Clicking a Track name assigns that Track to the slot. The panel stays open until the Editor closes it. Several slots may keep theirs open at once.
+_Avoid_: Library panel, nested library modal, Track picker
 
 **Create Setlist**:
 The write that inserts a new Setlist. Same payload as Save Setlist.
