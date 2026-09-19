@@ -32,6 +32,7 @@ import {
   type CreateSetlistSlotState,
 } from "./create-form-state";
 import { SlotRow } from "./create-setlist/slot-row";
+import { SLOT_SELECT_TOGGLE_CLASS } from "./create-setlist/slot-select-toggle-class";
 
 type CreateSetlistPanelProps = {
   onProgressChange: (hasProgress: boolean) => void;
@@ -100,25 +101,17 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
             <div className="flex w-full items-center justify-end gap-2">
               <div className="flex items-center gap-2 border border-border bg-card px-2 py-1">
                 <span className="text-sm font-medium text-foreground">Selected:</span>
-                
                 <Toggle
-              pressed={allSelected}
-              size="sm"
-              aria-label="Select all slots"
-              className={cn(
-                "items-center rounded-md border border-primary bg-background px-2 py-1 text-sm text-primary",
-                "hover:bg-primary hover:text-primary-foreground",
-                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary",
-                "aria-pressed:bg-primary/50 aria-pressed:text-foreground",
-              )}
-              onPressedChange={(pressed) =>
-                setForm((current) => selectAllSlots(pressed, current))
-              }
-            >
-              ALL
-            </Toggle>
-
-                {((form.slots.filter((slot) => slot.isSelected)).length > 0) ? (
+                  pressed={allSelected}
+                  aria-label="Select all slots"
+                  className={SLOT_SELECT_TOGGLE_CLASS}
+                  onPressedChange={(pressed) =>
+                    setForm((current) => selectAllSlots(pressed, current))
+                  }
+                >
+                  ALL
+                </Toggle>
+                {selectedCount > 0 ? (
                   <Button
                     type="button"
                     variant="destructive"
@@ -126,12 +119,16 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
                     aria-label={`Delete ${selectedCount} selected slot${selectedCount === 1 ? "" : "s"}`}
                     onClick={() => {
                       const next = removeSelectedSlots(form);
-                      setForm(next);
-                      setOpenLibrarySlotId((openId) =>
-                        openId && next.slots.some((slot) => slot.id === openId) ? openId : null,
-                      );
+                      // Defer unmount so the right-aligned bar does not slide ALL under this click.
+                      queueMicrotask(() => {
+                        setForm(next);
+                        setOpenLibrarySlotId((openId) =>
+                          openId && next.slots.some((slot) => slot.id === openId)
+                            ? openId
+                            : null,
+                        );
+                      });
                     }}
-                    disabled={(form.slots.filter((slot) => slot.isSelected)).length < 1}
                   >
                     <TrashIcon aria-hidden="true" />
                   </Button>
