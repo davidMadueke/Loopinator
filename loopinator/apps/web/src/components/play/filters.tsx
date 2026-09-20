@@ -1,6 +1,9 @@
 import {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -41,7 +44,8 @@ import {
   parseKeyFilterValue,
   serializeKeyFilterValue,
 } from "@/lib/play-filter-choice";
-import { KEY_CENTERS, KEY_SCALES, TIME_SIGNATURES, type KeyScale } from "@/lib/play-types";
+import { filterLibraryTracks } from "@/lib/play-filter-tracks";
+import { KEY_CENTERS, KEY_SCALES, TIME_SIGNATURES, type KeyScale, type Track } from "@/lib/play-types";
 import { Button } from "@loopinator/ui/components/button";
 import { HoverButton } from "@loopinator/ui/components/hover-button";
 import { Input } from "@loopinator/ui/components/input";
@@ -626,8 +630,16 @@ export const SLOT_TIME_SIGNATURE_FIELDS = SLOT_CHOICE_FIELDS.filter(
 );
 export const SLOT_KEY_FIELDS = SLOT_CHOICE_FIELDS.filter((field) => field.id === "key");
 
+type LibraryFilterResult = {
+  remaining: number;
+};
+
+const LibraryFilterResultContext = createContext<LibraryFilterResult>({ remaining: 0 });
+
 type FiltersProps = {
   children: ReactNode;
+  tracks: Track[];
+  onFilteredChange: (tracks: Track[]) => void;
   /** Operators offered on the Key chip. Defaults to is / is not / is one of / is none of. */
   keyOperators?: readonly ChoiceFilterOperator[];
   /** Operators offered on the Time signature chip. Same default as Key. */
@@ -669,6 +681,8 @@ function DefaultAddFilterTrigger({
 
 export function Filters({
   children,
+  tracks,
+  onFilteredChange,
   keyOperators,
   timeSignatureOperators,
 }: FiltersProps) {
@@ -682,19 +696,53 @@ export function Filters({
     [keyOperators, timeSignatureOperators],
   );
 
+  const filteredTracks = useMemo(
+    () => filterLibraryTracks(tracks, query),
+    [tracks, query],
+  );
+  const result = useMemo(
+    () => ({ remaining: filteredTracks.length }),
+    [filteredTracks],
+  );
+
   const handleQueryChange = useCallback((next: FilterQuery) => {
     setQuery(next);
   }, []);
 
+  useLayoutEffect(() => {
+    onFilteredChange(filteredTracks);
+  }, [filteredTracks, onFilteredChange]);
+
   return (
-    <FilterBar
-      fields={fields}
-      query={query}
-      onQueryChange={handleQueryChange}
-      size="sm"
+    <LibraryFilterResultContext.Provider value={result}>
+      <FilterBar
+        fields={fields}
+        query={query}
+        onQueryChange={handleQueryChange}
+        size="sm"
+      >
+        {children}
+      </FilterBar>
+    </LibraryFilterResultContext.Provider>
+  );
+}
+
+function tracksRemainingLabel(count: number) {
+  return count === 1 ? "1 track remaining" : `${count} tracks remaining`;
+}
+
+function FiltersRemaining({ remaining }: { remaining: number }) {
+  return (
+    <span
+      aria-live="polite"
+      className={cn(
+        "text-sm",
+        remaining === 0 ? "text-destructive" : "text-muted-foreground",
+        "px-2"
+      )}
     >
-      {children}
-    </FilterBar>
+      {tracksRemainingLabel(remaining)}
+    </span>
   );
 }
 
@@ -702,20 +750,24 @@ export function FiltersTrigger({ trigger }: FiltersTriggerProps) {
   const actions = useFilterActions();
   const sizes = filterControlSizes(actions);
   const { ruleCount, announcement, announcementSeq } = useFilterState();
+  const { remaining } = useContext(LibraryFilterResultContext);
 
   return (
     <div className="flex items-center gap-1.5">
       <FiltersBuilder trigger={trigger ?? <DefaultAddFilterTrigger compact={ruleCount > 0} />} />
       {ruleCount > 0 ? (
-        <Button
-          variant="outline"
-          size={sizes.button}
-          disabled={actions.disabled}
-          {...filterReadOnlyProps(actions)}
-          onClick={() => actions.clearQuery()}
-        >
-          {actions.labels.clear}
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size={sizes.button}
+            disabled={actions.disabled}
+            {...filterReadOnlyProps(actions)}
+            onClick={() => actions.clearQuery()}
+          >
+            {actions.labels.clear}
+          </Button>
+          <FiltersRemaining remaining={remaining} />
+        </>
       ) : null}
       <div aria-live="polite" role="status" className="sr-only">
         <span key={announcementSeq}>{announcement}</span>

@@ -79,6 +79,18 @@ _Avoid_: Player card, main stage
 The group a Track sits in inside the Library, taken from its Original BPM. The bands are under 80, 80 to 99, 100 to 129, 130 to 159, and 160 or more.
 _Avoid_: Tempo range, bucket, feel
 
+**Filters**:
+The Tracks tab bar that narrows the Library by Tempo, Time signature, and Key. Every complete Filter chip must match. Tempo reads Original BPM.
+_Avoid_: Search, query builder, Target BPM filter
+
+**Filter chip**:
+One Tempo, Time signature, or Key condition mounted on Filters. A chip with no value yet does not narrow the list.
+_Avoid_: Filter rule, facet, token
+
+**Tracks remaining**:
+How many Tracks still match every complete Filter chip. Shown next to Clear while any Filter chip is mounted.
+_Avoid_: Result count, match count
+
 **Row preview**:
 Plays a Track straight from its Library row without leaving the Library. The Track name opens `/t/{id}` instead.
 _Avoid_: Preview player, mini player

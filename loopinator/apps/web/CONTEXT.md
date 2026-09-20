@@ -431,7 +431,7 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 | Chip row when empty | Unmounts; the sticky stack collapses back to the Add / Expand / Collapse row |
 | Toolbar stickiness | Add Filter row and chip row share one `sticky top-0` wrapper with `bg-background`, so both stay put while the list scrolls |
 | List padding | TabsContent keeps `pt-4` whether chips are showing or not |
-| Fields (order) | **Tempo** (target BPM range), **Time signature**, **Key** |
+| Fields (order) | **Tempo** (Original BPM range), **Time signature**, **Key** |
 | Tempo editor | Dual-thumb range slider, 40–200 BPM, step 1; each bound is a number input beside the track; Apply/Discard footer like c-filters-6 |
 | Tempo chip | Mini track + range text; not a bare number |
 | Time signature | Multi toggle group over `TIME_SIGNATURES` from `play-types` |
@@ -444,8 +444,11 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 | Field picker search | Hidden on Add Filter (`searchable={false}`); input stays `sr-only` for keyboard |
 | Clear | Outline `sm`, ReUI **Clear** label; no `ms-auto` |
 | Composition | `Filters` provider wraps the Tracks tab; `FiltersTrigger` shares the Expand/Collapse row; `FiltersChips` is the second sticky row. ReUI `FiltersRow` is unused |
-| Query ownership | Local React state in `filters.tsx` for now; not yet applied to Tracks/Setlists lists |
+| Query ownership | Local React state in `filters.tsx`. `Filters` takes `tracks` and calls `onFilteredChange` with the Tracks that still match |
 | Why a wrapper trigger | ReUI `PopoverTrigger` merges click/ref onto the `trigger` element; that element must forward props to the real button or the picker never opens |
+| Matching | Complete Filter chips AND together. Incomplete chips are ignored. Tempo matches **Original BPM**, not Target BPM |
+| Key match | Centers only: those centers, any scale. Scale only: that scale, any center except **No Key**. Both: center and scale. **No Key** matches No Key Tracks and ignores scale |
+| Tracks remaining | `muted-foreground` span beside Clear, only while a Filter chip is mounted. `text-destructive` when the combination matches nothing |
 
 ### Library Filters file layout
 
@@ -453,6 +456,7 @@ follow the free c-filters-6 (range slider) and c-filters-8 (toggle group) patter
 apps/web/src/
   components/play/filters.tsx          ← schema, editors, Filters provider, FiltersTrigger, FiltersChips; slot Key / Time signature fields
   lib/play-filter-choice.ts            ← Key token parse/serialize shared by Library Filters and slot chips
+  lib/play-filter-tracks.ts            ← apply the Filter query to a Track list
   components/play/library-tracks-tab.tsx ← Filters wraps the tab; Trigger + Expand/Collapse; Chips under that row
   components/play/library-panel.tsx    ← Tabs + Create New; no filter chrome
   components/reui/filters/*            ← ReUI Filters (CLI)
@@ -462,10 +466,6 @@ packages/ui/src/components/
   hover-button.tsx                     ← Add Filter control
   slider.tsx, toggle.tsx, toggle-group.tsx, popover.tsx, button-group.tsx
 ```
-
-Open: wiring the filter query into `LibraryTracksTab` / `LibrarySetlistsTab` so chips actually
-narrow the lists. Tempo currently means target BPM in the filter schema; Tracks still group by
-original BPM bands until that hand-off lands.
 
 ## Frontend layout testing
 
