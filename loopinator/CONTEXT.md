@@ -134,8 +134,16 @@ An Original BPM that came from BPM detection and that no Editor has set by typin
 _Avoid_: Unconfirmed BPM, guessed BPM, auto BPM, needs checking
 
 **Target BPM**:
-The tempo a Track plays at, taken from the Setlist slot and then the live control. Legal values are three bands around Original BPM: half ±20%, original ±20%, and double ±20%. Typing, Tap tempo, and the Tempo stepper stay inside the current band.
+The tempo a Track plays at, taken from the Setlist slot and then the live control. Legal values sit in a Target BPM band. Typing, Tap tempo, and the Tempo stepper stay inside the current band.
 _Avoid_: Playback rate, speed, pitch
+
+**Target BPM band**:
+One of the three legal Target BPM ranges around Original BPM: half ±20%, original ±20%, and double ±20%. Gaps between bands are illegal. Time-stretch uses Target / Original inside the current band, including half and double.
+_Avoid_: BPM band (Library grouping), tempo range
+
+**Audio fixture**:
+A committed short percussion WAV that stands in for a Track's file until upload persists audio. The Play screen Time-stretches it the same way it will a persisted Track. Each fixture carries a hard-coded Loop region, the whole file or a segment, snapped to zero crossings. A fixture's meter pulse is local to that file. It is not the rule for uploaded Tracks.
+_Avoid_: Sample, demo file, mock audio, pagination fixture, DEV loop sample
 
 **Key**:
 Musical key stored on a Track, and a Setlist slot may hold its own copy. v1 shows it and never transposes. High-confidence Key detection may fill it as an Auto-detected Key; otherwise it stays No Key.
@@ -242,7 +250,7 @@ The +/- control on the main Play screen that adjusts Target BPM by 1 per tap, or
 _Avoid_: Tempo slider, pitch control, Key stepper
 
 **Time-stretch**:
-Pitch-preserving Play screen playback at Target BPM rather than Original BPM. Create Track preview and Row preview play the file at its own speed.
+Pitch-preserving Play screen playback at Target BPM rather than Original BPM. The ratio is Target / Original inside the current Target BPM band, including half and double. Create Track preview and Row preview play the file at its own speed.
 _Avoid_: Playback rate, speed change, varispeed, pitch shift
 
 **Pause**:
