@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Accordion,
@@ -55,7 +55,11 @@ type LibraryTracksTabProps = {
 export function LibraryTracksTab({ activeTrackId, onSelectTrack }: LibraryTracksTabProps) {
   const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
   const tracks = useMemo(() => getLibraryTracks(fixturesEnabled), [fixturesEnabled]);
-  const bands = useMemo(() => groupTracksByBand(tracks), [tracks]);
+  const [filteredTracks, setFilteredTracks] = useState(tracks);
+  const handleFilteredChange = useCallback((next: Track[]) => {
+    setFilteredTracks(next);
+  }, []);
+  const bands = useMemo(() => groupTracksByBand(filteredTracks), [filteredTracks]);
   const populatedBands = useMemo(
     () => BPM_BANDS.filter((band) => bands[band].length > 0),
     [bands],
@@ -71,7 +75,7 @@ export function LibraryTracksTab({ activeTrackId, onSelectTrack }: LibraryTracks
   }, [fixturesEnabled, populatedBands]);
 
   return (
-    <Filters>
+    <Filters tracks={tracks} onFilteredChange={handleFilteredChange}>
       <div className="flex flex-col gap-2">
         <div className="sticky top-0 z-10 bg-background">
           <div className="flex items-center justify-between gap-1.5">
