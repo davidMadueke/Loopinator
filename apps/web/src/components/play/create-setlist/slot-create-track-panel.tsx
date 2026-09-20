@@ -104,7 +104,7 @@ export function SlotCreateTrackPanel({ onProgressChange }: SlotCreateTrackPanelP
       />
 
       {form.audioFile ? (
-        <div className="sticky top-0 z-10 bg-background py-2">
+        <div className=" bg-background py-2">
           <WavePlayer
             className="p-2"
             waveColor="var(--muted-foreground)"
