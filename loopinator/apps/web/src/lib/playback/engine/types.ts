@@ -18,6 +18,7 @@ export type PlaybackEngineParamPatch = {
   transportFade?: TransportFade;
   loopEdgeFade?: LoopEdgeFade;
   restartResumes?: boolean;
+  prepareStretch?: boolean;
 };
 
 /**

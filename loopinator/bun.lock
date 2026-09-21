@@ -48,6 +48,7 @@
         "@audio/beat": "^2.1.3",
         "@audio/mir-chroma": "^1.1.2",
         "@audio/mir-key": "^1.0.1",
+        "@audio/stretch-transient": "^1.2.1",
         "@base-ui/react": "^1.7.0",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
@@ -242,6 +243,10 @@
     "@audio/mir-key": ["@audio/mir-key@1.0.1", "", {}, "sha512-3q/venTXYSj9r7YmkV6fxbiuo5uYG3n2bWi1OawAbZaxeykSoG+yL3cboC+LGj4wQHsGCR09kOG2FtZ/wllh9w=="],
 
     "@audio/onset": ["@audio/onset@1.0.1", "", { "dependencies": { "fourier-transform": "^2.2.0", "window-function": "^3.0.0" } }, "sha512-uO9RLWHNCMpbeIQszlc+J8ggZGT03nnfWT8++Ll25VhcJdKN3hIfAgwxAxjWbSgcXyKS17N7ba4HSVP7Wcxtag=="],
+
+    "@audio/spectral-pvoc": ["@audio/spectral-pvoc@1.0.1", "", {}, "sha512-YydFYjgewYTwgRcRGrsZ4gZsHjZt9U35Bl/7Y99nEriK1F3lVdQqgVuZAY2KWsr3J6XllVSdDffpd18bKzuQBQ=="],
+
+    "@audio/stretch-transient": ["@audio/stretch-transient@1.2.1", "", { "dependencies": { "@audio/spectral-pvoc": "^1.0.0", "fourier-transform": "^2.3.0" } }, "sha512-Z+zS4vLbtX9vCZGQqxZa61OdbybJMecdhKVFD3fA3RyVSVLZV7p7qjSrXL0w+wsGhWxzuY6Rd5YiXGarX1cdfg=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 

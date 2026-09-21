@@ -55,6 +55,7 @@ export function PlayScreen(props: PlayScreenProps) {
   const playback = usePlayback({
     originalBpm: props.track.originalBpm,
     initialTargetBpm,
+    trackId: props.track.id,
   });
 
   useSpacebarPlayPause(() => {

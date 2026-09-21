@@ -2,7 +2,7 @@
 
 One Web Audio session for Create Track preview, `/dev/loop-preview`, and the Play screen. WaveSurfer draws the waveform. It does not play. Domain terms live in [../../../../CONTEXT.md](../../../../CONTEXT.md). The cut that led here is [../../../../docs/playback-engine-review.md](../../../../docs/playback-engine-review.md) and [ADR-0019](../../../../docs/adr/0019-one-playback-engine.md).
 
-UI calls `createPlaybackEngine` from `engine/active.ts`, never WaveSurfer media, never `@audio/*`. Time-stretch ratio math stays in `loop-analysis/engine/stretch.ts`. Swap the worklet there when it lands.
+UI calls `createPlaybackEngine` from `engine/active.ts`, never WaveSurfer media, never `@audio/*`. Time-stretch ratio math and the live worklet live in `loop-analysis/engine/stretch.ts`. The processor is the only other file that may import `@audio/stretch-transient`.
 
 ## Why this exists
 
@@ -15,14 +15,15 @@ WavePlayer used to wrap on `audioprocess` (~16 ms) and fade with `setTimeout`. T
 | API | `createPlaybackEngine()`. WavePlayer and `usePlayback` each hold a session |
 | Clock | `AudioContext.currentTime` while playing. File seconds, not React state |
 | Playhead | `(fileTime − In) / (Out − In)`, wrapped at Out to 0 |
-| Loop wrap | `AudioBufferSourceNode.loop` + `loopStart` / `loopEnd` when a buffer is loaded and stretch ratio is 1 |
+| Loop wrap | `AudioBufferSourceNode.loop` + `loopStart` / `loopEnd` when a buffer is loaded and stretch ratio is 1. The worklet loops in file time when ratio is not 1 |
 | Outside the region on Play | Relocate to In-point before start |
 | Loop edge fade | 4 ms linear ramps on `edgeGain`, scheduled on the audio clock from `loopEdgeGain` |
 | Transport fade | Linear (default), exponential, or equal-power on `transportGain`. Displayed 0 s is 15 ms |
-| Preview stretch | Ratio 1. File speed. Create Track and Row preview do not stretch |
-| Sunday stretch | Ratio from `timeStretchEngine`. Clock runs. Audio stays silent until the worklet is wired |
+| Preview stretch | Ratio 1. File speed. Create Track and Row preview do not stretch and do not load the worklet |
+| Sunday stretch | Ratio from `timeStretchEngine` inside the current Target BPM band. At ratio 1, buffer source. Otherwise the live worklet. A ratio-only stepper change reanchors the clock and messages factor; no Transport fade, no seek to In |
 | No buffer | Silent clock still walks file time so the Playhead circle moves |
-| Play screen stand-in region | 4 beats at Original BPM, In 0, Out that length, until a Track carries a real Loop region |
+| Play screen stand-in region | 4 beats at Original BPM when the Track has no Audio fixture |
+| Audio fixtures | `lib/audio-fixtures.ts` maps Track id → `/fixtures/*.wav` and a whole-file Loop region. Decode snaps In/Out |
 | WavePlayer cursor | Engine `fileTime` drives `ws.setTime`. Waveform click/drag writes back via `interaction`, not media `seeking` |
 | WavePlayer Restart | `restartResumes: true`. Seek In and play |
 | Play screen Restart | `restartResumes: false`. Seek In and stay stopped |
@@ -32,13 +33,13 @@ WavePlayer used to wrap on `audioprocess` (~16 ms) and fade with `setTimeout`. T
 ### Graph
 
 ```
-AudioBufferSourceNode (loop in source time)
+AudioBufferSourceNode (ratio 1) or stretch worklet (ratio ≠ 1)
   → transportGain     ← Transport fade
   → edgeGain          ← Loop edge fade
   → destination
 ```
 
-Stretch worklet replaces the source node later. Same gains.
+Same gains either way. The worklet lives in `loop-analysis/engine/stretch-processor.ts`.
 
 ### Module layout
 
@@ -52,7 +53,7 @@ playback/
     types.ts                  ← PlaybackEngine contract
     params.ts                 ← TransportFade, LoopEdgeFade, click-safe 15 ms
     fade.ts                   ← GainNode ramps
-    source.ts                 ← BufferSource loop; worklet later
+    source.ts                 ← BufferSource at ratio 1; stretch worklet otherwise
     graph.ts                  ← session implementation
     active.ts                 ← createPlaybackEngine()
 ```
@@ -71,14 +72,13 @@ playback/
 
 | Decision | Choice |
 |---|---|
-| Stretch audio | `@audio/stretch-transient` worklet in `loop-analysis/engine/stretch.ts` |
 | Seam crossfade | Overlapping sources at Out → In, 5–50 ms. Not Loop edge fade |
-| Track Loop region on Play screen | Replace the 4-beat stand-in once upload persists In / Out |
+| Upload Loop region on Play screen | Fixtures cover the three demo Tracks. Other Tracks keep the 4-beat stand-in until upload persists In / Out |
 | Waveform peaks from the buffer | Skip WaveSurfer's second decode when we already have `AudioBuffer` |
 
 ## Tests
 
-`playhead.test.ts` — wrap, Playhead 0–1, stand-in 4-beat region vs stretched wall clock.
+`playhead.test.ts` — wrap, Playhead 0–1, stand-in 4-beat region vs stretched wall clock, half-band 120 → 60.
 
 `loop-bounds` coverage stays in `../loop-playback.test.ts`.
 

@@ -24,6 +24,8 @@ export type PlaybackEngineParams = {
   transportFade: TransportFade;
   loopEdgeFade: LoopEdgeFade;
   restartResumes: boolean;
+  /** Register the Play screen worklet on first Play so the stepper does not wait. */
+  prepareStretch: boolean;
 };
 
 export const DEFAULT_TRANSPORT_FADE: TransportFade = {
@@ -44,6 +46,7 @@ export function defaultPlaybackParams(): PlaybackEngineParams {
     transportFade: { ...DEFAULT_TRANSPORT_FADE },
     loopEdgeFade: { ...DEFAULT_LOOP_EDGE_FADE },
     restartResumes: false,
+    prepareStretch: false,
   };
 }
 
@@ -55,8 +58,17 @@ export function transportFadeDurationSec(seconds: number): number {
   return seconds;
 }
 
+/** True when the unstretched AudioBufferSourceNode should play. */
 export function canPlayBufferAudio(stretchRatio: number): boolean {
   return Math.abs(stretchRatio - 1) < 1e-6;
+}
+
+/** Play screen keeps the worklet at ratio 1 so the stepper only messages factor. */
+export function usesStretchWorklet(
+  stretchRatio: number,
+  prepareStretch: boolean,
+): boolean {
+  return prepareStretch || !canPlayBufferAudio(stretchRatio);
 }
 
 /** Linear Ableton-style edge envelope. 0 at In-point and Out-point, 1 in the middle. */

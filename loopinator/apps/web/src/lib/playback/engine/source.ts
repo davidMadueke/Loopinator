@@ -1,9 +1,12 @@
+import {
+  createStretchWorkletNode,
+  registerStretchWorklet,
+  setStretchWorkletFactor,
+  stopStretchWorklet,
+} from "@/lib/loop-analysis/engine/stretch";
+
 import type { LoopBounds } from "../loop-bounds";
 
-/**
- * Buffer playback at file speed. Replace this file with the stretch worklet
- * when `@audio/stretch-transient` is wired in `loop-analysis/engine/stretch.ts`.
- */
 export type PlaybackSourceStart = {
   context: AudioContext;
   destination: AudioNode;
@@ -11,6 +14,10 @@ export type PlaybackSourceStart = {
   offset: number;
   loopEnabled: boolean;
   bounds: LoopBounds;
+};
+
+export type StretchSourceStart = PlaybackSourceStart & {
+  stretchRatio: number;
 };
 
 export function startBufferSource({
@@ -33,3 +40,40 @@ export function startBufferSource({
   node.start(0, startAt);
   return node;
 }
+
+export function startStretchSource({
+  context,
+  destination,
+  buffer,
+  offset,
+  loopEnabled,
+  bounds,
+  stretchRatio,
+}: StretchSourceStart): AudioWorkletNode {
+  return createStretchWorkletNode({
+    context,
+    destination,
+    buffer,
+    offset,
+    loopEnabled,
+    loopStart: bounds.in,
+    loopEnd: bounds.out,
+    stretchRatio,
+  });
+}
+
+export function isStretchSource(
+  node: AudioNode | null,
+): node is AudioWorkletNode {
+  return (
+    node !== null &&
+    typeof AudioWorkletNode !== "undefined" &&
+    node instanceof AudioWorkletNode
+  );
+}
+
+export {
+  registerStretchWorklet,
+  setStretchWorkletFactor,
+  stopStretchWorklet,
+};

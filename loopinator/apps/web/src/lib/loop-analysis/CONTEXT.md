@@ -69,7 +69,9 @@ loop-analysis/
     active.ts                ← current BPM + Key backends
     bpm.ts                   ← @audio/beat only
     key.ts                   ← @audio/mir-chroma + @audio/mir-key only
-    stretch.ts               ← Time-stretch ratio math; worklet later
+    stretch.ts               ← Time-stretch ratio math + worklet register
+    stretch-processor.ts     ← AudioWorkletProcessor; only other `@audio/stretch-transient` import
+    stretch-worklet-name.ts  ← processor name shared with the register call
     transpose.ts             ← v1 unused
 
 ../use-loop-snap.ts    ← React hook: decode src, expose snapLoopPoint()
@@ -100,8 +102,8 @@ Time-stretch sits next to loop snap and detection. Create Track already decodes 
 | Decision | Choice |
 |---|---|
 | Time-stretch | Play screen only. Web Audio graph, `@audio/stretch-transient` in the stretch worklet. Create Track WavePlayer and Row preview play the file at its own speed. [0015-web-audio-stretch-graph](../../../../docs/adr/0015-web-audio-stretch-graph.md) |
-| Stretch backend | `engine/stretch.ts` already holds the Target / Original ratio. The worklet is not wired |
-| This pass leftover | Prove Play screen stretch on a fixture/sample until upload persists audio |
+| Stretch backend | `engine/stretch.ts` holds Target / Original in the current Target BPM band and registers the worklet. Library `factor` is `1 / stretchRatio` |
+| This pass leftover | Upload persistence. Fixtures cover the three demo Tracks |
 
 Worker pipeline now:
 

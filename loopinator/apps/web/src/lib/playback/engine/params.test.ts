@@ -6,6 +6,7 @@ import {
   canPlayBufferAudio,
   loopEdgeGain,
   transportFadeDurationSec,
+  usesStretchWorklet,
 } from "./params";
 import { transportFadeCurveValues } from "./fade";
 
@@ -23,6 +24,12 @@ describe("playback engine params", () => {
   it("plays the buffer only at stretch ratio 1", () => {
     expect(canPlayBufferAudio(1)).toBe(true);
     expect(canPlayBufferAudio(1.2)).toBe(false);
+  });
+
+  it("keeps the Play screen worklet at ratio 1", () => {
+    expect(usesStretchWorklet(1, true)).toBe(true);
+    expect(usesStretchWorklet(1, false)).toBe(false);
+    expect(usesStretchWorklet(1.2, false)).toBe(true);
   });
 
   it("is silent at In-point and Out-point", () => {
