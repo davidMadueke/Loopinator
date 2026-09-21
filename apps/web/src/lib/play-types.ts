@@ -68,6 +68,8 @@ export type Track = {
   keyMode: "major" | "minor";
   timeSignature: TimeSignature;
   cached: boolean;
+  /** Silent stand-in. Play loads the shared silent WAV instead of a recorded fixture. */
+  dev: boolean;
 };
 
 export type SetlistSlot = {

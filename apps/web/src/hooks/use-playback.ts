@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getAudioFixture } from "@/lib/audio-fixtures";
+import { DEV_SILENT_FIXTURE, getAudioFixture } from "@/lib/audio-fixtures";
 import { decodeAudioUrl } from "@/lib/loop-analysis/decode-audio";
 import { snapLoopPointToZeroCrossing } from "@/lib/loop-analysis/snap-loop-point";
 import {
@@ -8,18 +8,21 @@ import {
   toStoredLoopRegion,
 } from "@/lib/loop-region-time";
 import { stepTargetBpm, type PlaybackState } from "@/lib/play-types";
+import { standInLoopDurationSec } from "@/lib/playback/playhead";
 import { usePlaybackEngine } from "@/lib/playback/use-playback-engine";
 
 type UsePlaybackOptions = {
   originalBpm: number;
   initialTargetBpm: number;
   trackId?: string;
+  dev?: boolean;
 };
 
 export function usePlayback({
   originalBpm,
   initialTargetBpm,
   trackId,
+  dev = false,
 }: UsePlaybackOptions) {
   const [targetBpm, setTargetBpm] = useState(initialTargetBpm);
   const [hasLocalOverride, setHasLocalOverride] = useState(false);
@@ -47,7 +50,8 @@ export function usePlayback({
     }
 
     const fixture = getAudioFixture(trackId);
-    if (!fixture) {
+    const url = fixture?.url ?? (dev ? DEV_SILENT_FIXTURE.url : undefined);
+    if (!url) {
       setBuffer(null);
       setInPoint("");
       setOutPoint("");
@@ -55,12 +59,20 @@ export function usePlayback({
     }
 
     let cancelled = false;
-    decodeAudioUrl(fixture.url)
+    decodeAudioUrl(url)
       .then((decoded) => {
         if (cancelled) {
           return;
         }
         const duration = decoded.duration;
+        if (!fixture) {
+          const loopSec = Math.min(standInLoopDurationSec(originalBpm), duration);
+          const stored = toStoredLoopRegion(0, loopSec, duration);
+          setBuffer(decoded);
+          setInPoint(stored.inPoint);
+          setOutPoint(stored.outPoint);
+          return;
+        }
         const inSec = storedValueToSeconds(fixture.inPoint, duration, "in");
         const outSec = storedValueToSeconds(fixture.outPoint, duration, "out");
         const stored = toStoredLoopRegion(
@@ -83,7 +95,7 @@ export function usePlayback({
     return () => {
       cancelled = true;
     };
-  }, [trackId]);
+  }, [trackId, dev, originalBpm]);
 
   useEffect(() => {
     setTargetBpm(initialTargetBpm);

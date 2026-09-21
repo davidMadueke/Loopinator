@@ -30,6 +30,7 @@ export const PAGINATION_FIXTURE_TRACKS: Track[] = BPM_BANDS.flatMap((band) => {
       keyMode: "major" as const,
       timeSignature: "4/4" as const,
       cached: false,
+      dev: true,
     };
   });
 });
