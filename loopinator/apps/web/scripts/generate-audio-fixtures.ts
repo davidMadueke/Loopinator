@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import {
   AUDIO_FIXTURE_SAMPLE_RATE,
   AUDIO_FIXTURE_SPECS,
+  DEV_SILENT_DURATION_SEC,
+  DEV_SILENT_FIXTURE_FILE,
   fixtureSampleCount,
   type AudioFixtureSpec,
 } from "../src/lib/audio-fixtures.ts";
@@ -152,3 +154,8 @@ for (const spec of AUDIO_FIXTURE_SPECS) {
   writeFileSync(path, wav);
   console.log(`${spec.file} ${wav.byteLength} bytes ${fixtureSampleCount(spec)} samples`);
 }
+
+const silentLength = DEV_SILENT_DURATION_SEC * SAMPLE_RATE;
+const silentWav = encodeWav(new Float32Array(silentLength), SAMPLE_RATE);
+writeFileSync(join(outDir, DEV_SILENT_FIXTURE_FILE), silentWav);
+console.log(`${DEV_SILENT_FIXTURE_FILE} ${silentWav.byteLength} bytes ${silentLength} samples`);

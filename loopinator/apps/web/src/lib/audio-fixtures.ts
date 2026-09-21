@@ -1,5 +1,9 @@
 export const AUDIO_FIXTURE_SAMPLE_RATE = 44100;
 
+/** Shared silent file for Tracks marked `dev`. Long enough for a 4-beat stand-in down to 30 BPM. */
+export const DEV_SILENT_FIXTURE_FILE = "dev-silent.wav";
+export const DEV_SILENT_DURATION_SEC = 8;
+
 export type AudioFixtureSpec = {
   id: string;
   file: string;
@@ -52,6 +56,12 @@ export type AudioFixture = {
   url: string;
   inPoint: string;
   outPoint: string;
+};
+
+export const DEV_SILENT_FIXTURE: AudioFixture = {
+  url: `/fixtures/${DEV_SILENT_FIXTURE_FILE}`,
+  inPoint: "",
+  outPoint: "",
 };
 
 export const AUDIO_FIXTURES: Record<string, AudioFixture> = Object.fromEntries(

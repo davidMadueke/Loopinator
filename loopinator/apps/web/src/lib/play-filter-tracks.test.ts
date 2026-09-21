@@ -15,6 +15,7 @@ function track(partial: Partial<Track> & Pick<Track, "id">): Track {
     keyMode: "major",
     timeSignature: "4/4",
     cached: true,
+    dev: true,
     ...partial,
   };
 }
