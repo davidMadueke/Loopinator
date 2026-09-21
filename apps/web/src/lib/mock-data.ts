@@ -43,7 +43,7 @@ export const DEMO_TRACKS: Track[] = [
   {
     id: "n4w8q1",
     displayName: "Shaker Groove",
-    filename: "shaker-groove-154.mp3",
+    filename: "shaker-groove-154.wav",
     originalBpm: 154,
     bpmAutoDetected: true,
     keyAutoDetected: false,
@@ -441,6 +441,14 @@ export const DEMO_SETLISTS: Setlist[] = [
         targetBpm: 118,
         timeSignature: "4/4",
         key: "C",
+        keyMode: "major",
+      },
+      {
+        trackId: "k7m2p9",
+        slotLabel: "Half-time Kick",
+        targetBpm: 60,
+        timeSignature: "4/4",
+        key: "D",
         keyMode: "major",
       },
     ],

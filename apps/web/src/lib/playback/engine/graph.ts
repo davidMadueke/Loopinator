@@ -12,11 +12,18 @@ import {
   waitSec,
 } from "./fade";
 import {
-  canPlayBufferAudio,
   defaultPlaybackParams,
   transportFadeDurationSec,
+  usesStretchWorklet,
 } from "./params";
-import { startBufferSource } from "./source";
+import {
+  isStretchSource,
+  registerStretchWorklet,
+  setStretchWorkletFactor,
+  startBufferSource,
+  startStretchSource,
+  stopStretchWorklet,
+} from "./source";
 import type { PlaybackEngine, PlaybackEngineParamPatch, PlaybackSnapshot } from "./types";
 
 export function createPlaybackEngine(): PlaybackEngine {
@@ -27,7 +34,8 @@ export function createPlaybackEngine(): PlaybackEngine {
   let context: AudioContext | null = null;
   let transportGain: GainNode | null = null;
   let edgeGain: GainNode | null = null;
-  let source: AudioBufferSourceNode | null = null;
+  let source: AudioBufferSourceNode | AudioWorkletNode | null = null;
+  let stretchReady = false;
 
   let mode: PlaybackMode = "stopped";
   let fileTime = 0;
@@ -125,6 +133,11 @@ export function createPlaybackEngine(): PlaybackEngine {
     if (!source) {
       return;
     }
+    if (isStretchSource(source)) {
+      stopStretchWorklet(source);
+      source = null;
+      return;
+    }
     try {
       source.onended = null;
       source.stop();
@@ -173,30 +186,52 @@ export function createPlaybackEngine(): PlaybackEngine {
     if (!buffer || !transportGain || !edgeGain || !context) {
       return;
     }
-    if (!canPlayBufferAudio(params.stretchRatio)) {
+
+    if (!usesStretchWorklet(params.stretchRatio, params.prepareStretch)) {
+      stopSource();
+      const node = startBufferSource({
+        context,
+        destination: transportGain,
+        buffer,
+        offset: fileTime,
+        loopEnabled: params.loopEnabled,
+        bounds: params.bounds,
+      });
+      node.onended = () => {
+        if (source !== node || params.loopEnabled) {
+          return;
+        }
+        fileTime = params.duration;
+        mode = "stopped";
+        source = null;
+        stopRaf();
+        emit();
+      };
+      source = node;
+      scheduleLoopEdgeFades(edgeGain, fileTime, params);
+      return;
+    }
+
+    if (!stretchReady) {
+      void registerStretchWorklet(context).then((ok) => {
+        stretchReady = ok;
+        if (ok && mode === "playing" && !disposed) {
+          startAudio();
+        }
+      });
       return;
     }
 
     stopSource();
-    const node = startBufferSource({
+    source = startStretchSource({
       context,
       destination: transportGain,
       buffer,
       offset: fileTime,
       loopEnabled: params.loopEnabled,
       bounds: params.bounds,
+      stretchRatio: params.stretchRatio,
     });
-    node.onended = () => {
-      if (source !== node || params.loopEnabled) {
-        return;
-      }
-      fileTime = params.duration;
-      mode = "stopped";
-      source = null;
-      stopRaf();
-      emit();
-    };
-    source = node;
     scheduleLoopEdgeFades(edgeGain, fileTime, params);
   }
 
@@ -220,6 +255,16 @@ export function createPlaybackEngine(): PlaybackEngine {
 
     if (ctx.state === "suspended") {
       await ctx.resume();
+      if (gen !== commandGen || disposed) {
+        return;
+      }
+    }
+
+    if (
+      buffer &&
+      usesStretchWorklet(params.stretchRatio, params.prepareStretch)
+    ) {
+      stretchReady = await registerStretchWorklet(ctx);
       if (gen !== commandGen || disposed) {
         return;
       }
@@ -375,6 +420,37 @@ export function createPlaybackEngine(): PlaybackEngine {
   function setParams(patch: PlaybackEngineParamPatch) {
     const wasPlaying = mode === "playing";
     reanchor();
+
+    const prevRatio = params.stretchRatio;
+    const nextRatio = patch.stretchRatio ?? prevRatio;
+    const ratioChanged =
+      patch.stretchRatio !== undefined &&
+      Math.abs(nextRatio - prevRatio) > 1e-12;
+    const boundsChanged = Boolean(
+      patch.bounds &&
+        (patch.bounds.in !== params.bounds.in ||
+          patch.bounds.out !== params.bounds.out),
+    );
+    const loopChanged =
+      patch.loopEnabled !== undefined &&
+      patch.loopEnabled !== params.loopEnabled;
+    const durationChanged =
+      patch.duration !== undefined &&
+      !buffer &&
+      patch.duration !== params.duration;
+    const transportChanged = Boolean(
+      patch.transportFade &&
+        (patch.transportFade.seconds !== params.transportFade.seconds ||
+          patch.transportFade.curve !== params.transportFade.curve),
+    );
+    const edgeChanged = Boolean(
+      patch.loopEdgeFade &&
+        patch.loopEdgeFade.seconds !== params.loopEdgeFade.seconds,
+    );
+    const restartChanged =
+      patch.restartResumes !== undefined &&
+      patch.restartResumes !== params.restartResumes;
+
     if (patch.duration !== undefined && !buffer) {
       params.duration = patch.duration;
     }
@@ -396,6 +472,9 @@ export function createPlaybackEngine(): PlaybackEngine {
     if (patch.restartResumes !== undefined) {
       params.restartResumes = patch.restartResumes;
     }
+    if (patch.prepareStretch !== undefined) {
+      params.prepareStretch = patch.prepareStretch;
+    }
 
     fileTime = clampFileTimeToLoop(
       fileTime,
@@ -404,6 +483,33 @@ export function createPlaybackEngine(): PlaybackEngine {
       params.loopEnabled,
     );
     reanchor();
+
+    const structural =
+      boundsChanged ||
+      loopChanged ||
+      durationChanged ||
+      transportChanged ||
+      edgeChanged ||
+      restartChanged;
+
+    if (wasPlaying && !structural && !ratioChanged) {
+      emit();
+      return;
+    }
+
+    if (
+      wasPlaying &&
+      !structural &&
+      ratioChanged &&
+      isStretchSource(source)
+    ) {
+      setStretchWorkletFactor(source, nextRatio);
+      if (edgeGain) {
+        scheduleLoopEdgeFades(edgeGain, fileTime, params);
+      }
+      emit();
+      return;
+    }
 
     if (wasPlaying) {
       startAudio();

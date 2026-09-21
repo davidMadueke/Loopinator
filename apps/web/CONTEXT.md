@@ -335,21 +335,24 @@ Domain: [../../CONTEXT.md](../../CONTEXT.md). Analysis: **[src/lib/loop-analysis
 
 ## Play screen — Time-stretch
 
-Upload Track is still disabled and Play screen Tracks have no audio URL. `usePlayback` already runs the shared file-time clock. A stand-in Loop region of 4 beats at Original BPM keeps the Playhead circle moving. Audio stays silent until the stretch worklet and a real buffer land.
+Upload Track is still disabled. Three Audio fixtures stand in for Sunday Kick Loop, Shaker Groove, and Conga Fill. `usePlayback` decodes the fixture by Track id, snaps the whole-file Loop region, and hands the buffer to `usePlaybackEngine`. Tracks with no fixture keep the 4-beat stand-in clock and stay silent.
 
 | Decision | Choice |
 |---|---|
 | Graph | Web Audio, pitch-preserving stretch worklet. [0015-web-audio-stretch-graph](../../docs/adr/0015-web-audio-stretch-graph.md) |
-| Algorithm | `@audio/stretch-transient`. [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) |
-| Live control | Tempo stepper changes Target BPM; stretch ratio is Target / Original, clamped ±20% |
+| Algorithm | `@audio/stretch-transient` inside the Play screen worklet. [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) [0020-live-stretch-worklet](../../docs/adr/0020-live-stretch-worklet.md) |
+| Live control | Tempo stepper changes Target BPM. Ratio is Target / Original inside the current Target BPM band, including half and double. [0018-three-band-target-bpm](../../docs/adr/0018-three-band-target-bpm.md) |
+| Source node | `AudioBufferSourceNode` at ratio 1. Stretch worklet when a buffer is loaded and ratio is not 1. Stepper messages the new factor; it does not seek to In |
 | Loop wrap | Source file time. Stretch does not move In-point or Out-point |
-| What does not stretch | Create Track preview, Row preview |
+| What does not stretch | Create Track preview, Row preview. Preview never registers the worklet |
+| PlayheadPanel | Display only. The buffer loads in `usePlayback` |
 
 ### Create Track file layout
 
 ```
 apps/web/src/
   lib/loop-analysis/                   ← analysis CONTEXT + decode, snap, Worker, engine seam
+  lib/audio-fixtures.ts              ← Track id → committed WAV + Loop region
   lib/playback/                      ← file-time clock, Loop bounds, Transport fade, Loop edge fade
   lib/loop-region-time.ts            ← parse, format, clamp, commit helpers
   lib/use-loop-snap.ts               ← decode uploaded file for marker snap
@@ -486,4 +489,5 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 - [0016-audiojs-beat-and-stretch](../../docs/adr/0016-audiojs-beat-and-stretch.md) — `@audio/beat` and `@audio/stretch-transient`
 - [0017-audio-engine-seam](../../docs/adr/0017-audio-engine-seam.md) — analysis backends sit behind `engine/`
 - [0019-one-playback-engine](../../docs/adr/0019-one-playback-engine.md) — WavePlayer and Play screen share `createPlaybackEngine`
+- [0020-live-stretch-worklet](../../docs/adr/0020-live-stretch-worklet.md) — Play screen Time-stretch is a live worklet, not a pre-render
 - [playback-engine-review](../../docs/playback-engine-review.md) — why the clocks split and what not to copy from WaveSurfer

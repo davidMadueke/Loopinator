@@ -34,8 +34,7 @@ export type AudioAnalysisEngine = {
 
 /**
  * Play screen Time-stretch. Create Track and Row preview do not stretch.
- * Wire `@audio/stretch-transient` (or a replacement) in `stretch.ts` when the
- * Play screen worklet lands.
+ * The live worklet lives in `stretch.ts` / `stretch-processor.ts`.
  */
 export type TimeStretchEngine = {
   ratioFromTempos(originalBpm: number, targetBpm: number): number;

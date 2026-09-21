@@ -82,6 +82,7 @@ export function usePlaybackEngine(input: UsePlaybackEngineInput) {
       transportFade: input.transportFade ?? DEFAULT_TRANSPORT_FADE,
       loopEdgeFade: input.loopEdgeFade ?? DEFAULT_LOOP_EDGE_FADE,
       restartResumes: input.restartResumes ?? false,
+      prepareStretch: input.stretch ?? false,
     });
   }, [
     engine,
@@ -93,6 +94,7 @@ export function usePlaybackEngine(input: UsePlaybackEngineInput) {
     input.transportFade,
     input.loopEdgeFade,
     input.restartResumes,
+    input.stretch,
   ]);
 
   return {

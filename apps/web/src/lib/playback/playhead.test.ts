@@ -43,4 +43,10 @@ describe("playhead", () => {
     expect(ratio).toBeCloseTo(1.2, 10);
     expect(loopCycleWallSec(region, ratio)).toBeCloseTo(2.5, 10);
   });
+
+  it("makes 120 → 60 a half-band ratio of 0.5, not 0.8", () => {
+    const ratio = timeStretchEngine.ratioFromTempos(120, 60);
+    expect(ratio).toBeCloseTo(0.5, 10);
+    expect(ratio).not.toBeCloseTo(0.8, 5);
+  });
 });
