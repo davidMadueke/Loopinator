@@ -6,6 +6,7 @@ import type { Setlist, Track } from "./play-types";
 export const DEMO_TRACKS: Track[] = [
   {
     id: "k7m2p9",
+    dev: false,
     displayName: "Sunday Kick Loop",
     filename: "sunday-kick-loop.wav",
     originalBpm: 120,
@@ -18,6 +19,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "kd1a7c",
+    dev: true,
     displayName: "Detected Key Pad",
     filename: "detected-key-pad-90.wav",
     originalBpm: 90,
@@ -30,6 +32,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "kd2b8d",
+    dev: true,
     displayName: "Detected Key Groove",
     filename: "detected-key-groove-118.mp3",
     originalBpm: 118,
@@ -42,6 +45,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "n4w8q1",
+    dev: false,
     displayName: "Shaker Groove",
     filename: "shaker-groove-154.wav",
     originalBpm: 154,
@@ -54,6 +58,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "r2t6h5",
+    dev: false,
     displayName: "Conga Fill",
     filename: "conga-fill-92.wav",
     originalBpm: 92,
@@ -66,6 +71,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "b9c3x7",
+    dev: true,
     displayName: "Tambourine Pulse",
     filename: "tambourine-168.mp3",
     originalBpm: 168,
@@ -78,6 +84,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "q8k4v3",
+    dev: true,
     displayName: "Extended Ambient Pad Swell With Reverse Cymbal Tail",
     filename: "extended-ambient-pad-swell-with-reverse-cymbal-tail-72.wav",
     originalBpm: 72,
@@ -90,6 +97,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "z6y2n5",
+    dev: true,
     displayName: "Full Band Percussion Stack With Djembe, Shaker And Rim Clicks",
     filename: "full-band-percussion-stack-djembe-shaker-rim-clicks-104.mp3",
     originalBpm: 104,
@@ -102,6 +110,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "h5n8d2",
+    dev: true,
     displayName: "Cajon Backbeat",
     filename: "cajon-backbeat-88.wav",
     originalBpm: 88,
@@ -114,6 +123,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "v4l7g6",
+    dev: true,
     displayName: "Half Time Kit",
     filename: "half-time-kit-76.mp3",
     originalBpm: 76,
@@ -126,6 +136,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "j2s9r4",
+    dev: true,
     displayName: "Click Only Guide",
     filename: "click-only-guide-140.wav",
     originalBpm: 140,
@@ -138,6 +149,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "t8b3f1",
+    dev: true,
     displayName: "Stomp Clap Intro",
     filename: "stomp-clap-intro-132.mp3",
     originalBpm: 132,
@@ -150,6 +162,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "m6z1c9",
+    dev: true,
     displayName: "Brush Kit Swell",
     filename: "brush-kit-swell-64.wav",
     originalBpm: 64,
@@ -162,6 +175,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "a1p4k8",
+    dev: true,
     displayName: "Soft Piano Click",
     filename: "soft-piano-click-68.wav",
     originalBpm: 68,
@@ -174,6 +188,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "f3w7e2",
+    dev: true,
     displayName: "Slow Build Tom",
     filename: "slow-build-tom-74.mp3",
     originalBpm: 74,
@@ -186,6 +201,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "d8r5n1",
+    dev: true,
     displayName: "Lounge Brush Pattern",
     filename: "lounge-brush-pattern-78.wav",
     originalBpm: 78,
@@ -198,6 +214,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "u2h6m9",
+    dev: true,
     displayName: "Acoustic Strum Loop",
     filename: "acoustic-strum-loop-82.mp3",
     originalBpm: 82,
@@ -210,6 +227,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "y5t1b4",
+    dev: true,
     displayName: "Conga Layer",
     filename: "conga-layer-86.wav",
     originalBpm: 86,
@@ -222,6 +240,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "i9c7l3",
+    dev: true,
     displayName: "Worship Groove A",
     filename: "worship-groove-a-94.mp3",
     originalBpm: 94,
@@ -234,6 +253,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "o4x8s6",
+    dev: true,
     displayName: "Mid Tempo Shaker",
     filename: "mid-tempo-shaker-98.wav",
     originalBpm: 98,
@@ -246,6 +266,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "e6k2v7",
+    dev: true,
     displayName: "Steady Kick Pattern",
     filename: "steady-kick-pattern-108.mp3",
     originalBpm: 108,
@@ -258,6 +279,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "w1n5j8",
+    dev: true,
     displayName: "Synth Pulse Loop",
     filename: "synth-pulse-loop-112.wav",
     originalBpm: 112,
@@ -270,6 +292,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "l7g3p2",
+    dev: true,
     displayName: "Gospel Backbeat",
     filename: "gospel-backbeat-116.mp3",
     originalBpm: 116,
@@ -282,6 +305,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "x9f4d1",
+    dev: true,
     displayName: "Uplift Groove",
     filename: "uplift-groove-124.wav",
     originalBpm: 124,
@@ -294,6 +318,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "c5m8r6",
+    dev: true,
     displayName: "Driving Hi-Hat",
     filename: "driving-hi-hat-128.mp3",
     originalBpm: 128,
@@ -306,6 +331,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "p2b7h9",
+    dev: true,
     displayName: "Anthemic Build",
     filename: "anthemic-build-136.wav",
     originalBpm: 136,
@@ -318,6 +344,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "n8v1t5",
+    dev: true,
     displayName: "Energetic Clap Loop",
     filename: "energetic-clap-loop-142.mp3",
     originalBpm: 142,
@@ -330,6 +357,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "k3y6w4",
+    dev: true,
     displayName: "Fast Shaker Drive",
     filename: "fast-shaker-drive-148.wav",
     originalBpm: 148,
@@ -342,6 +370,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "r7s2q8",
+    dev: true,
     displayName: "Upbeat Conga Stack",
     filename: "upbeat-conga-stack-156.mp3",
     originalBpm: 156,
@@ -354,6 +383,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "b4d9f3",
+    dev: true,
     displayName: "Double Kick Pulse",
     filename: "double-kick-pulse-162.wav",
     originalBpm: 162,
@@ -366,6 +396,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "h1m6c7",
+    dev: true,
     displayName: "Breakbeat Loop",
     filename: "breakbeat-loop-170.mp3",
     originalBpm: 170,
@@ -378,6 +409,7 @@ export const DEMO_TRACKS: Track[] = [
   },
   {
     id: "v8j4n2",
+    dev: true,
     displayName: "High Energy Perc",
     filename: "high-energy-perc-178.wav",
     originalBpm: 178,
