@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loopinator backend schematic</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "dark",
+      flowchart: { curve: "basis", padding: 16 },
+      themeVariables: {
+        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+        fontSize: "14px",
+        primaryColor: "#1c1c1c",
+        primaryTextColor: "#ececec",
+        primaryBorderColor: "#3a3a3a",
+        lineColor: "#8a8a8a",
+        secondaryColor: "#222",
+        tertiaryColor: "#161616",
+        clusterBkg: "#161616",
+        clusterBorder: "#333",
+      },
+    });
+    window.__mermaid = mermaid;
+    window.dispatchEvent(new Event("mermaid-ready"));
+  </script>
+  <style>
+    :root {
+      --bg: #111;
+      --panel: #181818;
+      --card: #1c1c1c;
+      --ink: #ececec;
+      --muted: #9a9a9a;
+      --line: #2e2e2e;
+      --public: #3d8f6e;
+      --protected: #c4a15a;
+      --store: #6b8caf;
+      --device: #8a7a9a;
+      --shipped: #7a9a6a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 ui-sans-serif, system-ui, sans-serif; }
+    body { min-height: 100dvh; }
+    header {
+      padding: 28px 32px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    header h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+    header p { margin: 0; max-width: 72ch; color: var(--muted); }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      align-items: center;
+      padding: 14px 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .tabs, .toggles { display: flex; gap: 8px; }
+    button.tab, button.toggle {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 6px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button.tab[aria-selected="true"], button.toggle[aria-pressed="true"] {
+      color: var(--ink);
+      border-color: #555;
+      background: #222;
+    }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 13px; margin-left: auto; }
+    .swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+    main { display: grid; grid-template-columns: 1fr 320px; min-height: calc(100dvh - 180px); }
+    @media (max-width: 960px) { main { grid-template-columns: 1fr; } aside { border-left: 0; border-top: 1px solid var(--line); } }
+    .view { padding: 24px 32px 40px; }
+    .view[hidden] { display: none; }
+    aside {
+      border-left: 1px solid var(--line);
+      padding: 20px 22px;
+      background: var(--panel);
+    }
+    aside h2 { font-size: 16px; margin: 0 0 8px; }
+    aside .meta { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+    aside p { margin: 0; }
+    .layer { margin-bottom: 18px; }
+    .layer-label {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .node {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      min-width: 140px;
+      max-width: 280px;
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+    }
+    .node:hover, .node[aria-current="true"] { border-color: #666; }
+    .node small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .node.kind-public { border-left: 3px solid var(--public); }
+    .node.kind-protected { border-left: 3px solid var(--protected); }
+    .node.kind-store { border-left: 3px solid var(--store); }
+    .node.kind-device { border-left: 3px solid var(--device); }
+    .node.kind-shipped { border-left: 3px solid var(--shipped); }
+    .node.agreed { border-style: dashed; }
+    body.shipped-only .node.agreed { display: none; }
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 1px 5px;
+      margin-left: 6px;
+      vertical-align: 1px;
+    }
+    .arrow { color: var(--muted); font-size: 12px; padding: 4px 0 10px; }
+    .mermaid { background: #161616; padding: 16px; overflow: auto; }
+    .note { color: var(--muted); max-width: 70ch; margin: 0 0 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Loopinator backend schematic</h1>
+    <p>
+      Built from the CONTEXT.md files. The server is a public Play-payload read
+      and a signed Editor write in front of Turso and Vercel Blob. Playback,
+      BPM detection, Key detection, and loop snap stay in the browser.
+    </p>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-layers" aria-selected="true" data-view="layers">Layers</button>
+      <button class="tab" role="tab" id="tab-model" aria-selected="false" data-view="model">Records</button>
+      <button class="tab" role="tab" id="tab-mermaid" aria-selected="false" data-view="mermaid">Mermaid</button>
+    </div>
+    <div class="toggles">
+      <button class="toggle" id="scope-all" aria-pressed="true">Agreed contract</button>
+      <button class="toggle" id="scope-shipped" aria-pressed="false">Shipped code only</button>
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--public)"></i>Public</span>
+      <span><i class="swatch" style="background:var(--protected)"></i>Signed-in</span>
+      <span><i class="swatch" style="background:var(--store)"></i>Store</span>
+      <span><i class="swatch" style="background:var(--device)"></i>Device</span>
+      <span>Dashed = agreed, not in code yet</span>
+    </div>
+  </div>
+
+  <main>
+    <div>
+      <section class="view" id="view-layers">
+        <div class="layer">
+          <p class="layer-label">People</p>
+          <div class="row">
+            <button class="node kind-public" data-id="musician">Musician<small>Opens a Play link. No sign-in.</small></button>
+            <button class="node kind-protected" data-id="editor">Editor<small>Signed-in. Uploads, Setlists, Save for everyone.</small></button>
+          </div>
+        </div>
+
+        <p class="arrow">Play links stay public. Library and writes need a session.</p>
+
+        <div class="layer">
+          <p class="layer-label">Routes the web app exposes</p>
+          <div class="row">
+            <button class="node kind-public" data-id="play-setlist">/s/{id}<small>Setlist Play screen. Link scope is that Setlist.</small></button>
+            <button class="node kind-public" data-id="play-track">/t/{id}<small>One Track. Link scope is that Track.</small></button>
+            <button class="node kind-protected agreed" data-id="library">Library panel<small>Tracks tab and Setlists tab. Editor only.</small></button>
+            <button class="node kind-protected" data-id="login">/login<small>Better Auth. Invite code still agreed, not shipped.</small></button>
+          </div>
+        </div>
+
+        <p class="arrow">apps/web talks to apps/server over cookie credentials. Vercel rewrites /api/* to Express.</p>
+
+        <div class="layer">
+          <p class="layer-label">apps/server Express</p>
+          <div class="row">
+            <button class="node kind-shipped" data-id="express">Express :3000<small>CORS, JSON, health on /.</small></button>
+            <button class="node kind-shipped" data-id="better-auth">/api/auth<small>Better Auth. Email/password is live. Google and Apple are agreed.</small></button>
+            <button class="node kind-shipped" data-id="trpc">/trpc<small>appRouter. Today: healthCheck, privateData.</small></button>
+            <button class="node kind-protected agreed" data-id="invite">Invite code<small>One church-wide secret in env. Gates every sign-up.</small></button>
+          </div>
+        </div>
+
+        <div class="layer">
+          <p class="layer-label">Procedure gates</p>
+          <div class="row">
+            <button class="node kind-public" data-id="public-proc">publicProcedure<small>Play payload for a Short id. No Library list.</small></button>
+            <button class="node kind-protected" data-id="protected-proc">protectedProcedure<small>Cookie session required. Dev session does not pass this.</small></button>
+          </div>
+        </div>
+
+        <div class="layer">
+          <p class="layer-label">Domain operations the CONTEXT files require</p>
+          <div class="row">
+            <button class="node kind-public agreed" data-id="play-payload">Read Play payload<small>Addressed Track or Setlist. Omits Filename.</small></button>
+            <button class="node kind-public agreed" data-id="audio-fetch">Fetch audio<small>First open of a Play link. Then Offline cache.</small></button>
+            <button class="node kind-protected agreed" data-id="upload">Upload Track<small>WAV/MP3 plus Loop region and metadata.</small></button>
+            <button class="node kind-protected agreed" data-id="save-setlist">Create / Save Setlist<small>Name and every slot copy. Signed-in write.</small></button>
+            <button class="node kind-protected agreed" data-id="save-everyone">Save for everyone<small>Slot copies, or Track defaults on /t/{id}.</small></button>
+            <button class="node kind-protected agreed" data-id="soft-delete">Soft delete<small>Hide Track, drop from Setlists, keep row and Blob.</small></button>
+          </div>
+        </div>
+
+        <div class="layer">
+          <p class="layer-label">Stores and jobs</p>
+          <div class="row">
+            <button class="node kind-store" data-id="turso">Turso / SQLite<small>Prisma. Auth tables shipped. Track and Setlist rows agreed.</small></button>
+            <button class="node kind-store agreed" data-id="blob">Vercel Blob<small>WAV and MP3. Not in the database.</small></button>
+            <button class="node kind-store agreed" data-id="purge">Purge job<small>Destroys audio behind soft-deleted Tracks. Final.</small></button>
+            <button class="node kind-store" data-id="env">Env config<small>DATABASE_URL, Better Auth, CORS, invite code.</small></button>
+          </div>
+        </div>
+
+        <div class="layer">
+          <p class="layer-label">Stays on the device. Not the backend.</p>
+          <div class="row">
+            <button class="node kind-device" data-id="local-override">Local override<small>Advanced Options on this device. Reset this device clears it.</small></button>
+            <button class="node kind-device" data-id="offline-cache">Offline cache<small>Play payload plus audio. 30 days after last open.</small></button>
+            <button class="node kind-device" data-id="playback">Playback engine<small>File-time clock, Transport fade, Loop edge fade, Time-stretch.</small></button>
+            <button class="node kind-device" data-id="analysis">Loop analysis<small>Zero-cross snap, BPM Worker, Key Worker.</small></button>
+            <button class="node kind-device" data-id="session-seam">Session source<small>useSession() over Better Auth or the dev flag.</small></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-model" hidden>
+        <p class="note">
+          CONTEXT.md is a glossary, not a Prisma schema. These are the records
+          the Play payload and Editor writes have to persist once Turso grows
+          past Better Auth.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Record</th><th>Held where</th><th>Who sees it</th><th>Notes from CONTEXT.md</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Track</td>
+              <td>Turso row + Blob file</td>
+              <td>Editor: full row. Musician: Play payload only.</td>
+              <td>Track name, Filename, Original BPM, Key, Time signature, Loop region, Short id, soft-delete flag, Auto-detected flags.</td>
+            </tr>
+            <tr>
+              <td>Setlist</td>
+              <td>Turso</td>
+              <td>Editor: list. Musician: only the linked one.</td>
+              <td>Name, Short id, ordered slots. Same Track may occupy more than one slot.</td>
+            </tr>
+            <tr>
+              <td>Setlist slot</td>
+              <td>Turso, owned by Setlist</td>
+              <td>Anyone who can open that Setlist.</td>
+              <td>Copies Loop region, Target BPM, Transport fade, Key, Time signature. Track name stays on the Track. Slot label sticks.</td>
+            </tr>
+            <tr>
+              <td>Play payload</td>
+              <td>DTO from Turso, not a table</td>
+              <td>Anyone with the Short id.</td>
+              <td>Addressed Track or Setlist plus Play screen fields. Omits Filename and Library-only fields.</td>
+            </tr>
+            <tr>
+              <td>User / Session / Account</td>
+              <td>Turso, Better Auth</td>
+              <td>Signed-in Editor</td>
+              <td>Shipped. Every signed-in account is an Editor. No read-only tier.</td>
+            </tr>
+            <tr>
+              <td>Invite code</td>
+              <td>Env, not a row</td>
+              <td>Nobody. Sign-up checks it.</td>
+              <td>One church-wide secret. Google, Apple, and email all require it.</td>
+            </tr>
+            <tr>
+              <td>Local override</td>
+              <td>This browser</td>
+              <td>This device</td>
+              <td>Read first, then slot, then Track default. Save for everyone is the cloud write.</td>
+            </tr>
+            <tr>
+              <td>Offline cache</td>
+              <td>This browser</td>
+              <td>This device</td>
+              <td>Metadata and audio. Expires 30 days after last open. Missing audio is an Unavailable Track.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="view" id="view-mermaid" hidden>
+        <p class="note">Same picture as the layer view, as Mermaid. The chat reply has these diagrams too.</p>
+        <div class="mermaid" id="mermaid-flow"></div>
+        <div class="mermaid" id="mermaid-er" style="margin-top:20px"></div>
+      </section>
+    </div>
+
+    <aside id="detail">
+      <h2>Click a box</h2>
+      <div class="meta">Terms come from CONTEXT.md. Implementation notes come from the ADRs and the current packages.</div>
+      <p>The interesting split is this: the Play screen can run a Sunday loop with no network after the first fetch. The server only has to hand out a Play payload, store Editor writes, and later purge audio.</p>
+    </aside>
+  </main>
+
+  <script>
+    const DETAILS = {
+      musician: {
+        title: "Musician",
+        meta: "People · loopinator/CONTEXT.md",
+        body: "Anyone who opens a Play screen link. They need not sign in. A Musician never lists the Library or other Setlists. The Slot picker is the one picker they get, because the link already granted that Setlist.",
+      },
+      editor: {
+        title: "Editor",
+        meta: "People · loopinator/CONTEXT.md",
+        body: "A signed-in person who uploads Tracks, builds Setlists, and uses Save for everyone. Every signed-in account is an Editor. There is no read-only tier.",
+      },
+      "play-setlist": {
+        title: "/s/{id}",
+        meta: "Link scope · ADR-0002, ADR-0003, ADR-0014",
+        body: "Public Play screen for one Setlist. The Short id is stable and unguessable. Renaming does not change it. The response is a Play payload for that Setlist, not the Editor row and not a list of other Setlists.",
+      },
+      "play-track": {
+        title: "/t/{id}",
+        meta: "Link scope · ADR-0002, ADR-0003, ADR-0014",
+        body: "Public Play screen for one Track. Same Short id rule. Save for everyone here writes the Track default that new Setlist slots inherit.",
+      },
+      library: {
+        title: "Library",
+        meta: "Agreed · loopinator/CONTEXT.md",
+        body: "The one church-wide catalog of every Track, grouped by BPM band. No public page lists it. Any Editor can change any Track or Setlist. Soft delete hides a Track here and drops it from every Setlist.",
+      },
+      login: {
+        title: "/login",
+        meta: "Shipped skeleton · ADR-0007, ADR-0013",
+        body: "Better Auth email/password is wired. Google and Apple, plus the church invite code, are agreed and not in auth/ yet. A faked dev session unlocks editor UI only. Writes still hit protectedProcedure and get rejected.",
+      },
+      express: {
+        title: "Express",
+        meta: "Shipped · apps/server/src/index.ts",
+        body: "Listens on port 3000. CORS from CORS_ORIGIN, Better Auth handler, tRPC middleware, GET / returns OK. On Vercel, /api/* rewrites here and /api/auth keeps its path.",
+      },
+      "better-auth": {
+        title: "Better Auth",
+        meta: "Shipped · packages/auth",
+        body: "Prisma adapter on SQLite/Turso. emailAndPassword enabled. Session cookie is httpOnly, SameSite none, secure. createContext reads it on every tRPC call. Invite-code plugin and social providers are not installed.",
+      },
+      trpc: {
+        title: "tRPC appRouter",
+        meta: "Shipped skeleton · packages/api",
+        body: "Two procedures today: healthCheck (public) and privateData (protected, returns ctx.session.user). Track, Setlist, Play payload, upload, and Soft delete routers are not written.",
+      },
+      invite: {
+        title: "Invite code",
+        meta: "Agreed · ADR-0007",
+        body: "One church-wide secret in environment config. Google, Apple, and email sign-up all require it. Nobody registers without it. It is not a User row and not a single-use invite.",
+      },
+      "public-proc": {
+        title: "publicProcedure",
+        meta: "Shipped gate, agreed use",
+        body: "No session. The CONTEXT contract is: return a Play payload for a Short id, and serve audio for the Offline cache fill. Do not return Filename or a Library listing.",
+      },
+      "protected-proc": {
+        title: "protectedProcedure",
+        meta: "Shipped · packages/api/src/index.ts",
+        body: "Throws UNAUTHORIZED when ctx.session is missing. This is the write gate for Upload, Create Setlist, Save Setlist, Save for everyone, and Soft delete. The dev Editor never satisfies it.",
+      },
+      "play-payload": {
+        title: "Play payload",
+        meta: "Agreed · loopinator/CONTEXT.md",
+        body: "What a public Play link returns: the addressed Track or Setlist and the fields the Play screen needs. It omits Filename and anything else only the Library uses. Soft-deleted Tracks say they were removed.",
+      },
+      "audio-fetch": {
+        title: "Fetch audio",
+        meta: "Agreed · ADR-0006, ADR-0011",
+        body: "The first open of a Play screen fetches audio through the API, then stores the file on the device. A later open of the same link uses the stored file. Metadata is cached with the audio so Church Wi-Fi can fail mid-service.",
+      },
+      upload: {
+        title: "Upload Track",
+        meta: "Agreed · CONTEXT.md, ADR-0006, ADR-0010",
+        body: "Writes a WAV or MP3 to Blob and a Track row to Turso. Upload sets a default Loop region by guessing the first whole bars from BPM detection. Auto-detected BPM still saves, even at low confidence. Upload persistence is not shipped; Audio fixtures stand in.",
+      },
+      "save-setlist": {
+        title: "Create / Save Setlist",
+        meta: "Agreed · CONTEXT.md, ADR-0008",
+        body: "A signed-in write of the Setlist name and every slot's Track, Slot label, Target BPM, Key, and Time signature. Create Setlist uses the same payload as Save Setlist. The Create button in the UI does not write yet.",
+      },
+      "save-everyone": {
+        title: "Save for everyone",
+        meta: "Agreed · CONTEXT.md, ADR-0008",
+        body: "From a Setlist it copies Loop region, Target BPM, Transport fade, Key, and Time signature onto that Setlist slot. From /t/{id} it writes the Track default. It is not Save Setlist, and it is not Reset this device.",
+      },
+      "soft-delete": {
+        title: "Soft delete",
+        meta: "Agreed · ADR-0009",
+        body: "Hides a Track from the Library and drops it from every Setlist. The row and the audio file survive. A public link to a soft-deleted Track says it was removed. Purge is the later job that destroys the Blob.",
+      },
+      turso: {
+        title: "Turso / SQLite",
+        meta: "Shipped adapter, agreed domain rows · ADR-0006",
+        body: "Prisma LibSQL client. Shipped models: User, Session, Account, Verification. Agreed models: Track, Setlist, Setlist slot. Source of truth for metadata. WorshipTools is never read back.",
+      },
+      blob: {
+        title: "Vercel Blob",
+        meta: "Agreed · ADR-0006",
+        body: "Audio binaries. Keeps WAV and MP3 out of Turso. Soft delete leaves the object; Purge removes it. No client in the repo yet.",
+      },
+      purge: {
+        title: "Purge",
+        meta: "Agreed · CONTEXT.md, ADR-0009",
+        body: "A scheduled job that destroys the audio files behind soft-deleted Tracks. Nothing recovers a purged Track. Soft delete is the reversible hide; this is the final step.",
+      },
+      env: {
+        title: "Env config",
+        meta: "Shipped · packages/env",
+        body: "Server: DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL, CORS_ORIGIN. Web: VITE_SERVER_URL, VITE_SESSION_SOURCE. Invite code belongs here once ADR-0007 lands.",
+      },
+      "local-override": {
+        title: "Local override",
+        meta: "Device · CONTEXT.md Playback",
+        body: "Advanced Options changes kept on one device. Playback reads Local override, then Setlist slot, then Track default. Reset this device clears it and writes nothing to the Library.",
+      },
+      "offline-cache": {
+        title: "Offline cache",
+        meta: "Device · ADR-0011",
+        body: "Setlist metadata and Track audio stored when a Play screen opens. Expires 30 days after that device last opened it. An Unavailable Track is a slot whose audio never finished caching and cannot be fetched now.",
+      },
+      playback: {
+        title: "Playback engine",
+        meta: "Device · apps/web/src/lib/playback/CONTEXT.md",
+        body: "One Web Audio session. File-time clock, Loop wrap, Transport fade, Loop edge fade, live Time-stretch worklet. WaveSurfer draws. It does not play. This folder does not talk to Express.",
+      },
+      analysis: {
+        title: "Loop analysis",
+        meta: "Device · apps/web/src/lib/loop-analysis/CONTEXT.md",
+        body: "Decode, zero-cross snap, BPM via @audio/beat, Key via @audio/mir-*. UI talks to audioAnalysisEngine, never @audio/* directly. This folder does not play audio and does not persist Track rows.",
+      },
+      "session-seam": {
+        title: "Session source",
+        meta: "Device UI · ADR-0013, apps/web/CONTEXT.md",
+        body: "Components call useSession(). They never call authClient except the real sign-in forms. Dev source is a localStorage flag. Better Auth source is the real cookie. The faked Editor never authorizes a write.",
+      },
+    };
+
+    const FLOW = `flowchart TB
+  subgraph people[People]
+    Musician
+    Editor
+  end
+
+  subgraph web[apps/web]
+    PlayLinks["/s/{id} and /t/{id}"]
+    Library["Library panel"]
+    Session["useSession()"]
+  end
+
+  subgraph device[Stays on the device]
+    Cache["Offline cache"]
+    Override["Local override"]
+    Engine["Playback engine"]
+    Analysis["Loop analysis Worker"]
+  end
+
+  subgraph server[apps/server Express]
+    Auth["/api/auth Better Auth"]
+    TRPC["/trpc"]
+    Public["publicProcedure"]
+    Protected["protectedProcedure"]
+  end
+
+  subgraph stores[Stores]
+    Turso[("Turso metadata")]
+    Blob[("Vercel Blob audio")]
+    Env["Invite code env"]
+  end
+
+  Purge["Purge job"]
+
+  Musician --> PlayLinks
+  Editor --> Library
+  Editor --> Auth
+  PlayLinks --> Session
+  Library --> Session
+  PlayLinks --> Cache
+  PlayLinks --> Engine
+  Library --> Analysis
+  Session --> Auth
+  PlayLinks --> TRPC
+  Library --> TRPC
+  TRPC --> Public
+  TRPC --> Protected
+  Public --> Turso
+  Public --> Blob
+  Protected --> Turso
+  Protected --> Blob
+  Auth --> Turso
+  Auth --> Env
+  Protected --> Purge
+  Purge --> Blob`;
+
+    const ER = `erDiagram
+      TRACK ||--o{ SETLIST_SLOT : "occupies"
+      SETLIST ||--|{ SETLIST_SLOT : "contains"
+      USER ||--o{ SESSION : "signs in"
+
+      TRACK {
+        string short_id
+        string track_name
+        string filename
+        float original_bpm
+        bool auto_detected_bpm
+        string key
+        bool auto_detected_key
+        string time_signature
+        loop_region default_region
+        bool soft_deleted
+        blob_ref audio
+      }
+      SETLIST {
+        string short_id
+        string name
+      }
+      SETLIST_SLOT {
+        string slot_label
+        loop_region region_copy
+        float target_bpm
+        string key_copy
+        string time_signature_copy
+        transport_fade fade
+      }
+      USER {
+        string id
+        string email
+      }
+      SESSION {
+        string token
+        datetime expires_at
+      }`;
+
+    const detail = document.getElementById("detail");
+    const nodes = document.querySelectorAll(".node");
+
+    function show(id) {
+      const item = DETAILS[id];
+      if (!item) return;
+      nodes.forEach((n) => n.setAttribute("aria-current", n.dataset.id === id ? "true" : "false"));
+      detail.innerHTML = `<h2>${item.title}</h2><div class="meta">${item.meta}</div><p>${item.body}</p>`;
+    }
+
+    nodes.forEach((n) => n.addEventListener("click", () => show(n.dataset.id)));
+
+    const views = {
+      layers: document.getElementById("view-layers"),
+      model: document.getElementById("view-model"),
+      mermaid: document.getElementById("view-mermaid"),
+    };
+    const tabs = document.querySelectorAll(".tab");
+    let mermaidDrawn = false;
+
+    async function drawMermaid() {
+      if (mermaidDrawn || !window.__mermaid) return;
+      const m = window.__mermaid;
+      const flow = document.getElementById("mermaid-flow");
+      const er = document.getElementById("mermaid-er");
+      const a = await m.render("flow-svg", FLOW);
+      flow.innerHTML = a.svg;
+      const b = await m.render("er-svg", ER);
+      er.innerHTML = b.svg;
+      mermaidDrawn = true;
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", async () => {
+        const view = tab.dataset.view;
+        tabs.forEach((t) => t.setAttribute("aria-selected", t === tab ? "true" : "false"));
+        Object.entries(views).forEach(([key, el]) => { el.hidden = key !== view; });
+        if (view === "mermaid") await drawMermaid();
+      });
+    });
+
+    window.addEventListener("mermaid-ready", () => {
+      if (document.getElementById("tab-mermaid").getAttribute("aria-selected") === "true") {
+        drawMermaid();
+      }
+    });
+
+    const allBtn = document.getElementById("scope-all");
+    const shippedBtn = document.getElementById("scope-shipped");
+    allBtn.addEventListener("click", () => {
+      document.body.classList.remove("shipped-only");
+      allBtn.setAttribute("aria-pressed", "true");
+      shippedBtn.setAttribute("aria-pressed", "false");
+    });
+    shippedBtn.addEventListener("click", () => {
+      document.body.classList.add("shipped-only");
+      allBtn.setAttribute("aria-pressed", "false");
+      shippedBtn.setAttribute("aria-pressed", "true");
+    });
+  </script>
+</body>
+</html>
