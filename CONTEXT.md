@@ -56,8 +56,8 @@ A Setlist slot with no Track yet. It exists only while creating or editing a Set
 _Avoid_: Placeholder row, unassigned slot
 
 **Library**:
-The catalog of every Track, grouped by BPM band. When open it stacks as the Library panel above the Playback frame in the same scroll column. Only an Editor reaches it, through the Library panel or the Track picker. No public page lists it.
-_Avoid_: AllTracks, public index, library page, library modal
+The one church-wide catalog of every Track, grouped by BPM band. Any Editor can change any Track or Setlist. When open it stacks as the Library panel above the Playback frame in the same scroll column. Only an Editor reaches it, through the Library panel or the Track picker. No public page lists it.
+_Avoid_: AllTracks, public index, library page, library modal, per-Editor library
 
 **Library panel**:
 The full-width block above the Playback frame, opened from the hamburger. It has two tabs: Tracks and Setlists. Playback keeps running while it is open.
@@ -99,8 +99,12 @@ _Avoid_: Preview player, mini player
 The stable, unguessable public identifier in `/s/{id}` and `/t/{id}`. Renaming does not change it.
 _Avoid_: UUID, slug, pretty URL
 
+**Play payload**:
+What a public Play link returns: the addressed Track or Setlist and the fields the Play screen needs. It omits Filename, an audio URL, and anything else only the Library uses.
+_Avoid_: Full Track row, guest DTO, public record
+
 **Link scope**:
-What a Play screen link opens for a Musician: the thing it addresses and nothing wider. `/s/{id}` reaches every slot in that Setlist. `/t/{id}` reaches that one Track. Neither reaches the Library or the list of Setlists without a sign-in.
+What a Play screen link opens for a Musician: the thing it addresses and nothing wider. `/s/{id}` reaches every slot in that Setlist. `/t/{id}` reaches that one Track. Neither reaches the Library or the list of Setlists without a sign-in. The public response is a Play payload, not the Editor row.
 _Avoid_: Guest browsing, public library, link permissions
 
 **Soft delete**:
@@ -270,7 +274,7 @@ Advanced Options changes kept on one device. Playback reads the Local override f
 The marker on the Advanced Options button meaning a Local override is active on this device. It is not the Cache indicator.
 
 **Offline cache**:
-The Setlist metadata and Track audio a device stores when a Play screen opens, so the whole screen still works with no network. It expires 30 days after that device last opened it.
+The Setlist metadata and Track audio a device stores when a Play screen opens, so the whole screen still works with no network. The first open asks the API for a short-lived audio URL, fetches the file, then stores it. A later open of the same link on that browser uses the stored file. It expires 30 days after that device last opened it.
 _Avoid_: Ready, download, sync
 
 **Cache indicator**:

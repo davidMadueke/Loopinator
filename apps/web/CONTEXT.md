@@ -202,6 +202,22 @@ before invite-code sign-up ships. See **[0013-session-source-seam](../../docs/ad
 Gated UI today: the Play screen hamburger (Library toggles for an Editor, links to `/login` for a
 Musician, per ADR-0002), the Route breadcrumb pickers, `UserMenu`, and the `/_auth` route gate.
 
+## Library source
+
+The Library can read the in-memory design mock or Turso. Unlike session source, this switch is a
+visible dev toggle and can change without a reload. Domain: [../../CONTEXT.md](../../CONTEXT.md).
+
+| Decision | Choice |
+|---|---|
+| What the UI reads | `mock` (DEMO_TRACKS / DEMO_SETLISTS) or `turso` (tRPC) |
+| How you switch | Dev-only toggle, `bun dev` only, never on a deployment |
+| Mock writes | Read-only. Create, Save, and Delete stay disabled |
+| Turso mode | Disabled until Better Auth says signed-in. Dummy Editor is not enough |
+| Turso seed | A few Tracks plus one Setlist with filled slots, not the pagination or silent fixtures |
+| Session vs Library | Dummy session is `bun dev` UI only. Turso writes need Better Auth email/password |
+| Sign-up until invite | Open email sign-up in local/dev only. Production keeps sign-up off until the invite code ships |
+| First slice scope | Local/dev: Prisma, tRPC, Blob upload and Play fetch, Create Track persist. Seed uploads the three fixture WAVs into Blob. Production writes wait for invite-code sign-up |
+
 ### Session file layout
 
 ```
@@ -379,7 +395,7 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 | Start | One Empty slot labelled Track 1 |
 | Progress | Setlist name, an extra slot, a picked Track, or a Slot label other than Track 1. The empty initial form is not progress |
 | Create enablement | Name is non-empty, at least one slot, every slot has a Track |
-| Persist | Create Setlist enables when valid. Click does not write |
+| Persist | Create Setlist enables when valid. Turso source writes through tRPC. Mock source keeps Create disabled. |
 | Slot Track picker | Dropdown of `DEMO_TRACKS`. Trigger reads Pick a Track while empty. Footer is Open full Library, same as the Route breadcrumb Track picker |
 | Open full Library | Expands a Slot library under that slot row. Assigning a Track from a name click leaves it open. Opening another slot's library closes the first. If previous open library is in create track tab and user opens library panel for another, create track progress is lost without warning|
 | Slot library | Sibling under the existing slot chrome, which is now the row header. Grip / Move up / Move down still move header and panel together as one SortableItem. Close library collapses it |
@@ -397,8 +413,8 @@ The form lives in the Setlists tab after Create New. One Empty slot labelled Tra
 
 | Next | Notes |
 |---|---|
-| Create Setlist write | Same payload as Save Setlist. Button enablement is already the domain rule |
-| Slot Create Track upload | Upload Track stays disabled. A new Track does not yet land in the Slot library or assign to the slot |
+| Create Setlist write | Same payload as Save Setlist. First slice writes through tRPC. |
+| Slot Create Track upload | Persist the Track and assign it to the open slot. |
 
 ### Create Setlist file layout
 
@@ -490,4 +506,5 @@ HoverButton reveal, box centering, and icon-vs-baseline optical checks live in
 - [0017-audio-engine-seam](../../docs/adr/0017-audio-engine-seam.md) — analysis backends sit behind `engine/`
 - [0019-one-playback-engine](../../docs/adr/0019-one-playback-engine.md) — WavePlayer and Play screen share `createPlaybackEngine`
 - [0020-live-stretch-worklet](../../docs/adr/0020-live-stretch-worklet.md) — Play screen Time-stretch is a live worklet, not a pre-render
+- [0021-private-blob-signed-url](../../docs/adr/0021-private-blob-signed-url.md) — private Blob, short-lived URL, Offline cache stores the bytes
 - [playback-engine-review](../../docs/playback-engine-review.md) — why the clocks split and what not to copy from WaveSurfer
