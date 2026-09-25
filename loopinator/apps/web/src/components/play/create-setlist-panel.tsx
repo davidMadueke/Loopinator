@@ -101,16 +101,7 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
             <div className="flex w-full items-center justify-end gap-2">
               <div className="flex items-center gap-2 border border-border bg-card px-2 py-1">
                 <span className="text-sm font-medium text-foreground">Selected:</span>
-                <Toggle
-                  pressed={allSelected}
-                  aria-label="Select all slots"
-                  className={SLOT_SELECT_TOGGLE_CLASS}
-                  onPressedChange={(pressed) =>
-                    setForm((current) => selectAllSlots(pressed, current))
-                  }
-                >
-                  ALL
-                </Toggle>
+
                 {selectedCount > 0 ? (
                   <Button
                     type="button"
@@ -133,6 +124,18 @@ export function CreateSetlistPanel({ onProgressChange }: CreateSetlistPanelProps
                     <TrashIcon aria-hidden="true" />
                   </Button>
                 ) : null}
+                
+                <Toggle
+                  pressed={allSelected}
+                  aria-label="Select all slots"
+                  className={SLOT_SELECT_TOGGLE_CLASS}
+                  onPressedChange={(pressed) =>
+                    setForm((current) => selectAllSlots(pressed, current))
+                  }
+                >
+                  ALL
+                </Toggle>
+                
               </div>
             </div>
           </div>
