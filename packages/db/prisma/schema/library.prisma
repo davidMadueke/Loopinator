@@ -1,0 +1,91 @@
+model Track {
+  id                 String        @id @default(cuid())
+  name               String
+  filename           String
+  blobPathname       String        @map("audio_url")
+  originalBPM        Int
+  bpmAutoDetected    Boolean       @default(false)
+  keyCenter          MusicalKey    @default(NO_KEY)
+  keyMode            MusicalMode   @default(major)
+  keyAutoDetected    Boolean       @default(false)
+  timeSignature      TimeSignature @default(FOUR_FOUR)
+  inPoint            String        @default("")
+  outPoint           String        @default("")
+  transportFadeSec   Float         @default(0)
+  transportFadeCurve String        @default("linear")
+  softDeleted        Boolean       @default(false)
+  deletedAt          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  slots              SetlistSlot[]
+
+  @@index([deletedAt])
+  @@map("track")
+}
+
+model Setlist {
+  id        String        @id @default(cuid())
+  name      String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  slots     SetlistSlot[]
+
+  @@map("setlist")
+}
+
+model SetlistSlot {
+  id                 String        @id @default(cuid())
+  setlistId          String
+  setlist            Setlist       @relation(fields: [setlistId], references: [id], onDelete: Cascade)
+  trackId            String
+  track              Track         @relation(fields: [trackId], references: [id], onDelete: Restrict)
+  position           Int
+  slotLabel          String
+  targetBpm          Int
+  keyCenter          MusicalKey    @default(NO_KEY)
+  keyMode            MusicalMode   @default(major)
+  keyAutoDetected    Boolean       @default(false)
+  timeSignature      TimeSignature @default(FOUR_FOUR)
+  inPoint            String        @default("")
+  outPoint           String        @default("")
+  transportFadeSec   Float         @default(0)
+  transportFadeCurve String        @default("linear")
+
+  @@unique([setlistId, position])
+  @@index([trackId])
+  @@map("setlist_slot")
+}
+
+enum TimeSignature {
+  FOUR_FOUR    @map("4/4")
+  THREE_FOUR   @map("3/4")
+  SIX_EIGHT    @map("6/8")
+  TWELVE_EIGHT @map("12/8")
+  TWO_FOUR     @map("2/4")
+}
+
+enum MusicalKey {
+  NO_KEY  @map("No Key")
+  C
+  C_SHARP @map("C#")
+  D_FLAT  @map("Db")
+  D
+  D_SHARP @map("D#")
+  E_FLAT  @map("Eb")
+  E
+  F
+  F_SHARP @map("F#")
+  G_FLAT  @map("Gb")
+  G
+  G_SHARP @map("G#")
+  A_FLAT  @map("Ab")
+  A
+  A_SHARP @map("A#")
+  B_FLAT  @map("Bb")
+  B
+}
+
+enum MusicalMode {
+  major
+  minor
+}

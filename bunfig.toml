@@ -1,0 +1,3 @@
+[run]
+# Package bins run under Bun so Prisma 7 can load its ESM dependencies.
+bun = true
