@@ -25,6 +25,18 @@ const runtimeEnv = {
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
+    TURSO_AUTH_TOKEN: z
+      .string()
+      .min(1)
+      .optional()
+      .refine(
+        (token) => {
+          const databaseUrl = process.env.DATABASE_URL ?? "";
+          if (!databaseUrl.startsWith("libsql:")) return true;
+          return typeof token === "string" && token.length > 0;
+        },
+        { error: "TURSO_AUTH_TOKEN is required when DATABASE_URL starts with libsql:" },
+      ),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
