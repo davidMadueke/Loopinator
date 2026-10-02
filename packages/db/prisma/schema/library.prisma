@@ -1,5 +1,6 @@
+/// \id\ is the Short id in \/t/{id}\. Set once at create, never edited, so renaming a Track keeps its link.
 model Track {
-  id                 String        @id @default(cuid())
+  id                 String        @id @default(nanoid(8))
   name               String
   filename           String
   blobPathname       String        @map("audio_url")
@@ -23,8 +24,9 @@ model Track {
   @@map("track")
 }
 
+/// \id\ is the Short id in \/s/{id}\. Set once at create, never edited, so renaming a Setlist keeps its link.
 model Setlist {
-  id        String        @id @default(cuid())
+  id        String        @id @default(nanoid(8))
   name      String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
