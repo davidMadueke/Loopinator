@@ -18,6 +18,7 @@
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "vercel": "^62.2.0",
     "zod": "catalog:"
   },
   "devDependencies": {
