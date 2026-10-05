@@ -1,13 +1,18 @@
 import { auth } from "@loopinator/auth";
+import prisma, { type PrismaClient } from "@loopinator/db";
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { fromNodeHeaders } from "better-auth/node";
 
-export async function createContext(opts: CreateExpressContextOptions) {
+type Session = Awaited<ReturnType<typeof auth.api.getSession>>;
+
+export async function createContext(
+  opts: CreateExpressContextOptions,
+): Promise<{ prisma: PrismaClient; session: Session }> {
   const session = await auth.api.getSession({
     headers: fromNodeHeaders(opts.req.headers),
   });
   return {
-    auth: null,
+    prisma,
     session,
   };
 }

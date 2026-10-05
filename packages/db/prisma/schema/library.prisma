@@ -3,7 +3,7 @@ model Track {
   id                 String        @id @default(nanoid(8))
   name               String
   filename           String
-  blobPathname       String        @map("audio_url")
+  blobPathname       String        @unique @map("audio_pathname")
   originalBPM        Int
   bpmAutoDetected    Boolean       @default(false)
   keyCenter          MusicalKey    @default(NO_KEY)

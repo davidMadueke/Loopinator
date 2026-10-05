@@ -3,7 +3,15 @@ import { PrismaLibSql } from "@prisma/adapter-libsql";
 
 import { PrismaClient } from "../prisma/generated/client";
 
-export function createPrismaClient() {
+export type {
+  MusicalKey,
+  MusicalMode,
+  PrismaClient,
+  TimeSignature,
+  Track,
+} from "../prisma/generated/client";
+
+export function createPrismaClient(): PrismaClient {
   const adapter = new PrismaLibSql({
     url: env.DATABASE_URL,
     authToken: env.TURSO_AUTH_TOKEN
@@ -12,5 +20,5 @@ export function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
-const prisma = createPrismaClient();
+const prisma: PrismaClient = createPrismaClient();
 export default prisma;
