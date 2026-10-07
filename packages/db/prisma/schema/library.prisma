@@ -4,6 +4,7 @@ model Track {
   name               String
   filename           String
   blobPathname       String        @unique @map("audio_pathname")
+  blobVersion        Int           @default(1) @map("audio_version")
   originalBPM        Int
   bpmAutoDetected    Boolean       @default(false)
   keyCenter          MusicalKey    @default(NO_KEY)
