@@ -70,6 +70,12 @@ export type Track = {
   cached: boolean;
   /** Silent stand-in. Play loads the shared silent WAV instead of a recorded fixture. */
   dev: boolean;
+  /** Prisma `audio_version`. Present on Turso Play payloads; used as the Offline cache key. */
+  blobVersion?: number;
+  inPoint?: string;
+  outPoint?: string;
+  /** Soft-deleted (or missing) Setlist slot Track. Play still opens; audio is skipped. */
+  removed?: boolean;
 };
 
 export type SetlistSlot = {
@@ -79,6 +85,11 @@ export type SetlistSlot = {
   timeSignature: TimeSignature;
   key: string;
   keyMode: "major" | "minor";
+  inPoint?: string;
+  outPoint?: string;
+  removed?: boolean;
+  /** Nested Track from a Setlist Play payload. Mock slots leave this unset. */
+  track?: Track;
 };
 
 export type Setlist = {

@@ -15,6 +15,8 @@ import { useLayoutEffect } from "react";
 
 import { DevSessionToggle } from "../components/dev-session-toggle";
 import Header from "../components/header";
+import { pruneAudioCache } from "../lib/offline-cache/audio-cache";
+import { prunePlayPayloads } from "../lib/offline-cache/play-payload-cache";
 import { appearanceInitScript } from "../lib/appearance";
 import { useAppearanceStore } from "../stores/appearance-store";
 
@@ -59,6 +61,13 @@ function RootDocument() {
   useLayoutEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useLayoutEffect(() => {
+    prunePlayPayloads();
+    void pruneAudioCache();
+    // iOS often ignores persist() unless the site is on the home screen.
+    void navigator.storage?.persist?.();
+  }, []);
 
   // The head script rewrites class and data-accent before first paint. After hydrate,
   // data-accent follows the store so a later root render cannot pin it back to Neutral.

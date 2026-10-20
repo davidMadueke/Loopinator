@@ -1,8 +1,8 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
+import Loader from "@/components/loader";
 import { PlayScreen } from "@/components/play/play-screen";
-import { getTrackById } from "@/lib/mock-data";
-import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
+import { usePlayTrack } from "@/lib/audio";
 
 export const Route = createFileRoute("/_play/t/$id")({
   component: TrackPlayRoute,
@@ -10,11 +10,14 @@ export const Route = createFileRoute("/_play/t/$id")({
 
 function TrackPlayRoute() {
   const { id } = Route.useParams();
-  const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
-  const track = getTrackById(id, fixturesEnabled);
+  const { data: track, isPending } = usePlayTrack(id);
+
+  if (isPending) {
+    return <Loader />;
+  }
 
   if (!track) {
-    throw notFound();
+    return <div>Not Found</div>;
   }
 
   // Keyed so the Track picker starts the next Track stopped, even when both share an Original BPM.

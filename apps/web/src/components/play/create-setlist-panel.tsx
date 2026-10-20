@@ -7,7 +7,7 @@ import { cn } from "@loopinator/ui/lib/utils";
 import { PlusIcon, TrashIcon } from "lucide-react";
 
 import { Sortable } from "@/components/reui/sortable";
-import { DEMO_TRACKS } from "@/lib/mock-data";
+import { DEMO_TRACKS } from "@/lib/dev/mock-data";
 import type { Track } from "@/lib/play-types";
 
 import {

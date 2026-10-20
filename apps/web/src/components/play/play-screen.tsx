@@ -52,11 +52,19 @@ export function PlayScreen(props: PlayScreenProps) {
       ? props.setlist.slots[props.slotIndex]?.targetBpm ?? props.track.originalBpm
       : props.track.originalBpm;
 
+  const slot = props.mode === "setlist" ? props.setlist.slots[props.slotIndex] : undefined;
+
   const playback = usePlayback({
     originalBpm: props.track.originalBpm,
     initialTargetBpm,
     trackId: props.track.id,
     dev: props.track.dev,
+    blobVersion: props.track.blobVersion,
+    setlistId: props.mode === "setlist" ? props.setlist.id : undefined,
+    setlist: props.mode === "setlist" ? props.setlist : undefined,
+    loopInPoint: slot?.inPoint ?? props.track.inPoint ?? "",
+    loopOutPoint: slot?.outPoint ?? props.track.outPoint ?? "",
+    removed: props.track.removed ?? slot?.removed,
   });
 
   useSpacebarPlayPause(() => {

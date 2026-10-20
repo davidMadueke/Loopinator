@@ -16,6 +16,7 @@ const trackPlayFields = {
   outPoint: true,
   transportFadeSec: true,
   transportFadeCurve: true,
+  blobVersion: true,
 } as const;
 
 export const playRouter = router({
@@ -51,6 +52,7 @@ export const playRouter = router({
             select: {
               id: true,
               position: true,
+              trackId: true,
               slotLabel: true,
               targetBpm: true,
               keyCenter: true,
@@ -61,7 +63,15 @@ export const playRouter = router({
               outPoint: true,
               transportFadeSec: true,
               transportFadeCurve: true,
-              track: { select: { id: true, name: true, originalBPM: true } },
+              track: {
+                select: {
+                  id: true,
+                  name: true,
+                  originalBPM: true,
+                  blobVersion: true,
+                  softDeleted: true,
+                },
+              },
             },
           },
         },
@@ -70,6 +80,25 @@ export const playRouter = router({
       if (!setlist) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Setlist not found" });
       }
-      return setlist;
+
+      return {
+        id: setlist.id,
+        name: setlist.name,
+        slots: setlist.slots.map((slot) => {
+          const { track, ...rest } = slot;
+          return {
+            ...rest,
+            track: track
+              ? {
+                  id: track.id,
+                  name: track.name,
+                  originalBPM: track.originalBPM,
+                  blobVersion: track.blobVersion,
+                  removed: track.softDeleted,
+                }
+              : null,
+          };
+        }),
+      };
     }),
 });

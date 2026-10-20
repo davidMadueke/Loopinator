@@ -16,6 +16,7 @@
     "@loopinator/env": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "@vercel/blob": "^2.3.1",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "vercel": "^62.2.0",

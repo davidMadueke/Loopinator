@@ -13,7 +13,7 @@ import { LayersArrowDown, LayersArrowUp, PlayIcon, SquareIcon } from "lucide-rea
 
 import { LibraryLoadMore, LIBRARY_PAGE_SIZE } from "@/components/play/library-load-more";
 import { Filters, FiltersChips, FiltersTrigger } from "@/components/play/filters";
-import { getLibraryTracks } from "@/lib/mock-data";
+import { getLibraryTracks } from "@/lib/dev/mock-data";
 import { BPM_BANDS, BPM_BAND_LABELS, getBpmBand, type BpmBand, type Track } from "@/lib/play-types";
 import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
 

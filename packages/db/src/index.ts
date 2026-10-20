@@ -11,10 +11,13 @@ export type {
   Track,
 } from "../prisma/generated/client";
 
-export function createPrismaClient(): PrismaClient {
+export function createPrismaClient(overrides?: {
+  url?: string;
+  authToken?: string;
+}): PrismaClient {
   const adapter = new PrismaLibSql({
-    url: env.DATABASE_URL,
-    authToken: env.TURSO_AUTH_TOKEN
+    url: overrides?.url ?? env.DATABASE_URL,
+    authToken: overrides?.authToken ?? env.TURSO_AUTH_TOKEN,
   });
 
   return new PrismaClient({ adapter });

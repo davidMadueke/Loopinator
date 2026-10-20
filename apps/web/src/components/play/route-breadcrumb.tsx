@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { Button } from "@loopinator/ui/components/button";
@@ -27,8 +27,15 @@ import {
   DropdownMenuTrigger,
 } from "@loopinator/ui/components/dropdown-menu";
 
-import { DEMO_SETLISTS, DEMO_TRACKS } from "@/lib/mock-data";
+import { isSetlistCached } from "@/lib/audio";
+import { DEMO_SETLISTS, DEMO_TRACKS } from "@/lib/dev/mock-data";
+import { isTrackAudioCached } from "@/lib/offline-cache/audio-cache";
 import type { Setlist, Track } from "@/lib/play-types";
+import { useAudioCacheRevision } from "@/hooks/use-audio-cache-revision";
+import {
+  selectEnableApiData,
+  usePlaySourceStore,
+} from "@/stores/play-source-store";
 import type { LibraryTab } from "./library-panel";
 
 type RouteBreadcrumbProps =
@@ -75,7 +82,7 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
         </BreadcrumbList>
           </Breadcrumb>
 
-          <CacheIndicator cached={props.setlist.cached} className="shrink-0" />
+          <CacheIndicator cached={props.setlist.cached} setlist={props.setlist} className="shrink-0" />
           </div>
           <SlotNavigator
             slotIndex={props.slotIndex}
@@ -90,7 +97,7 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
           <TrackPicker currentTrack={props.track} onOpenLibrary={props.onOpenLibrary} />
           </BreadcrumbItem>
         </Breadcrumb>
-        <CacheIndicator cached={props.track.cached} className="shrink-0" />
+        <CacheIndicator cached={props.track.cached} track={props.track} className="shrink-0" />
         </div>
       )}
     </div>
@@ -298,14 +305,54 @@ function CurrentMark({ current }: { current: boolean }) {
   );
 }
 
-function CacheIndicator({ cached, className }: { cached: boolean; className?: string }) {
+function CacheIndicator({
+  cached,
+  className,
+  track,
+  setlist,
+}: {
+  cached: boolean;
+  className?: string;
+  track?: Track;
+  setlist?: Setlist;
+}) {
+  const enableApi = usePlaySourceStore(selectEnableApiData);
+  const revision = useAudioCacheRevision();
+  const [liveCached, setLiveCached] = useState(cached);
+
+  useEffect(() => {
+    if (!enableApi) {
+      setLiveCached(cached);
+      return;
+    }
+
+    let cancelled = false;
+    const check = setlist
+      ? isSetlistCached(setlist)
+      : track?.blobVersion != null
+        ? isTrackAudioCached(track.id, track.blobVersion)
+        : Promise.resolve(false);
+
+    void check.then((value) => {
+      if (!cancelled) {
+        setLiveCached(value);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enableApi, cached, track, setlist, revision]);
+
+  const shown = enableApi ? liveCached : cached;
+
   return (
     <span
       className={cn("inline-flex items-center gap-1 text-xs text-muted-foreground", className)}
-      title={cached ? "Available offline" : "Not cached on this device"}
+      title={shown ? "Available offline" : "Not cached on this device"}
     >
-      {cached ? <CloudIcon className="size-3.5" /> : <CloudOffIcon className="size-3.5" />}
-      {cached ? "Cached" : "Online only"}
+      {shown ? <CloudIcon className="size-3.5" /> : <CloudOffIcon className="size-3.5" />}
+      {shown ? "Cached" : "Online only"}
     </span>
   );
 }

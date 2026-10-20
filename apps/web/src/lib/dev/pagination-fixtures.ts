@@ -1,4 +1,4 @@
-import { BPM_BANDS, BPM_BAND_LABELS, type BpmBand, type Track } from "./play-types";
+import { BPM_BANDS, BPM_BAND_LABELS, type BpmBand, type Track } from "../play-types";
 
 /** Extra tracks per band so Load more takes a couple of clicks once demo rows are included. */
 const FIXTURES_PER_BAND = 11;

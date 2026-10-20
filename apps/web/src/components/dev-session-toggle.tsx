@@ -5,6 +5,11 @@ import { SessionSourceContext } from "@/components/session-provider";
 import { useSession } from "@/hooks/use-session";
 import { useDevSessionStore } from "@/stores/dev-session-store";
 import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
+import {
+  selectEnableApiData,
+  selectEnableMockData,
+  usePlaySourceStore,
+} from "@/stores/play-source-store";
 
 /**
  * Flips the dummy session while editor UI is being built. Renders nothing once the
@@ -17,6 +22,9 @@ export function DevSessionToggle() {
   const signOut = useDevSessionStore((state) => state.signOut);
   const fixturesEnabled = usePaginationFixturesStore((state) => state.enabled);
   const toggleFixtures = usePaginationFixturesStore((state) => state.toggle);
+  const enableMockData = usePlaySourceStore(selectEnableMockData);
+  const enableApiData = usePlaySourceStore(selectEnableApiData);
+  const setPlaySource = usePlaySourceStore((state) => state.setSource);
 
   if (source.name !== "dev" || isLoading) {
     return null;
@@ -27,6 +35,28 @@ export function DevSessionToggle() {
       <span className="text-muted-foreground">
         Dev session: {editor ? editor.name : "signed out"}
       </span>
+      {import.meta.env.DEV ? (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 rounded-full px-2 text-xs aria-pressed:bg-primary"
+            aria-pressed={enableMockData}
+            onClick={() => setPlaySource("mock")}
+          >
+            Mock data
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 rounded-full px-2 text-xs aria-pressed:bg-primary"
+            aria-pressed={enableApiData}
+            onClick={() => setPlaySource("api")}
+          >
+            API data
+          </Button>
+        </>
+      ) : null}
       {editor ? (
         <Button
           variant="outline"

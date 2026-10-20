@@ -1,3 +1,4 @@
+import "./load-env";
 import { createContext } from "@loopinator/api/context";
 import { appRouter } from "@loopinator/api/routers/index";
 import { auth } from "@loopinator/auth";

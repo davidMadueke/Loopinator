@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { DEMO_TRACKS } from "@/lib/mock-data";
+import { DEMO_TRACKS } from "@/lib/dev/mock-data";
 
 import {
   addEmptySlot,

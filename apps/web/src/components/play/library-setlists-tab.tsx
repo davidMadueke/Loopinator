@@ -4,7 +4,7 @@ import { Button } from "@loopinator/ui/components/button";
 import { cn } from "@loopinator/ui/lib/utils";
 
 import { LibraryLoadMore, LIBRARY_PAGE_SIZE } from "@/components/play/library-load-more";
-import { DEMO_SETLISTS } from "@/lib/mock-data";
+import { DEMO_SETLISTS } from "@/lib/dev/mock-data";
 import { usePaginationFixturesStore } from "@/stores/pagination-fixtures-store";
 
 type LibrarySetlistsTabProps = {

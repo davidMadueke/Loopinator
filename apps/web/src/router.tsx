@@ -1,9 +1,6 @@
-import type { AppRouter } from "@loopinator/api/routers/index";
-import { env } from "@loopinator/env/web";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 
@@ -11,34 +8,8 @@ import Loader from "./components/loader";
 import { SessionProvider } from "./components/session-provider";
 import { routeTree } from "./routeTree.gen";
 import { TRPCProvider } from "./utils/trpc";
+import { trpcClient } from "./utils/trpc-client";
 
-function getServerUrl(url: string) {
-  const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
-
-  if (!normalized.startsWith("/")) {
-    return normalized;
-  }
-
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}${normalized}`;
-  }
-
-  const processEnv = (
-    globalThis as {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env;
-  const vercelUrl =
-    processEnv?.VERCEL_ENV === "production"
-      ? (processEnv?.VERCEL_PROJECT_PRODUCTION_URL ?? processEnv?.VERCEL_URL)
-      : (processEnv?.VERCEL_URL ?? processEnv?.VERCEL_PROJECT_PRODUCTION_URL);
-  if (vercelUrl) {
-    const origin = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
-    return `${origin}${normalized}`;
-  }
-
-  return `http://localhost:3000${normalized}`;
-}
 function createQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({
@@ -56,20 +27,6 @@ function createQueryClient() {
     defaultOptions: { queries: { staleTime: 60 * 1000 } },
   });
 }
-
-const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: `${getServerUrl(env.VITE_SERVER_URL)}/trpc`,
-      fetch(url, options) {
-        return fetch(url, {
-          ...options,
-          credentials: "include",
-        });
-      },
-    }),
-  ],
-});
 
 export const getRouter = () => {
   const queryClient = createQueryClient();
