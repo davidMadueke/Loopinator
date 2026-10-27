@@ -12,14 +12,12 @@ function TrackPlayRoute() {
   const { id } = Route.useParams();
   const { data: track, isPending } = usePlayTrack(id);
 
-  if (isPending) {
-    return <Loader />;
-  }
-
-  if (!track) {
-    return <div>Not Found</div>;
-  }
 
   // Keyed so the Track picker starts the next Track stopped, even when both share an Original BPM.
-  return <PlayScreen key={track.id} mode="track" track={track} />;
+  return <PlayScreen 
+  key={id} 
+  mode="track" 
+  loadState={isPending ? "pending" : track ? "ready" : "not-found"}
+  track={track ?? undefined}
+  />;
 }

@@ -36,7 +36,7 @@ function pill(width: number): Preset {
 }
 
 type SmallPlayheadTransportProps = {
-  label: string;
+  label?: string;
   mode: PlaybackMode;
   playhead: number;
   onPlay: () => void;

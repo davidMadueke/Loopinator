@@ -30,7 +30,7 @@ import {
 import { isSetlistCached } from "@/lib/audio";
 import { DEMO_SETLISTS, DEMO_TRACKS } from "@/lib/dev/mock-data";
 import { isTrackAudioCached } from "@/lib/offline-cache/audio-cache";
-import type { Setlist, Track } from "@/lib/play-types";
+import type { Setlist, Track, TrackLoadState } from "@/lib/play-types";
 import { useAudioCacheRevision } from "@/hooks/use-audio-cache-revision";
 import {
   selectEnableApiData,
@@ -41,6 +41,12 @@ import type { LibraryTab } from "./library-panel";
 type RouteBreadcrumbProps =
   | {
       variant: "track";
+      trackLoadState: "pending" | "not-found";
+      onOpenLibrary: (tab: LibraryTab) => void;
+    }
+  | {
+      variant: "track";
+      trackLoadState: "ready";
       track: Track;
       onOpenLibrary: (tab: LibraryTab) => void;
     }
@@ -52,7 +58,20 @@ type RouteBreadcrumbProps =
       onOpenLibrary: (tab: LibraryTab) => void;
     };
 
+const TRACK_UNAVAILABLE_TEXT = {
+  pending: "Loading track...",
+  "not-found": "Track not Found",
+} as const;
+
 export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
+  if (props.variant === "track" && props.trackLoadState !== "ready") {
+    return (
+      <div className="flex w-full items-center font-medium text-lg text-destructive">
+        {TRACK_UNAVAILABLE_TEXT[props.trackLoadState]}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {props.variant === "setlist" ? (

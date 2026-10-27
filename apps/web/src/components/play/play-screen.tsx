@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { usePlayback } from "@/hooks/use-playback";
 import { useSpacebarPlayPause } from "@/hooks/use-spacebar-play-pause";
-import type { Setlist, Track } from "@/lib/play-types";
+import type { Setlist, Track, TrackLoadState } from "@/lib/play-types";
 import { useLibraryCreateStore } from "@/stores/library-create-store";
 
 import { AdvancedOptionsPanel } from "./advanced-options-panel";
@@ -21,15 +21,20 @@ import { Separator } from "@loopinator/ui/components/separator";
 type PlayScreenProps =
   | {
       mode: "track";
-      track: Track;
+      track?: Track;
+      loadState: TrackLoadState;
     }
   | {
       mode: "setlist";
       setlist: Setlist;
-      track: Track;
+      track?: Track;
+      loadState: TrackLoadState;
       slotIndex: number;
       onSlotChange: (index: number) => void;
     };
+
+
+const DEFAULT_ORIGINAL_BPM = 120;
 
 function modeTab(mode: PlayScreenProps["mode"]): LibraryTab {
   return mode === "setlist" ? "Setlist" : "Track";
@@ -47,24 +52,23 @@ export function PlayScreen(props: PlayScreenProps) {
   const confirmDiscard = useLibraryCreateStore((state) => state.confirmDiscard);
   const cancelDiscard = useLibraryCreateStore((state) => state.cancelDiscard);
 
-  const initialTargetBpm =
-    props.mode === "setlist"
-      ? props.setlist.slots[props.slotIndex]?.targetBpm ?? props.track.originalBpm
-      : props.track.originalBpm;
-
   const slot = props.mode === "setlist" ? props.setlist.slots[props.slotIndex] : undefined;
+  const track = props.track;
+
+  const originalBpm = track?.originalBpm ?? DEFAULT_ORIGINAL_BPM;
+  const initialTargetBpm = slot?.targetBpm ?? track?.originalBpm ?? DEFAULT_ORIGINAL_BPM;
 
   const playback = usePlayback({
-    originalBpm: props.track.originalBpm,
+    originalBpm: originalBpm,
     initialTargetBpm,
-    trackId: props.track.id,
-    dev: props.track.dev,
-    blobVersion: props.track.blobVersion,
+    trackId: props.loadState === "ready" ? track?.id : undefined,
+    dev: track?.dev,
+    blobVersion: track?.blobVersion,
     setlistId: props.mode === "setlist" ? props.setlist.id : undefined,
     setlist: props.mode === "setlist" ? props.setlist : undefined,
-    loopInPoint: slot?.inPoint ?? props.track.inPoint ?? "",
-    loopOutPoint: slot?.outPoint ?? props.track.outPoint ?? "",
-    removed: props.track.removed ?? slot?.removed,
+    loopInPoint: slot?.inPoint ?? track?.inPoint ?? "",
+    loopOutPoint: slot?.outPoint ?? track?.outPoint ?? "",
+    removed: track?.removed ?? slot?.removed,
   });
 
   useSpacebarPlayPause(() => {
@@ -76,10 +80,12 @@ export function PlayScreen(props: PlayScreenProps) {
   });
 
   const transportLabel =
+    props.track ?
     props.mode === "setlist"
       ? props.setlist.slots[props.slotIndex]?.slotLabel ?? props.track.displayName
-      : props.track.displayName;
+      : props.track.displayName
 
+    : undefined;
   const handleLibraryToggle = () => {
     if (!libraryOpen) {
       setLibraryTab(modeTab(props.mode));
@@ -178,7 +184,7 @@ export function PlayScreen(props: PlayScreenProps) {
         <LibraryPanel
           tab={libraryTab}
           onTabChange={setLibraryTab}
-          activeTrackId={props.mode === "track" ? props.track.id : undefined}
+          activeTrackId={props.mode === "track" ? track?.id : undefined}
           activeSetlistId={props.mode === "setlist" ? props.setlist.id : undefined}
         />
         <div className="pb-2"></div>
@@ -202,8 +208,19 @@ export function PlayScreen(props: PlayScreenProps) {
               onSlotChange={props.onSlotChange}
               onOpenLibrary={handleOpenLibrary}
             />
+          ) : props.loadState === "ready" && props.track ? (
+            <RouteBreadcrumb
+              variant="track"
+              trackLoadState="ready"
+              track={props.track}
+              onOpenLibrary={handleOpenLibrary}
+            />
           ) : (
-            <RouteBreadcrumb variant="track" track={props.track} onOpenLibrary={handleOpenLibrary} />
+            <RouteBreadcrumb
+              variant="track"
+              trackLoadState={props.loadState === "pending" ? "pending" : "not-found"}
+              onOpenLibrary={handleOpenLibrary}
+            />
           )}
 
           <PlayheadPanel
@@ -213,6 +230,7 @@ export function PlayScreen(props: PlayScreenProps) {
             hasLocalOverride={playback.state.hasLocalOverride}
             advancedOpen={advancedOpen}
             onAdvancedToggle={() => setAdvancedOpen((open) => !open)}
+            trackLoadState={props.loadState}
           />
 
           <TransportBar
@@ -221,6 +239,7 @@ export function PlayScreen(props: PlayScreenProps) {
             onPlay={playback.play}
             onPause={playback.pause}
             onRestart={playback.restart}
+            isUnavailable={props.loadState === "not-found" || props.loadState === "pending"}
           />
           <Separator className="my-3 w-full" />
           <TempoStepper

@@ -28,22 +28,16 @@ function SetlistPlayRoute() {
 
 function SetlistPlayScreen({ setlist }: { setlist: Setlist }) {
   const [slotIndex, setSlotIndex] = useState(0);
-  const slot = setlist.slots[slotIndex];
   const { data: track, isPending } = usePlayTrackForSlot(setlist, slotIndex);
 
-  if (isPending) {
-    return <Loader />;
-  }
 
-  if (!slot || !track) {
-    return <div>Not Found</div>;
-  }
 
   return (
     <PlayScreen
       mode="setlist"
       setlist={setlist}
-      track={track}
+      loadState={isPending ? "pending" : track ? "ready" : "not-found"}
+      track={track ?? undefined}
       slotIndex={slotIndex}
       onSlotChange={setSlotIndex}
     />

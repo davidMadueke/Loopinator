@@ -78,6 +78,8 @@ export type Track = {
   removed?: boolean;
 };
 
+export type TrackLoadState = "ready" | "pending" | "not-found";
+
 export type SetlistSlot = {
   trackId: string;
   slotLabel: string;

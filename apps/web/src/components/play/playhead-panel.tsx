@@ -2,10 +2,11 @@ import { PlayheadCircle } from "@loopinator/ui/components/playhead-circle";
 import { Separator } from "@loopinator/ui/components/separator";
 
 import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
-import type { Track } from "@/lib/play-types";
+import type { Track, TrackLoadState } from "@/lib/play-types";
 
 type PlayheadPanelProps = {
-  track: Track;
+  track?: Track;
+  trackLoadState: TrackLoadState;
   targetBpm: number;
   playhead: number;
   hasLocalOverride: boolean;
@@ -15,6 +16,7 @@ type PlayheadPanelProps = {
 
 export function PlayheadPanel({
   track,
+  trackLoadState,
   targetBpm,
   playhead,
   hasLocalOverride,
@@ -25,7 +27,8 @@ export function PlayheadPanel({
     <div className="relative flex flex-col items-center py-6">
       <div className="relative flex items-center justify-center">
         <PlayheadCircle progress={playhead} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
+        { track ?
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
           <div className="flex h-fit w-fit items-center justify-center gap-2">
             <p className="h-full align-middle text-7xl font-bold tabular-nums">{Math.round(targetBpm)}</p>
             <div className="box-content flex h-full w-fit flex-col items-center justify-center gap-0 align-middle font-medium text-primary text-sm leading-4">
@@ -61,6 +64,7 @@ export function PlayheadPanel({
             />
           </div>
         </div>
+        : trackLoadState == "pending"}
       </div>
     </div>
   );

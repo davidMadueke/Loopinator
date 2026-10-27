@@ -20,9 +20,10 @@ type TransportBarProps = {
   onPlay: () => void;
   onPause: () => void;
   onRestart: () => void;
+  isUnavailable: boolean;
 };
 
-export function TransportBar({ mode, playhead, onPlay, onPause, onRestart }: TransportBarProps) {
+export function TransportBar({ mode, playhead, onPlay, onPause, onRestart, isUnavailable }: TransportBarProps) {
   const playing = mode === "playing";
   const canRestart = !playing && playhead > 0;
 
@@ -33,6 +34,7 @@ export function TransportBar({ mode, playhead, onPlay, onPause, onRestart }: Tra
         aria-label={playing ? "Pause" : "Play"}
         aria-pressed={playing}
         aria-keyshortcuts="Space"
+        disabled={isUnavailable}
         onClick={playing ? onPause : onPlay}
       >
         {playing ? (
@@ -44,7 +46,7 @@ export function TransportBar({ mode, playhead, onPlay, onPause, onRestart }: Tra
       <TransportButton
         tone={canRestart ? "idle" : "disabled"}
         aria-label="Restart"
-        disabled={!canRestart}
+        disabled={!canRestart || isUnavailable}
         onClick={onRestart}
       >
         <SkipBackIcon className="size-10" strokeWidth={2.5} />
