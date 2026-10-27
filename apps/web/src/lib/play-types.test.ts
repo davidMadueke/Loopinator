@@ -8,6 +8,8 @@ import {
   clampTargetBpmInBand,
   commitOriginalBpmInput,
   commitTargetBpmInput,
+  playLoadState,
+  playUnavailableState,
   resolveTargetBpmBand,
   sanitizeOriginalBpmDraft,
   scaleOriginalBpm,
@@ -118,5 +120,27 @@ describe("three-band Target BPM", () => {
     expect(scaleTargetBpm(120, 120, 0.5)).toBe(60);
     expect(scaleTargetBpm(120, 240, 0.5)).toBe(120);
     expect(clampTargetBpmInBand(120, 60, "half")).toBe(60);
+  });
+});
+
+describe("playLoadState", () => {
+  it("stays pending while the query is in flight", () => {
+    expect(playLoadState(true, undefined)).toBe("pending");
+    expect(playLoadState(true, { id: "x" })).toBe("pending");
+  });
+
+  it("is ready when the query settled with a record", () => {
+    expect(playLoadState(false, { id: "x" })).toBe("ready");
+  });
+
+  it("is not-found when the query settled empty", () => {
+    expect(playLoadState(false, null)).toBe("not-found");
+    expect(playLoadState(false, undefined)).toBe("not-found");
+  });
+
+  it("collapses ready-without-record into not-found for overlay copy", () => {
+    expect(playUnavailableState("pending")).toBe("pending");
+    expect(playUnavailableState("not-found")).toBe("not-found");
+    expect(playUnavailableState("ready")).toBe("not-found");
   });
 });

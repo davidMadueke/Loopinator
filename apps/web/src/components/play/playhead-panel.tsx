@@ -2,11 +2,17 @@ import { PlayheadCircle } from "@loopinator/ui/components/playhead-circle";
 import { Separator } from "@loopinator/ui/components/separator";
 
 import { AutoDetectedIcon } from "@/components/play/auto-detected-icon";
-import type { Track, TrackLoadState } from "@/lib/play-types";
+import {
+  PLAY_UNAVAILABLE_COPY,
+  playUnavailableState,
+  type PlayLoadState,
+  type Track,
+} from "@/lib/play-types";
 
 type PlayheadPanelProps = {
   track?: Track;
-  trackLoadState: TrackLoadState;
+  trackLoadState: PlayLoadState;
+  setlistLoadState?: PlayLoadState;
   targetBpm: number;
   playhead: number;
   hasLocalOverride: boolean;
@@ -17,6 +23,7 @@ type PlayheadPanelProps = {
 export function PlayheadPanel({
   track,
   trackLoadState,
+  setlistLoadState,
   targetBpm,
   playhead,
   hasLocalOverride,
@@ -27,7 +34,12 @@ export function PlayheadPanel({
     <div className="relative flex flex-col items-center py-6">
       <div className="relative flex items-center justify-center">
         <PlayheadCircle progress={playhead} />
-        { track ?
+        {setlistLoadState != null && setlistLoadState !== "ready" ? (
+          <UnavailableReadout
+            entity="setlist"
+            loadState={playUnavailableState(setlistLoadState)}
+          />
+        ) : track && trackLoadState === "ready" ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
           <div className="flex h-fit w-fit items-center justify-center gap-2">
             <p className="h-full align-middle text-7xl font-bold tabular-nums">{Math.round(targetBpm)}</p>
@@ -64,8 +76,35 @@ export function PlayheadPanel({
             />
           </div>
         </div>
-        : trackLoadState == "pending"}
+        ) : (
+          <UnavailableReadout
+            entity="track"
+            loadState={playUnavailableState(trackLoadState)}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+function UnavailableReadout({
+  entity,
+  loadState,
+}: {
+  entity: "track" | "setlist";
+  loadState: Exclude<PlayLoadState, "ready">;
+}) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
+      <p
+        className={
+          loadState === "not-found"
+            ? "text-lg font-medium text-destructive"
+            : "text-lg font-medium text-muted-foreground"
+        }
+      >
+        {PLAY_UNAVAILABLE_COPY[entity][loadState]}
+      </p>
     </div>
   );
 }

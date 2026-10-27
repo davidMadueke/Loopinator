@@ -30,7 +30,13 @@ import {
 import { isSetlistCached } from "@/lib/audio";
 import { DEMO_SETLISTS, DEMO_TRACKS } from "@/lib/dev/mock-data";
 import { isTrackAudioCached } from "@/lib/offline-cache/audio-cache";
-import type { Setlist, Track, TrackLoadState } from "@/lib/play-types";
+import {
+  PLAY_UNAVAILABLE_COPY,
+  playUnavailableState,
+  type PlayLoadState,
+  type Setlist,
+  type Track,
+} from "@/lib/play-types";
 import { useAudioCacheRevision } from "@/hooks/use-audio-cache-revision";
 import {
   selectEnableApiData,
@@ -41,41 +47,60 @@ import type { LibraryTab } from "./library-panel";
 type RouteBreadcrumbProps =
   | {
       variant: "track";
-      trackLoadState: "pending" | "not-found";
-      onOpenLibrary: (tab: LibraryTab) => void;
-    }
-  | {
-      variant: "track";
-      trackLoadState: "ready";
-      track: Track;
+      trackLoadState: PlayLoadState;
+      track?: Track;
       onOpenLibrary: (tab: LibraryTab) => void;
     }
   | {
       variant: "setlist";
-      setlist: Setlist;
+      setlistLoadState: PlayLoadState;
+      setlist?: Setlist;
       slotIndex: number;
       onSlotChange: (index: number) => void;
       onOpenLibrary: (tab: LibraryTab) => void;
     };
 
-const TRACK_UNAVAILABLE_TEXT = {
-  pending: "Loading track...",
-  "not-found": "Track not Found",
-} as const;
+function UnavailableBreadcrumb({
+  entity,
+  loadState,
+}: {
+  entity: "track" | "setlist";
+  loadState: PlayLoadState;
+}) {
+  return (
+    <div className="flex w-full items-center font-medium text-lg text-destructive">
+      {PLAY_UNAVAILABLE_COPY[entity][playUnavailableState(loadState)]}
+    </div>
+  );
+}
 
 export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
-  if (props.variant === "track" && props.trackLoadState !== "ready") {
+  if (props.variant === "track") {
+    if (props.trackLoadState !== "ready" || !props.track) {
+      return <UnavailableBreadcrumb entity="track" loadState={props.trackLoadState} />;
+    }
+
     return (
-      <div className="flex w-full items-center font-medium text-lg text-destructive">
-        {TRACK_UNAVAILABLE_TEXT[props.trackLoadState]}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 w-full">
+        <Breadcrumb className="flex min-w-0 max-w-4/5 ">
+          <BreadcrumbItem className="min-w-0">
+          <TrackPicker currentTrack={props.track} onOpenLibrary={props.onOpenLibrary} />
+          </BreadcrumbItem>
+        </Breadcrumb>
+        <CacheIndicator cached={props.track.cached} track={props.track} className="shrink-0" />
+        </div>
       </div>
     );
   }
 
+  if (props.setlistLoadState !== "ready" || !props.setlist) {
+    return <UnavailableBreadcrumb entity="setlist" loadState={props.setlistLoadState} />;
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {props.variant === "setlist" ? (
-        <div className="flex items-center gap-2 w-full">
+      <div className="flex items-center gap-2 w-full">
         <div className="flex min-w-0 max-w-4/5 flex-1 items-center gap-4">
         <Breadcrumb className="flex min-w-0 ">
         <BreadcrumbList className="w-full flex-nowrap overflow-hidden">
@@ -109,16 +134,6 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
             onSlotChange={props.onSlotChange}
           />
         </div>
-      ) : (
-        <div className="flex items-center gap-2 w-full">
-        <Breadcrumb className="flex min-w-0 max-w-4/5 ">
-          <BreadcrumbItem className="min-w-0">
-          <TrackPicker currentTrack={props.track} onOpenLibrary={props.onOpenLibrary} />
-          </BreadcrumbItem>
-        </Breadcrumb>
-        <CacheIndicator cached={props.track.cached} track={props.track} className="shrink-0" />
-        </div>
-      )}
     </div>
   );
 }

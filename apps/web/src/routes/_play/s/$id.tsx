@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import Loader from "@/components/loader";
 import { PlayScreen } from "@/components/play/play-screen";
-import { usePlaySetlist, usePlayTrackForSlot } from "@/lib/audio";
-import type { Setlist } from "@/lib/play-types";
+import { usePlaySetlist, useSetlistTrack } from "@/lib/audio";
+import type { PlayLoadState, Setlist } from "@/lib/play-types";
 
 export const Route = createFileRoute("/_play/s/$id")({
   component: SetlistPlayRoute,
@@ -12,31 +11,34 @@ export const Route = createFileRoute("/_play/s/$id")({
 
 function SetlistPlayRoute() {
   const { id } = Route.useParams();
-  const { data: setlist, isPending } = usePlaySetlist(id);
-
-  if (isPending) {
-    return <Loader />;
-  }
-
-  if (!setlist) {
-    return <div>Not Found</div>;
-  }
+  const { data: setlist, loadState } = usePlaySetlist(id);
 
   // Keyed so the Setlist picker cannot carry a slot index into a shorter Setlist.
-  return <SetlistPlayScreen key={setlist.id} setlist={setlist} />;
+  return (
+    <SetlistPlayScreen
+      key={id}
+      setlist={setlist ?? undefined}
+      setlistLoadState={loadState}
+    />
+  );
 }
 
-function SetlistPlayScreen({ setlist }: { setlist: Setlist }) {
+function SetlistPlayScreen({
+  setlist,
+  setlistLoadState,
+}: {
+  setlist?: Setlist;
+  setlistLoadState: PlayLoadState;
+}) {
   const [slotIndex, setSlotIndex] = useState(0);
-  const { data: track, isPending } = usePlayTrackForSlot(setlist, slotIndex);
-
-
+  const { data: track, loadState } = useSetlistTrack(setlist, slotIndex);
 
   return (
     <PlayScreen
       mode="setlist"
       setlist={setlist}
-      loadState={isPending ? "pending" : track ? "ready" : "not-found"}
+      setlistLoadState={setlistLoadState}
+      loadState={loadState}
       track={track ?? undefined}
       slotIndex={slotIndex}
       onSlotChange={setSlotIndex}

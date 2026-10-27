@@ -78,7 +78,34 @@ export type Track = {
   removed?: boolean;
 };
 
-export type TrackLoadState = "ready" | "pending" | "not-found";
+export type PlayLoadState = "ready" | "pending" | "not-found";
+
+export function playLoadState(isPending: boolean, data: unknown): PlayLoadState {
+  if (isPending) {
+    return "pending";
+  }
+  if (data) {
+    return "ready";
+  }
+  return "not-found";
+}
+
+export function playUnavailableState(
+  loadState: PlayLoadState,
+): Exclude<PlayLoadState, "ready"> {
+  return loadState === "pending" ? "pending" : "not-found";
+}
+
+export const PLAY_UNAVAILABLE_COPY = {
+  track: {
+    pending: "Loading track...",
+    "not-found": "Track not Found",
+  },
+  setlist: {
+    pending: "Loading setlist...",
+    "not-found": "Setlist not Found",
+  },
+} as const;
 
 export type SetlistSlot = {
   trackId: string;

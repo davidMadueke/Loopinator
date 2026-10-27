@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
 import {
   getSetlistById,
@@ -20,7 +20,7 @@ import {
   type PlaySetlistDto,
   type PlayTrackDto,
 } from "@/lib/play-payload";
-import type { Setlist, Track } from "@/lib/play-types";
+import { playLoadState, type Setlist, type Track } from "@/lib/play-types";
 import {
   getEnableMockData,
   resolvePlaySource,
@@ -136,30 +136,49 @@ export async function getPlayTrackForSlot(
   return getPlayTrack(slot.trackId, deps);
 }
 
+function withPlayLoadState<T>(query: UseQueryResult<T | null>) {
+  return {
+    ...query,
+    loadState: playLoadState(query.isPending, query.data),
+  };
+}
+
 export function usePlayTrack(id: string) {
   const source = usePlaySourceStore((state) => resolvePlaySource(state.source));
-  return useQuery({
-    queryKey: ["play", "track", source, id],
-    queryFn: async () => (await getPlayTrack(id)) ?? null,
-  });
+  return withPlayLoadState(
+    useQuery({
+      queryKey: ["play", "track", source, id],
+      queryFn: async () => (await getPlayTrack(id)) ?? null,
+    }),
+  );
 }
 
 export function usePlaySetlist(id: string) {
   const source = usePlaySourceStore((state) => resolvePlaySource(state.source));
-  return useQuery({
-    queryKey: ["play", "setlist", source, id],
-    queryFn: async () => (await getPlaySetlist(id)) ?? null,
-  });
+  return withPlayLoadState(
+    useQuery({
+      queryKey: ["play", "setlist", source, id],
+      queryFn: async () => (await getPlaySetlist(id)) ?? null,
+    }),
+  );
 }
 
-export function usePlayTrackForSlot(setlist: Setlist, slotIndex: number) {
+export function useSetlistTrack(setlist: Setlist | undefined, slotIndex: number) {
   const source = usePlaySourceStore((state) => resolvePlaySource(state.source));
-  const slot = setlist.slots[slotIndex];
-  return useQuery({
-    queryKey: ["play", "slot-track", source, setlist.id, slotIndex, slot?.trackId],
-    queryFn: async () => (await getPlayTrackForSlot(setlist, slotIndex)) ?? null,
-    initialData: slot?.track,
-  });
+  const slot = setlist?.slots[slotIndex];
+  return withPlayLoadState(
+    useQuery({
+      queryKey: ["play", "slot-track", source, setlist?.id, slotIndex, slot?.trackId],
+      queryFn: async () => {
+        if (!setlist) {
+          return null;
+        }
+        return (await getPlayTrackForSlot(setlist, slotIndex)) ?? null;
+      },
+      enabled: Boolean(setlist),
+      initialData: slot?.track,
+    }),
+  );
 }
 
 export async function isSetlistCached(setlist: Setlist) {
