@@ -210,6 +210,7 @@ export function PlayScreen(props: PlayScreenProps) {
               variant="setlist"
               setlistLoadState={props.setlistLoadState}
               setlist={props.setlist}
+              trackLoadState={props.loadState}
               slotIndex={props.slotIndex}
               onSlotChange={props.onSlotChange}
               onOpenLibrary={handleOpenLibrary}

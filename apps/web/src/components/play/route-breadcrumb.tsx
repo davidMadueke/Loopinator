@@ -55,47 +55,52 @@ type RouteBreadcrumbProps =
       variant: "setlist";
       setlistLoadState: PlayLoadState;
       setlist?: Setlist;
+      trackLoadState: PlayLoadState;
       slotIndex: number;
       onSlotChange: (index: number) => void;
       onOpenLibrary: (tab: LibraryTab) => void;
     };
 
-function UnavailableBreadcrumb({
-  entity,
-  loadState,
-}: {
-  entity: "track" | "setlist";
-  loadState: PlayLoadState;
-}) {
-  return (
-    <div className="flex w-full items-center font-medium text-lg text-destructive">
-      {PLAY_UNAVAILABLE_COPY[entity][playUnavailableState(loadState)]}
-    </div>
-  );
+function pickerLabel(
+  entity: "track" | "setlist",
+  loadState: PlayLoadState,
+  readyLabel?: string,
+) {
+  if (loadState === "ready" && readyLabel != null) {
+    return readyLabel;
+  }
+  return PLAY_UNAVAILABLE_COPY[entity][playUnavailableState(loadState)];
 }
+
+function pickerLabelClass(loadState: PlayLoadState) {
+  if (loadState === "not-found") {
+    return "text-destructive hover:text-destructive aria-expanded:text-destructive";
+  }
+  else if (loadState === "pending" || loadState === "ready")
+  { 
+    return "text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted";
+}}
 
 export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
   if (props.variant === "track") {
-    if (props.trackLoadState !== "ready" || !props.track) {
-      return <UnavailableBreadcrumb entity="track" loadState={props.trackLoadState} />;
-    }
-
     return (
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2 w-full">
         <Breadcrumb className="flex min-w-0 max-w-4/5 ">
           <BreadcrumbItem className="min-w-0">
-          <TrackPicker currentTrack={props.track} onOpenLibrary={props.onOpenLibrary} />
+          <TrackPicker
+            currentTrack={props.track}
+            loadState={props.trackLoadState}
+            onOpenLibrary={props.onOpenLibrary}
+          />
           </BreadcrumbItem>
         </Breadcrumb>
-        <CacheIndicator cached={props.track.cached} track={props.track} className="shrink-0" />
+        {props.track ? (
+          <CacheIndicator cached={props.track.cached} track={props.track} className="shrink-0" />
+        ) : null}
         </div>
       </div>
     );
-  }
-
-  if (props.setlistLoadState !== "ready" || !props.setlist) {
-    return <UnavailableBreadcrumb entity="setlist" loadState={props.setlistLoadState} />;
   }
 
   return (
@@ -107,7 +112,11 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
 
           <BreadcrumbItem className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-          <SetlistPicker currentSetlist={props.setlist} onOpenLibrary={props.onOpenLibrary} />
+          <SetlistPicker
+            currentSetlist={props.setlist}
+            loadState={props.setlistLoadState}
+            onOpenLibrary={props.onOpenLibrary}
+          />
           </div>
           </BreadcrumbItem>
 
@@ -118,6 +127,11 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
           <BreadcrumbItem className="min-w-0">
           <SlotPicker
             setlist={props.setlist}
+            loadState={
+              props.setlistLoadState === "ready"
+                ? props.trackLoadState
+                : props.setlistLoadState
+            }
             slotIndex={props.slotIndex}
             onSlotChange={props.onSlotChange}
           />
@@ -126,11 +140,13 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
         </BreadcrumbList>
           </Breadcrumb>
 
-          <CacheIndicator cached={props.setlist.cached} setlist={props.setlist} className="shrink-0" />
+          {props.setlist ? (
+            <CacheIndicator cached={props.setlist.cached} setlist={props.setlist} className="shrink-0" />
+          ) : null}
           </div>
           <SlotNavigator
             slotIndex={props.slotIndex}
-            slotCount={props.setlist.slots.length}
+            slotCount={props.setlist?.slots.length ?? 0}
             onSlotChange={props.onSlotChange}
           />
         </div>
@@ -140,21 +156,28 @@ export function RouteBreadcrumb(props: RouteBreadcrumbProps) {
 
 function SetlistPicker({
   currentSetlist,
+  loadState,
   onOpenLibrary,
 }: {
-  currentSetlist: Setlist;
+  currentSetlist?: Setlist;
+  loadState: PlayLoadState;
   onOpenLibrary: (tab: LibraryTab) => void;
 }) {
+  const unavailable = loadState !== "ready" || !currentSetlist;
+
   return (
     <PickerChip
-      label={currentSetlist.name}
-      className="max-w-80 font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
+      label={pickerLabel("setlist", loadState, currentSetlist?.name)}
+      className={cn(
+        "max-w-80 font-medium text-lg",
+      pickerLabelClass(loadState),
+      )}
       footer={
         <OpenFullLibraryItem onSelect={() => onOpenLibrary("Setlist")} />
       }
     >
       {DEMO_SETLISTS.map((setlist) => {
-        const current = setlist.id === currentSetlist.id;
+        const current = currentSetlist ? setlist.id === currentSetlist.id : false;
 
         return (
           <DropdownMenuItem
@@ -175,20 +198,27 @@ function SetlistPicker({
 
 function SlotPicker({
   setlist,
+  loadState,
   slotIndex,
   onSlotChange,
 }: {
-  setlist: Setlist;
+  setlist?: Setlist;
+  loadState: PlayLoadState;
   slotIndex: number;
   onSlotChange: (index: number) => void;
 }) {
+  const unavailable = loadState === "not-found";
+  const slots = setlist?.slots ?? [];
+
   return (
     <PickerChip
-      label={setlist.slots[slotIndex]?.slotLabel ?? ""}
-      className="min-w-24 max-w-56 text-lg "
-      /* contentClassName="w-full" */
+      label={pickerLabel("track", loadState, slots[slotIndex]?.slotLabel)}
+      className={cn(
+        "min-w-24 max-w-56 text-lg",
+        unavailable ? "text-destructive/50 hover:text-destructive aria-expanded:text-destructive" : null,
+      )}
     >
-      {setlist.slots.map((slot, index) => {
+      {slots.map((slot, index) => {
         const current = index === slotIndex;
 
         return (
@@ -213,19 +243,26 @@ function SlotPicker({
 
 function TrackPicker({
   currentTrack,
+  loadState,
   onOpenLibrary,
 }: {
-  currentTrack: Track;
+  currentTrack?: Track;
+  loadState: PlayLoadState;
   onOpenLibrary: (tab: LibraryTab) => void;
 }) {
+  const unavailable = loadState !== "ready" || !currentTrack;
+
   return (
     <PickerChip
-      label={currentTrack.displayName}
-      className="max-w-full font-medium text-lg text-primary hover:text-primary-on-muted aria-expanded:text-primary-on-muted"
+      label={pickerLabel("track", loadState, currentTrack?.displayName)}
+      className={cn(
+        "max-w-full font-medium text-lg",
+        pickerLabelClass(loadState),
+      )}
       footer={<OpenFullLibraryItem onSelect={() => onOpenLibrary("Track")} />}
     >
       {DEMO_TRACKS.map((track) => {
-        const current = track.id === currentTrack.id;
+        const current = currentTrack ? track.id === currentTrack.id : false;
 
         return (
           <DropdownMenuItem
