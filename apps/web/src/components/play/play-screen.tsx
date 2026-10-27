@@ -246,6 +246,7 @@ export function PlayScreen(props: PlayScreenProps) {
           <Separator className="my-3 w-full" />
           <TempoStepper
             onAdjust={playback.adjustTargetBpm}
+            isUnavailable={!playReady}
           />
         </div>
       </main>

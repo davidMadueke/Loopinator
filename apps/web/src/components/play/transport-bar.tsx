@@ -30,7 +30,7 @@ export function TransportBar({ mode, playhead, onPlay, onPause, onRestart, isUna
   return (
     <div className="flex h-fit w-full items-center justify-center gap-0.5 p-3">
       <TransportButton
-        tone={playing ? "engaged" : "idle"}
+        tone={isUnavailable ? "disabled" : playing ? "engaged" : "idle"}
         aria-label={playing ? "Pause" : "Play"}
         aria-pressed={playing}
         aria-keyshortcuts="Space"
